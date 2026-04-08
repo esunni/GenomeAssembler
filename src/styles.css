@@ -94,24 +94,24 @@ button:disabled {
   width: 0.38rem;
   height: 0.38rem;
   border-radius: 999px;
-  background: linear-gradient(180deg, #8c3fd5 0%, #4a1b74 100%);
+  background: var(--accent-400);
   box-shadow: 0 0 0 1px rgba(74, 27, 116, 0.2);
 }
 
 .brand-mark span:nth-child(2) {
-  background: linear-gradient(180deg, #a55deb 0%, #63239a 100%);
+  background: #9343ce;
 }
 
 .brand-mark span:nth-child(3) {
-  background: linear-gradient(180deg, #c57df3 0%, #8430bf 100%);
+  background: #7830b8;
 }
 
 .brand-mark span:nth-child(4) {
-  background: linear-gradient(180deg, #9a54e0 0%, #5d2291 100%);
+  background: #5f239d;
 }
 
 .brand-mark span:nth-child(5) {
-  background: linear-gradient(180deg, #7232b7 0%, #351253 100%);
+  background: #4a1b74;
 }
 
 .brand-overline,
@@ -359,8 +359,13 @@ button:disabled {
 
 .genome-site-label {
   fill: var(--accent-800);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
+  paint-order: stroke;
+  stroke: #ffffff;
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .genome-map-center-name {
@@ -678,7 +683,7 @@ textarea {
 
 select {
   appearance: none;
-  padding-right: 3.15rem;
+  padding: 0.74rem 3.15rem 0.74rem 1.2rem;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'%3E%3Cpath d='M2 2L7 7L12 2' stroke='%231D1724' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 1.45rem center;
@@ -686,20 +691,54 @@ select {
 
 .design-upload-zone {
   position: relative;
-  display: grid;
-  gap: 0.5rem;
-  align-content: start;
-  min-height: 156px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
   padding: 1.15rem 1.2rem;
-  border: 1px dashed var(--line-strong);
+  border: 2px dashed var(--line-strong);
   border-radius: 12px;
   background: #ffffff;
   cursor: pointer;
+  transition: all 200ms ease;
 }
 
 .design-upload-zone.is-drag-active {
   border-color: var(--accent-500);
   background: #fcf9ff;
+  border-style: solid;
+}
+
+.design-upload-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.design-upload-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: var(--accent-500);
+}
+
+.design-upload-file {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--accent-700);
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: var(--accent-100);
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+}
+
+.design-upload-file .design-upload-icon {
+  color: var(--accent-600);
+  font-size: 1.1rem;
 }
 
 .design-upload-zone > span:first-child,
@@ -720,20 +759,9 @@ select {
   border: 0;
 }
 
-.design-upload-copy {
-  color: #5a5164;
-  font-size: 0.97rem;
-  line-height: 1.65;
-}
-
-.design-upload-file {
-  color: var(--accent-700);
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
 .design-select-field {
   align-content: start;
+  gap: 0.7rem;
 }
 
 input:focus,

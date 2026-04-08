@@ -106,7 +106,6 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
           }}
           onDrop={(event) => void handleDrop(event)}
         >
-          <span>Upload genome FASTA</span>
           <input
             aria-label="Upload genome FASTA"
             className="design-file-input"
@@ -114,12 +113,20 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
             accept=".fa,.fasta,.fna,text/plain"
             onChange={(event) => void handleGenomeUpload(event)}
           />
-          <span className="design-upload-copy">
-            Drag and drop one circular FASTA file here, or click to browse.
-          </span>
-          <span className="design-upload-file">
-            {selectedFileName ? `Selected file: ${selectedFileName}` : 'No file selected'}
-          </span>
+          {selectedFileName ? (
+            <span className="design-upload-file">
+              <span className="design-upload-icon">✓</span>
+              {selectedFileName}
+            </span>
+          ) : (
+            <span className="design-upload-placeholder">
+              <svg className="design-upload-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 16V4M12 4L8 8M12 4L16 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 15V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Drop FASTA file here
+            </span>
+          )}
         </label>
 
         <label className="design-select-field">
@@ -136,7 +143,7 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
 
       {errorMessage ? <p className="design-error">{errorMessage}</p> : null}
 
-      {uploadedGenome && selectedEnzyme ? (
+      {uploadedGenome && selectedEnzyme && (
         <>
           <section className="design-summary">
             <p className="design-summary-line">
@@ -184,8 +191,6 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
             </div>
           </div>
         </>
-      ) : (
-        <p className="muted">Upload one circular FASTA sequence to map Type IIS recognition sites on the genome.</p>
       )}
     </section>
   );
