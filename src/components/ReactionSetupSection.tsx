@@ -19,6 +19,7 @@ export function ReactionSetupSection({
   onProjectChange,
 }: ReactionSetupSectionProps) {
   const [patternConfig, setPatternConfig] = useState<Record<string, { prefix: string; start: number; end: number; suffix: string }>>({});
+  const [expandedSubitems, setExpandedSubitems] = useState<Record<string, boolean>>({});
 
   const updateProtocolComponent = (componentId: string, updater: (component: ProtocolComponent) => ProtocolComponent) => {
     onProjectChange((current) => ({
@@ -44,6 +45,13 @@ export function ReactionSetupSection({
     }));
   };
 
+  const toggleSubitems = (componentId: string) => {
+    setExpandedSubitems((current) => ({
+      ...current,
+      [componentId]: !current[componentId],
+    }));
+  };
+
   return (
     <section className="section-card">
       <h2>Reaction Setup</h2>
@@ -51,84 +59,89 @@ export function ReactionSetupSection({
         Define components, transfer volumes, dead-volume behavior, reusable subitem lists, and premix groups.
       </p>
 
-      <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Protocol</h3>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Component</th>
-              <th>Volume (uL)</th>
-              <th style={{ width: '40px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {project.protocolComponents.map((component) => (
-              <tr key={component.id}>
-                <td>
-                  <input
-                    value={component.name}
-                    onChange={(event) => updateProtocolComponent(component.id, (current) => ({ ...current, name: event.target.value }))}
-                    placeholder="Component name"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={component.transferVolume}
-                    onChange={(event) =>
-                      updateProtocolComponent(component.id, (current) => ({
-                        ...current,
-                        transferVolume: Number(event.target.value) || 0,
-                      }))
-                    }
-                  />
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    className="icon-button"
-                    onClick={() =>
-                      onProjectChange((current) => ({
-                        ...current,
-                        protocolComponents: current.protocolComponents.filter((candidate) => candidate.id !== component.id),
-                      }))
-                    }
-                    disabled={project.protocolComponents.length <= 2}
-                    title="Remove"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                    </svg>
-                  </button>
-                </td>
+      <div className="helper-box" style={{ marginTop: '1.5rem' }}>
+        <h3>Protocol</h3>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Volume (uL)</th>
+                <th style={{ width: '40px' }}></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {project.protocolComponents.map((component) => (
+                <tr key={component.id}>
+                  <td>
+                    <input
+                      className="table-inline-input"
+                      value={component.name}
+                      onChange={(event) => updateProtocolComponent(component.id, (current) => ({ ...current, name: event.target.value }))}
+                      placeholder="Component name"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="table-inline-input"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={component.transferVolume}
+                      onChange={(event) =>
+                        updateProtocolComponent(component.id, (current) => ({
+                          ...current,
+                          transferVolume: Number(event.target.value) || 0,
+                        }))
+                      }
+                    />
+                  </td>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      onClick={() =>
+                        onProjectChange((current) => ({
+                          ...current,
+                          protocolComponents: current.protocolComponents.filter((candidate) => candidate.id !== component.id),
+                        }))
+                      }
+                      disabled={project.protocolComponents.length <= 2}
+                      title="Remove"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <button
+          type="button"
+          className="icon-button"
+          onClick={() =>
+            onProjectChange((current) => ({
+              ...current,
+              protocolComponents: [...current.protocolComponents, createProtocolComponent()],
+            }))
+          }
+          title="Add row"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
       </div>
-      <button
-        type="button"
-        className="icon-button"
-        onClick={() =>
-          onProjectChange((current) => ({
-            ...current,
-            protocolComponents: [...current.protocolComponents, createProtocolComponent()],
-          }))
-        }
-        title="Add row"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-      </button>
 
       <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Transfer Settings</h3>
-      <div className="inline-grid" style={{ marginTop: '0.5rem' }}>
-        <label>
+      <div className="transfer-settings-row">
+        <label className="transfer-settings-label">
           Global dead volume (uL)
           <input
+            className="transfer-settings-input"
             type="number"
             min="0"
             step="0.1"
@@ -141,9 +154,10 @@ export function ReactionSetupSection({
             }
           />
         </label>
-        <label>
+        <label className="transfer-settings-label">
           Use global dead volume
           <select
+            className="transfer-settings-input"
             value={project.useGlobalDeadVolume ? 'yes' : 'no'}
             onChange={(event) =>
               onProjectChange((current) => ({
@@ -163,42 +177,29 @@ export function ReactionSetupSection({
           <thead>
             <tr>
               <th>Component</th>
-              <th>Transfer volume (uL)</th>
+              <th>Volume (uL)</th>
               <th>Color</th>
               <th>Dead volume</th>
-              <th>Subitems and naming rule</th>
-              <th>Actions</th>
+              <th>Subitems</th>
+              <th style={{ width: '40px' }}></th>
             </tr>
           </thead>
           <tbody>
             {project.protocolComponents.map((component) => (
               <tr key={component.id}>
                 <td>
-                  <input
-                    value={component.name}
-                    onChange={(event) => updateProtocolComponent(component.id, (current) => ({ ...current, name: event.target.value }))}
-                    placeholder="Component name"
-                  />
+                  <span className="table-inline-value">{component.name || '—'}</span>
                 </td>
                 <td>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={component.transferVolume}
-                    onChange={(event) =>
-                      updateProtocolComponent(component.id, (current) => ({
-                        ...current,
-                        transferVolume: Number(event.target.value) || 0,
-                      }))
-                    }
-                  />
+                  <span className="table-inline-value">{component.transferVolume}</span>
                 </td>
                 <td>
                   <input
                     type="color"
                     value={component.color}
                     onChange={(event) => updateProtocolComponent(component.id, (current) => ({ ...current, color: event.target.value }))}
+                    className="color-circle-input"
+                    title="Pick color"
                   />
                 </td>
                 <td>
@@ -232,130 +233,146 @@ export function ReactionSetupSection({
                   </div>
                 </td>
                 <td>
-                  <div className="subitem-box">
-                    <div className="chip-row">
-                      {component.subItems.map((item) => (
-                        <span key={item.id} className="chip" style={{ background: component.color }}>
-                          {item.name}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateProtocolComponent(component.id, (current) => ({
-                                ...current,
-                                subItems: current.subItems.filter((candidate) => candidate.id !== item.id),
-                              }))
-                            }
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="button-row" style={{ marginTop: '0.75rem' }}>
+                  <div className="subitems-cell">
+                    <div className="subitems-header">
+                      <div className="chip-row">
+                        {component.subItems.map((item) => (
+                          <span key={item.id} className="chip" style={{ background: component.color }}>
+                            {item.name}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateProtocolComponent(component.id, (current) => ({
+                                  ...current,
+                                  subItems: current.subItems.filter((candidate) => candidate.id !== item.id),
+                                }))
+                              }
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
                       <button
                         type="button"
-                        className="ghost"
-                        onClick={() =>
-                          updateProtocolComponent(component.id, (current) => ({
-                            ...current,
-                            subItems: [
-                              ...current.subItems,
-                              { id: createId('item'), name: `${current.name || 'Item'}_${current.subItems.length + 1}` },
-                            ],
-                          }))
-                        }
+                        className="toggle-button"
+                        onClick={() => toggleSubitems(component.id)}
+                        title={expandedSubitems[component.id] ? 'Collapse' : 'Expand'}
                       >
-                        Add subitem
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          style={{ transform: expandedSubitems[component.id] ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+                        >
+                          <path d="M6 9l6 6 6-6" />
+                        </svg>
                       </button>
                     </div>
 
-                    <div className="inline-grid" style={{ marginTop: '0.75rem' }}>
-                      <label>
-                        Prefix
-                        <input
-                          value={patternConfig[component.id]?.prefix ?? ''}
-                          onChange={(event) =>
-                            setPatternConfig((current) => ({
+                    {expandedSubitems[component.id] && (
+                      <div className="subitems-expanded">
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() =>
+                            updateProtocolComponent(component.id, (current) => ({
                               ...current,
-                              [component.id]: {
-                                prefix: event.target.value,
-                                start: current[component.id]?.start ?? 1,
-                                end: current[component.id]?.end ?? 3,
-                                suffix: current[component.id]?.suffix ?? '',
-                              },
+                              subItems: [
+                                ...current.subItems,
+                                { id: createId('item'), name: `${current.name || 'Item'}_${current.subItems.length + 1}` },
+                              ],
                             }))
                           }
-                        />
-                      </label>
-                      <label>
-                        Start
-                        <input
-                          type="number"
-                          min="1"
-                          value={patternConfig[component.id]?.start ?? 1}
-                          onChange={(event) =>
-                            setPatternConfig((current) => ({
-                              ...current,
-                              [component.id]: {
-                                prefix: current[component.id]?.prefix ?? '',
-                                start: Number(event.target.value) || 1,
-                                end: current[component.id]?.end ?? 3,
-                                suffix: current[component.id]?.suffix ?? '',
-                              },
-                            }))
-                          }
-                        />
-                      </label>
-                      <label>
-                        End
-                        <input
-                          type="number"
-                          min="1"
-                          value={patternConfig[component.id]?.end ?? 3}
-                          onChange={(event) =>
-                            setPatternConfig((current) => ({
-                              ...current,
-                              [component.id]: {
-                                prefix: current[component.id]?.prefix ?? '',
-                                start: current[component.id]?.start ?? 1,
-                                end: Number(event.target.value) || 3,
-                                suffix: current[component.id]?.suffix ?? '',
-                              },
-                            }))
-                          }
-                        />
-                      </label>
-                      <label>
-                        Suffix
-                        <input
-                          value={patternConfig[component.id]?.suffix ?? ''}
-                          onChange={(event) =>
-                            setPatternConfig((current) => ({
-                              ...current,
-                              [component.id]: {
-                                prefix: current[component.id]?.prefix ?? '',
-                                start: current[component.id]?.start ?? 1,
-                                end: current[component.id]?.end ?? 3,
-                                suffix: event.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      </label>
-                    </div>
-
-                    <div className="button-row" style={{ marginTop: '0.75rem' }}>
-                      <button type="button" className="secondary" onClick={() => handlePatternGenerate(component.id)}>
-                        Generate naming rule
-                      </button>
-                    </div>
+                        >
+                          + Add
+                        </button>
+                        <div className="pattern-row">
+                          <label>
+                            <span>Prefix</span>
+                            <input
+                              value={patternConfig[component.id]?.prefix ?? ''}
+                              onChange={(event) =>
+                                setPatternConfig((current) => ({
+                                  ...current,
+                                  [component.id]: {
+                                    prefix: event.target.value,
+                                    start: current[component.id]?.start ?? 1,
+                                    end: current[component.id]?.end ?? 3,
+                                    suffix: current[component.id]?.suffix ?? '',
+                                  },
+                                }))
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>Start</span>
+                            <input
+                              type="number"
+                              min="1"
+                              value={patternConfig[component.id]?.start ?? 1}
+                              onChange={(event) =>
+                                setPatternConfig((current) => ({
+                                  ...current,
+                                  [component.id]: {
+                                    prefix: current[component.id]?.prefix ?? '',
+                                    start: Number(event.target.value) || 1,
+                                    end: current[component.id]?.end ?? 3,
+                                    suffix: current[component.id]?.suffix ?? '',
+                                  },
+                                }))
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>End</span>
+                            <input
+                              type="number"
+                              min="1"
+                              value={patternConfig[component.id]?.end ?? 3}
+                              onChange={(event) =>
+                                setPatternConfig((current) => ({
+                                  ...current,
+                                  [component.id]: {
+                                    prefix: current[component.id]?.prefix ?? '',
+                                    start: current[component.id]?.start ?? 1,
+                                    end: Number(event.target.value) || 3,
+                                    suffix: current[component.id]?.suffix ?? '',
+                                  },
+                                }))
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>Suffix</span>
+                            <input
+                              value={patternConfig[component.id]?.suffix ?? ''}
+                              onChange={(event) =>
+                                setPatternConfig((current) => ({
+                                  ...current,
+                                  [component.id]: {
+                                    prefix: current[component.id]?.prefix ?? '',
+                                    start: current[component.id]?.start ?? 1,
+                                    end: current[component.id]?.end ?? 3,
+                                    suffix: event.target.value,
+                                  },
+                                }))
+                              }
+                            />
+                          </label>
+                          <button type="button" className="secondary" onClick={() => handlePatternGenerate(component.id)}>
+                            Generate
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </td>
-                <td>
+                <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                   <button
                     type="button"
-                    className="ghost"
+                    className="icon-button"
                     onClick={() =>
                       onProjectChange((current) => ({
                         ...current,
@@ -367,28 +384,17 @@ export function ReactionSetupSection({
                       }))
                     }
                     disabled={project.protocolComponents.length === 1}
+                    title="Remove"
                   >
-                    Remove
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                    </svg>
                   </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="button-row" style={{ marginTop: '1rem' }}>
-        <button
-          type="button"
-          onClick={() =>
-            onProjectChange((current) => ({
-              ...current,
-              protocolComponents: [...current.protocolComponents, createProtocolComponent()],
-            }))
-          }
-        >
-          Add component row
-        </button>
       </div>
 
       <div className="premix-box" style={{ marginTop: '1rem' }}>

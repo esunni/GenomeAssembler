@@ -242,10 +242,10 @@ button:disabled {
 }
 
 .design-header-actions {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 0.8rem;
-  align-content: start;
-  justify-items: start;
   padding-top: 0.4rem;
 }
 
@@ -796,8 +796,8 @@ button:focus-visible {
 }
 
 .icon-button:hover:not(:disabled) {
-  color: #9b2226;
-  background: #fef2f2;
+  color: var(--accent-600);
+  background: var(--accent-100);
 }
 
 .icon-button:disabled {
@@ -808,6 +808,149 @@ button:focus-visible {
 .icon-button svg {
   width: 18px;
   height: 18px;
+}
+
+/* Table inline inputs without box styling */
+.table-inline-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0.4rem 0;
+  color: var(--text);
+}
+
+.table-inline-input:focus {
+  outline: none;
+  background: transparent;
+}
+
+.table-inline-input::placeholder {
+  color: var(--muted);
+}
+
+.table-inline-value {
+  display: block;
+  padding: 0.4rem 0;
+  color: var(--text);
+}
+
+/* Transfer settings compact row */
+.transfer-settings-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.transfer-settings-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-weight: 600;
+  color: #2a2133;
+}
+
+.transfer-settings-input {
+  width: 120px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  background: #ffffff;
+  color: var(--text);
+}
+
+/* Color circle input */
+.color-circle-input {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid var(--line-strong);
+  border-radius: 50%;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.color-circle-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-circle-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+/* Subitems cell */
+.subitems-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.subitems-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subitems-header .chip-row {
+  flex: 1;
+}
+
+.toggle-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.toggle-button:hover {
+  color: var(--accent-600);
+}
+
+.toggle-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.subitems-expanded {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #faf7fd;
+  border-radius: 6px;
+}
+
+.pattern-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pattern-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+}
+
+.pattern-row label span {
+  color: var(--muted);
+}
+
+.pattern-row input {
+  width: 70px;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  font-size: 0.85rem;
 }
 
 .control-stack,
