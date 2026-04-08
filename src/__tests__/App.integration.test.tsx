@@ -12,6 +12,23 @@ describe('portal navigation', () => {
     expect(screen.queryByRole('heading', { name: 'Reaction Setup' })).not.toBeInTheDocument();
   });
 
+  test('uploads a circular FASTA on Design and shows Type IIS site count on the genome map', async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await user.upload(
+      screen.getByLabelText('Upload genome FASTA'),
+      new File(['>pDemo\nTCTCTTTGGTCTCAAAGAGACCAAGG\n'], 'pDemo.fasta', { type: 'text/plain' }),
+    );
+    await user.selectOptions(screen.getByLabelText('Type IIS enzyme'), 'bsai-hfv2');
+
+    expect(screen.getByText('3 sites found')).toBeInTheDocument();
+    expect(screen.getByText('Sequence name: pDemo')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Circular genome map for pDemo' })).toBeInTheDocument();
+    expect(within(screen.getByRole('table')).getByText('25')).toBeInTheDocument();
+  });
+
   test('shows the Build submenu on hover and reveals Janus', async () => {
     const user = userEvent.setup();
 

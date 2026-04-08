@@ -1,6 +1,7 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AspirationPlatesSection } from './components/AspirationPlatesSection';
+import { DesignPage } from './components/DesignPage';
 import { DispensingPlateSection } from './components/DispensingPlateSection';
 import { ReactionSetupSection } from './components/ReactionSetupSection';
 import type { ExperimentProject } from './types';
@@ -83,6 +84,7 @@ function App() {
 
       if (!buildMenuRef.current?.contains(event.target)) {
         setBuildMenuOpen(false);
+        setBuildMenuPinned(false);
       }
     };
 
@@ -246,51 +248,7 @@ function App() {
       <main className="portal-body">
         <div className="page-canvas">
           {activeView === 'design' ? (
-            <section className="portal-surface design-page">
-              <div className="page-header">
-                <div>
-                  <p className="page-eyebrow">Design</p>
-                  <h2>Design Workspace</h2>
-                  <p className="page-copy">
-                    Plan future genome design workflows here, keep sequence rules in one place, and move into Janus when you are ready to
-                    turn a design into aspiration and dispensing instructions.
-                  </p>
-                </div>
-
-                <div className="cta-panel">
-                  <p className="cta-label">Need a build-ready plate plan right now?</p>
-                  <button type="button" className="primary-cta" onClick={openJanus}>
-                    Open Janus Builder
-                  </button>
-                </div>
-              </div>
-
-              <div className="coming-soon-grid">
-                <article className="coming-soon-card">
-                  <p className="card-kicker">Coming soon</p>
-                  <h3>Genome design briefs</h3>
-                  <p>
-                    Capture sequence intent, assembly strategy, and project notes in a cleaner design-first workspace before anything reaches the bench.
-                  </p>
-                </article>
-
-                <article className="coming-soon-card">
-                  <p className="card-kicker">Coming soon</p>
-                  <h3>Reusable design rules</h3>
-                  <p>
-                    Store naming conventions, sequence constraints, and repeatable patterns so new experiments start from the same shared logic.
-                  </p>
-                </article>
-
-                <article className="coming-soon-card">
-                  <p className="card-kicker">Coming soon</p>
-                  <h3>Build handoff packs</h3>
-                  <p>
-                    Package design outputs into bench-ready inputs for Janus, including component lists, plate-ready samples, and export checkpoints.
-                  </p>
-                </article>
-              </div>
-            </section>
+            <DesignPage onOpenJanus={openJanus} />
           ) : (
             <>
               <section className="portal-surface janus-hero">

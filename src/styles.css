@@ -94,24 +94,24 @@ button:disabled {
   width: 0.38rem;
   height: 0.38rem;
   border-radius: 999px;
-  background: var(--accent-400);
-  box-shadow: 0 0 0 1px rgba(179, 91, 221, 0.16);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .brand-mark span:nth-child(2) {
-  background: #9343ce;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .brand-mark span:nth-child(3) {
-  background: #7830b8;
+  background: rgba(255, 255, 255, 0.88);
 }
 
 .brand-mark span:nth-child(4) {
-  background: #5f239d;
+  background: rgba(255, 255, 255, 0.84);
 }
 
 .brand-mark span:nth-child(5) {
-  background: #4a1b74;
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .brand-overline,
@@ -186,13 +186,15 @@ button:disabled {
 
 .nav-menu {
   position: absolute;
-  top: calc(100% - 1px);
+  top: calc(100% + 0.2rem);
   left: 0;
-  min-width: 220px;
-  padding: 0.4rem 0;
-  border: 1px solid var(--line-strong);
+  min-width: 144px;
+  padding: 0.2rem 0;
+  border: none;
+  border-radius: 14px;
   background: #ffffff;
   box-shadow: 0 14px 28px rgba(17, 7, 27, 0.12);
+  overflow: hidden;
 }
 
 .menu-item {
@@ -200,7 +202,7 @@ button:disabled {
   border: none;
   background: transparent;
   color: var(--accent-800);
-  padding: 0.9rem 1rem;
+  padding: 0.7rem 0.85rem;
   text-align: left;
   font-weight: 600;
 }
@@ -232,6 +234,147 @@ button:disabled {
 .design-page,
 .janus-hero {
   padding: 0 0 2.25rem;
+}
+
+.design-header {
+  gap: 1.5rem;
+}
+
+.design-header-actions {
+  display: grid;
+  gap: 0.8rem;
+  align-content: start;
+  justify-items: start;
+  padding-top: 0.4rem;
+}
+
+.design-controls,
+.design-summary,
+.design-results-panel {
+  border-top: 1px solid var(--line);
+}
+
+.design-controls {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(220px, 320px);
+  gap: 1rem;
+  padding-top: 1.4rem;
+}
+
+.design-error {
+  margin: 1rem 0 0;
+  color: #9b2226;
+  font-weight: 600;
+}
+
+.design-summary {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.4rem;
+  margin-top: 1.4rem;
+}
+
+.design-summary-count {
+  margin: 0;
+  color: var(--accent-700);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.design-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem 1.25rem;
+}
+
+.design-summary-grid p {
+  margin: 0;
+  color: #453b4f;
+}
+
+.design-map-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.2fr) minmax(280px, 1fr);
+  gap: 2rem;
+  align-items: start;
+  padding-top: 1.6rem;
+}
+
+.design-map-panel {
+  min-width: 0;
+}
+
+.design-results-panel {
+  padding-top: 1rem;
+}
+
+.design-results-panel h3 {
+  margin: 0 0 1rem;
+}
+
+.genome-map {
+  width: 100%;
+  height: auto;
+  max-width: 520px;
+  display: block;
+}
+
+.genome-map-ring-shadow {
+  fill: none;
+  stroke: rgba(132, 48, 191, 0.08);
+  stroke-width: 30;
+}
+
+.genome-map-ring {
+  fill: none;
+  stroke: var(--accent-700);
+  stroke-width: 18;
+}
+
+.genome-map-ring-inner {
+  fill: #ffffff;
+  stroke: #f1e8fa;
+  stroke-width: 1;
+}
+
+.genome-map-tick {
+  stroke: var(--line-strong);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.genome-site-line {
+  stroke: var(--accent-400);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.genome-site-dot {
+  fill: var(--accent-500);
+}
+
+.genome-site-label {
+  fill: var(--accent-800);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.genome-map-center-name {
+  fill: var(--accent-800);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.genome-map-center-enzyme {
+  fill: #5e4d74;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.genome-map-center-count {
+  fill: var(--accent-600);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .page-header,
@@ -636,7 +779,9 @@ button:focus-visible {
 
 @media (max-width: 1040px) {
   .page-header,
-  .plate-grid-wrap {
+  .plate-grid-wrap,
+  .design-map-layout,
+  .design-controls {
     grid-template-columns: 1fr;
   }
 
@@ -681,7 +826,9 @@ button:focus-visible {
   }
 
   .two-column-grid,
-  .plate-grid-wrap {
+  .plate-grid-wrap,
+  .design-controls,
+  .design-map-layout {
     grid-template-columns: 1fr;
   }
 
