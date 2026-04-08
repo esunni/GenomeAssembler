@@ -912,19 +912,34 @@ button:focus-visible {
 /* Subitems cell */
 .subitems-cell {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .subitems-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   flex-shrink: 0;
+  width: 100%;
 }
 
 .subitems-header .chip-row {
-  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.subitems-header .chip {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+}
+
+.subitems-header .chip button {
+  font-size: 0.75rem;
+  padding: 0 0.2rem;
 }
 
 .toggle-button {
@@ -939,6 +954,7 @@ button:focus-visible {
   color: var(--muted);
   cursor: pointer;
   flex-shrink: 0;
+  margin-top: 0.1rem;
 }
 
 .toggle-button:hover {
@@ -952,9 +968,31 @@ button:focus-visible {
 
 .subitems-expanded {
   display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.4rem 0;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0 0.5rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.subitems-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.subitems-row input[type="text"] {
+  width: 70px;
+  height: 28px;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.subitems-row input.subitem-name-input {
+  width: 80px;
 }
 
 .subitems-expanded .chip-row .chip {
@@ -1014,7 +1052,7 @@ button:focus-visible {
   cursor: pointer;
   transition: all 140ms ease;
   white-space: nowrap;
-  margin-right: 0.8rem;
+  margin-right: 1.5rem;
 }
 
 .subitems-row .btn-like:hover {

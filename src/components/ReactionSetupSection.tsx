@@ -219,7 +219,7 @@ export function ReactionSetupSection({
                         }))
                       }
                       className="table-inline-input"
-                      style={{ padding: '0.2rem 0', height: '28px' }}
+                      style={{ padding: '0.2rem 0.5rem', height: '28px' }}
                       placeholder="0"
                     />
                   </td>
