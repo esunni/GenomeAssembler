@@ -62,7 +62,7 @@ export function createAspirationPlate(): AspirationPlate {
 export function createDefaultProject(): ExperimentProject {
   return {
     experimentName: '',
-    globalDeadVolume: 2,
+    globalDeadVolume: 30,
     useGlobalDeadVolume: true,
     protocolComponents: [createProtocolComponent()],
     premixGroups: [],

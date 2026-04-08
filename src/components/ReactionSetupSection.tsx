@@ -176,10 +176,12 @@ export function ReactionSetupSection({
         <table>
           <thead>
             <tr>
-              <th>Component</th>
-              <th style={{ width: '60px' }}>Vol</th>
-              <th style={{ width: '40px' }}></th>
-              <th style={{ width: '120px' }}>Dead vol</th>
+              <th style={{ width: '150px' }}>Component</th>
+              <th style={{ width: '50px' }}>Vol</th>
+              <th style={{ width: '40px' }}>Color</th>
+              {project.useGlobalDeadVolume ? null : (
+                <th style={{ width: '100px' }}>Dead vol</th>
+              )}
               <th>Subitems</th>
               <th style={{ width: '40px' }}></th>
             </tr>
@@ -202,41 +204,44 @@ export function ReactionSetupSection({
                     title="Pick color"
                   />
                 </td>
-                <td>
-                  <div className="control-stack" style={{ flexDirection: 'row', gap: '0.3rem' }}>
-                    <select
-                      value={component.deadVolumeMode}
+                {!project.useGlobalDeadVolume && (
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={component.customDeadVolume ?? 0}
                       onChange={(event) =>
                         updateProtocolComponent(component.id, (current) => ({
                           ...current,
-                          deadVolumeMode: event.target.value as ProtocolComponent['deadVolumeMode'],
+                          customDeadVolume: Number(event.target.value) || 0,
+                          deadVolumeMode: 'custom',
                         }))
                       }
-                      style={{ flex: '0 0 70px' }}
-                    >
-                      <option value="global">Global</option>
-                      <option value="custom">Custom</option>
-                    </select>
-                    {component.deadVolumeMode === 'custom' ? (
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={component.customDeadVolume ?? 0}
-                        onChange={(event) =>
-                          updateProtocolComponent(component.id, (current) => ({
-                            ...current,
-                            customDeadVolume: Number(event.target.value) || 0,
-                          }))
-                        }
-                        style={{ width: '60px' }}
-                      />
-                    ) : null}
-                  </div>
-                </td>
+                      className="table-inline-input"
+                      placeholder="0"
+                    />
+                  </td>
+                )}
                 <td>
                   <div className="subitems-cell">
                     <div className="subitems-header">
+                      <button
+                        type="button"
+                        className="toggle-button"
+                        onClick={() => toggleSubitems(component.id)}
+                        title={expandedSubitems[component.id] ? 'Collapse' : 'Expand'}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          style={{ transform: expandedSubitems[component.id] ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
+                        >
+                          <path d="M6 9l6 6 6-6" />
+                        </svg>
+                      </button>
                       <div className="chip-row">
                         {component.subItems.map((item) => (
                           <span key={item.id} className="chip" style={{ background: component.color }}>
@@ -255,22 +260,6 @@ export function ReactionSetupSection({
                           </span>
                         ))}
                       </div>
-                      <button
-                        type="button"
-                        className="toggle-button"
-                        onClick={() => toggleSubitems(component.id)}
-                        title={expandedSubitems[component.id] ? 'Collapse' : 'Expand'}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          style={{ transform: expandedSubitems[component.id] ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms' }}
-                        >
-                          <path d="M6 9l6 6 6-6" />
-                        </svg>
-                      </button>
                     </div>
 
                     {expandedSubitems[component.id] && (
@@ -311,6 +300,13 @@ export function ReactionSetupSection({
                             }}
                           >
                             Add
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-generate"
+                            onClick={() => handlePatternGenerate(component.id)}
+                          >
+                            Generate
                           </button>
                         </div>
                         <div className="pattern-row">
@@ -386,9 +382,6 @@ export function ReactionSetupSection({
                               }
                             />
                           </label>
-                          <button type="button" className="btn-like" onClick={() => handlePatternGenerate(component.id)}>
-                            Generate
-                          </button>
                         </div>
                       </div>
                     )}
