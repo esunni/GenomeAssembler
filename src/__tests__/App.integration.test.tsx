@@ -1,26 +1,41 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import App from '../App';
 
-describe('Janus app', () => {
-  test('shows janus workspace with disabled design menu', async () => {
+describe('portal navigation', () => {
+  test('opens on the Design page by default', () => {
     render(<App />);
 
-    expect(screen.getByRole('button', { name: 'Janus' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('button', { name: 'Design' })).toBeDisabled();
-    expect(screen.getByRole('heading', { name: 'Reaction Setup' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Aspiration Plates' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Dispensing Plate' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Preparation Volumes' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Mapping Files' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Design' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('heading', { name: 'Design Workspace' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Reaction Setup' })).not.toBeInTheDocument();
   });
 
-  test('blocks mapping export when aspiration plate names are missing', async () => {
+  test('shows the Build submenu on hover and reveals Janus', async () => {
     const user = userEvent.setup();
 
     render(<App />);
 
+    const buildNav = screen.getByRole('button', { name: 'Build' });
+    await user.hover(buildNav);
+
+    const menu = screen.getByRole('menu', { name: 'Build submenu' });
+    expect(within(menu).getByRole('menuitem', { name: 'Janus' })).toBeInTheDocument();
+  });
+
+  test('opens Janus from Design and keeps export validation working', async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'Open Janus Builder' }));
+
+    expect(screen.getByRole('button', { name: 'Janus' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('heading', { name: 'Reaction Setup' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Build' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Janus' }));
     await user.click(screen.getByRole('button', { name: 'Add aspiration plate' }));
     await user.click(screen.getByRole('button', { name: 'Generate mapping files' }));
 
