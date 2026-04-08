@@ -725,20 +725,27 @@ select {
 }
 
 .design-upload-file {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.6rem;
   color: var(--accent-700);
   font-size: 0.95rem;
   font-weight: 600;
   background: var(--accent-100);
-  padding: 0.5rem 0.9rem;
-  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .design-upload-file .design-upload-icon {
   color: var(--accent-600);
-  font-size: 1.1rem;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .design-upload-zone > span:first-child,

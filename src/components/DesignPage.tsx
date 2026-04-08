@@ -72,10 +72,10 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
       <div className="page-header design-header">
         <div>
           <p className="page-eyebrow">Design</p>
-          <h2>Design Workspace</h2>
+          <h2>Fragment Design</h2>
           <p className="page-copy">
-            Upload one circular genome FASTA file, choose a Type IIS enzyme, and inspect both the number of recognition sites and their
-            locations on a circular genome map.
+            Upload a circular genome sequence and design optimal fragmentation strategies. Plan Type IIS recognition site placements to create
+            assembly-ready fragments that can be experimentally validated and assembled into a complete genome.
           </p>
         </div>
 
@@ -115,7 +115,10 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
           />
           {selectedFileName ? (
             <span className="design-upload-file">
-              <span className="design-upload-icon">✓</span>
+              <svg className="design-upload-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
               {selectedFileName}
             </span>
           ) : (

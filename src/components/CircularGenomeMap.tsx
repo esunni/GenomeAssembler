@@ -29,11 +29,11 @@ function normalizeAngle(angle: number): number {
 }
 
 function getLabelRadius(baseRadius: number, angleIndex: number, totalSites: number): number {
-  // Increase base radius to add more gap from the circular map
-  const minRadius = baseRadius + 32;
-  // Spread labels across multiple tiers based on total sites
-  const tier = Math.floor(angleIndex / 6);
-  return minRadius + tier * 16;
+  // Keep labels closer to the circle - just enough gap
+  const minRadius = baseRadius + 20;
+  // Only add extra tier for dense distributions
+  const tier = totalSites > 12 ? Math.floor(angleIndex / 8) : 0;
+  return minRadius + tier * 14;
 }
 
 function shouldShowLabel(
@@ -101,7 +101,7 @@ export function CircularGenomeMap({ sequenceName, sequenceLength, enzymeName, si
 
       {Array.from({ length: 12 }, (_, index) => {
         const angle = index * 30;
-        const outer = polarToCartesian(center, radius + 5, angle);
+        const outer = polarToCartesian(center, radius + 3, angle);
         const inner = polarToCartesian(center, radius - 1, angle);
 
         return <line key={angle} className="genome-map-tick" x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} />;
