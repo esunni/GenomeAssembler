@@ -66,7 +66,7 @@ export function ReactionSetupSection({
             <thead>
               <tr>
                 <th>Component</th>
-                <th style={{ width: '100px' }}>Volume (uL)</th>
+                <th style={{ width: '200px' }}>Volume (uL)</th>
                 <th style={{ width: '40px' }}></th>
               </tr>
             </thead>
@@ -176,11 +176,11 @@ export function ReactionSetupSection({
         <table>
           <thead>
             <tr>
-              <th style={{ width: '150px' }}>Component</th>
+              <th style={{ width: '200px' }}>Component</th>
               <th style={{ width: '50px' }}>Vol</th>
               <th style={{ width: '40px' }}>Color</th>
               {project.useGlobalDeadVolume ? null : (
-                <th style={{ width: '100px' }}>Dead vol</th>
+                <th style={{ width: '80px' }}>Dead vol</th>
               )}
               <th>Subitems</th>
               <th style={{ width: '40px' }}></th>
@@ -219,6 +219,7 @@ export function ReactionSetupSection({
                         }))
                       }
                       className="table-inline-input"
+                      style={{ padding: '0.2rem 0', height: '28px' }}
                       placeholder="0"
                     />
                   </td>
@@ -264,7 +265,7 @@ export function ReactionSetupSection({
 
                     {expandedSubitems[component.id] && (
                       <div className="subitems-expanded">
-                        <div className="subitems-add-row">
+                        <div className="subitems-row">
                           <input
                             type="text"
                             placeholder="Name"
@@ -301,15 +302,6 @@ export function ReactionSetupSection({
                           >
                             Add
                           </button>
-                          <button
-                            type="button"
-                            className="btn-generate"
-                            onClick={() => handlePatternGenerate(component.id)}
-                          >
-                            Generate
-                          </button>
-                        </div>
-                        <div className="pattern-row">
                           <label>
                             <span>Prefix</span>
                             <input
@@ -382,6 +374,13 @@ export function ReactionSetupSection({
                               }
                             />
                           </label>
+                          <button
+                            type="button"
+                            className="btn-generate"
+                            onClick={() => handlePatternGenerate(component.id)}
+                          >
+                            Generate
+                          </button>
                         </div>
                       </div>
                     )}

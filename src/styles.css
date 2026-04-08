@@ -948,38 +948,53 @@ button:focus-visible {
 .subitems-expanded {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.5rem 0;
+  gap: 0.3rem;
+  padding: 0.4rem 0;
 }
 
-.subitems-expanded .chip-row {
-  margin-bottom: 0.3rem;
+.subitems-expanded .chip-row .chip {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
 }
 
-.subitems-add-row {
+.subitems-expanded .chip-row .chip button {
+  font-size: 0.75rem;
+  padding: 0 0.2rem;
+}
+
+.subitems-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
-.subitems-add-row input {
-  width: 100px;
-  padding: 0.35rem 0.5rem;
+.subitems-row input[type="text"] {
+  width: 80px;
+  padding: 0.3rem 0.4rem;
   border: 1px solid var(--line-strong);
-  border-radius: 6px;
-  font-size: 0.85rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
 }
 
-.subitems-add-row input:focus {
+.subitems-row input[type="text"]:focus {
   outline: 2px solid rgba(132, 48, 191, 0.3);
   outline-offset: 1px;
 }
 
-.subitems-add-row .btn-like {
-  padding: 0.35rem 0.6rem;
+.subitems-row input[type="number"] {
+  width: 55px;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.subitems-row .btn-like {
+  padding: 0.3rem 0.5rem;
   font-size: 0.8rem;
   border: 1px solid var(--accent-500);
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--accent-100);
   color: var(--accent-700);
   cursor: pointer;
@@ -987,16 +1002,16 @@ button:focus-visible {
   white-space: nowrap;
 }
 
-.subitems-add-row .btn-like:hover {
+.subitems-row .btn-like:hover {
   background: var(--accent-500);
   color: #ffffff;
 }
 
-.subitems-add-row .btn-generate {
-  padding: 0.35rem 0.6rem;
+.subitems-row .btn-generate {
+  padding: 0.3rem 0.5rem;
   font-size: 0.8rem;
   border: 1px solid var(--accent-500);
-  border-radius: 6px;
+  border-radius: 4px;
   background: #ffffff;
   color: var(--accent-700);
   cursor: pointer;
@@ -1004,38 +1019,20 @@ button:focus-visible {
   white-space: nowrap;
 }
 
-.subitems-add-row .btn-generate:hover {
+.subitems-row .btn-generate:hover {
   background: var(--accent-500);
   color: #ffffff;
 }
 
-.pattern-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  margin-top: 0.4rem;
-  padding-top: 0.4rem;
-  border-top: 1px dashed var(--line);
-}
-
-.pattern-row label {
+.subitems-row label {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  font-size: 0.8rem;
+  gap: 0.15rem;
+  font-size: 0.75rem;
 }
 
-.pattern-row label span {
+.subitems-row label span {
   color: var(--muted);
-}
-
-.pattern-row input {
-  width: 70px;
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--line-strong);
-  border-radius: 4px;
-  font-size: 0.85rem;
 }
 
 .pattern-row .secondary {
