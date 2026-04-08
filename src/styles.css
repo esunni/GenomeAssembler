@@ -191,7 +191,7 @@ button:disabled {
   min-width: 134px;
   padding: 0.22rem 0.2rem;
   border: none;
-  border-radius: 9px;
+  border-radius: 0;
   background: #ffffff;
   box-shadow: 0 14px 28px rgba(17, 7, 27, 0.12);
   overflow: hidden;

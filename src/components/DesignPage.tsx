@@ -80,9 +80,9 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
         </div>
 
         <div className="design-header-actions">
-          <p className="cta-label">Move into the build workflow when this genome is ready.</p>
+          <p className="cta-label">Move into the build workflow when the fragments are ready.</p>
           <button type="button" className="primary-cta" onClick={onOpenJanus}>
-            Open Janus Builder
+            Mapping File Generator
           </button>
         </div>
       </div>

@@ -52,18 +52,73 @@ export function ReactionSetupSection({
       </p>
 
       <div className="helper-box">
-        <h3>Quick protocol paste</h3>
-        <div className="two-column-grid">
-          <label>
-            Paste CSV rows as `component,transfer_volume`
-            <textarea rows={4} value={bulkProtocolText} onChange={(event) => onBulkProtocolTextChange(event.target.value)} />
-          </label>
-          <div className="button-row">
-            <button type="button" onClick={onImportProtocolPaste}>
-              Import pasted protocol rows
-            </button>
-          </div>
+        <h3>Quick protocol</h3>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Volume (uL)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {project.protocolComponents.map((component) => (
+                <tr key={component.id}>
+                  <td>
+                    <input
+                      value={component.name}
+                      onChange={(event) => updateProtocolComponent(component.id, (current) => ({ ...current, name: event.target.value }))}
+                      placeholder="Component name"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={component.transferVolume}
+                      onChange={(event) =>
+                        updateProtocolComponent(component.id, (current) => ({
+                          ...current,
+                          transferVolume: Number(event.target.value) || 0,
+                        }))
+                      }
+                    />
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="ghost"
+                      onClick={() =>
+                        onProjectChange((current) => ({
+                          ...current,
+                          protocolComponents: current.protocolComponents.filter((candidate) => candidate.id !== component.id),
+                        }))
+                      }
+                      disabled={project.protocolComponents.length <= 2}
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+        <button
+          type="button"
+          className="ghost"
+          onClick={() =>
+            onProjectChange((current) => ({
+              ...current,
+              protocolComponents: [...current.protocolComponents, createProtocolComponent()],
+            }))
+          }
+          style={{ marginTop: '0.75rem' }}
+        >
+          + Add row
+        </button>
       </div>
 
       <div className="inline-grid" style={{ marginTop: '1rem' }}>

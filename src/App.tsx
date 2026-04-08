@@ -236,7 +236,7 @@ function App() {
               {buildMenuOpen ? (
                 <div id="build-submenu" className="nav-menu" role="menu" aria-label="Build submenu" onMouseEnter={openBuildMenu}>
                   <button type="button" className="menu-item" role="menuitem" onClick={openJanus}>
-                    Janus
+                    JANUS
                   </button>
                 </div>
               ) : null}
@@ -251,13 +251,13 @@ function App() {
             <DesignPage onOpenJanus={openJanus} />
           ) : (
             <>
-              <section className="portal-surface janus-hero">
+                <section className="portal-surface janus-hero">
                 <div className="page-header">
                   <div>
-                    <p className="page-eyebrow">Build / Janus</p>
-                    <h2>Janus Builder</h2>
+                    <p className="page-eyebrow">Build / JANUS</p>
+                    <h2>JANUS Mapping File Generator</h2>
                     <p className="page-copy">
-                      Prepare reaction setup, assign aspiration and dispensing wells, calculate preparation volumes, and export mapping files for the Janus run.
+                      Generate mapping files for the JANUS liquid handler. Define reaction components, assign wells, and export ready-to-use mapping files for your experiment.
                     </p>
                   </div>
 
@@ -302,10 +302,10 @@ function App() {
                     <button type="button" className="secondary" onClick={() => loadInputRef.current?.click()}>
                       Load project JSON
                     </button>
-                    <button type="button" className="ghost" onClick={openDesign}>
+                    <input ref={loadInputRef} type="file" accept=".json,application/json" hidden onChange={handleProjectLoad} />
+                    <button type="button" className="ghost" onClick={openDesign} style={{ marginLeft: 'auto' }}>
                       Back to Design
                     </button>
-                    <input ref={loadInputRef} type="file" accept=".json,application/json" hidden onChange={handleProjectLoad} />
                   </div>
                 </div>
               </section>
