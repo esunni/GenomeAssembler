@@ -31,7 +31,7 @@ describe('portal navigation', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open Janus Builder' }));
 
-    expect(screen.getByRole('button', { name: 'Janus' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Build' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { name: 'Reaction Setup' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Build' }));
