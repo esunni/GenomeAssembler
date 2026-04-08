@@ -23,8 +23,11 @@ describe('portal navigation', () => {
     );
     await user.selectOptions(screen.getByLabelText('Type IIS enzyme'), 'bsai-hfv2');
 
+    expect(screen.getByText('Selected file: pDemo.fasta')).toBeInTheDocument();
     expect(screen.getByText('3 sites found')).toBeInTheDocument();
-    expect(screen.getByText('Sequence name: pDemo')).toBeInTheDocument();
+    expect(screen.getByText('GGTCTCn^nnnn_')).toBeInTheDocument();
+    expect(screen.queryByText('Sequence name: pDemo')).not.toBeInTheDocument();
+    expect(screen.queryByText('Genome length: 26 bp')).not.toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Circular genome map for pDemo' })).toBeInTheDocument();
     expect(within(screen.getByRole('table')).getByText('25')).toBeInTheDocument();
   });

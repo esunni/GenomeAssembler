@@ -94,24 +94,24 @@ button:disabled {
   width: 0.38rem;
   height: 0.38rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, #8c3fd5 0%, #4a1b74 100%);
+  box-shadow: 0 0 0 1px rgba(74, 27, 116, 0.2);
 }
 
 .brand-mark span:nth-child(2) {
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(180deg, #a55deb 0%, #63239a 100%);
 }
 
 .brand-mark span:nth-child(3) {
-  background: rgba(255, 255, 255, 0.88);
+  background: linear-gradient(180deg, #c57df3 0%, #8430bf 100%);
 }
 
 .brand-mark span:nth-child(4) {
-  background: rgba(255, 255, 255, 0.84);
+  background: linear-gradient(180deg, #9a54e0 0%, #5d2291 100%);
 }
 
 .brand-mark span:nth-child(5) {
-  background: rgba(255, 255, 255, 0.8);
+  background: linear-gradient(180deg, #7232b7 0%, #351253 100%);
 }
 
 .brand-overline,
@@ -188,10 +188,10 @@ button:disabled {
   position: absolute;
   top: calc(100% + 0.2rem);
   left: 0;
-  min-width: 144px;
-  padding: 0.2rem 0;
+  min-width: 134px;
+  padding: 0.22rem 0.2rem;
   border: none;
-  border-radius: 14px;
+  border-radius: 9px;
   background: #ffffff;
   box-shadow: 0 14px 28px rgba(17, 7, 27, 0.12);
   overflow: hidden;
@@ -202,7 +202,7 @@ button:disabled {
   border: none;
   background: transparent;
   color: var(--accent-800);
-  padding: 0.7rem 0.85rem;
+  padding: 0.62rem 0.92rem 0.62rem 1.1rem;
   text-align: left;
   font-weight: 600;
 }
@@ -258,7 +258,8 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) minmax(220px, 320px);
   gap: 1rem;
-  padding-top: 1.4rem;
+  margin-top: 2rem;
+  padding-top: 1.85rem;
 }
 
 .design-error {
@@ -269,9 +270,17 @@ button:disabled {
 
 .design-summary {
   display: grid;
-  gap: 1rem;
+  gap: 0.5rem;
   padding-top: 1.4rem;
   margin-top: 1.4rem;
+}
+
+.design-summary-line {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.9rem;
 }
 
 .design-summary-count {
@@ -281,15 +290,10 @@ button:disabled {
   font-weight: 700;
 }
 
-.design-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.85rem 1.25rem;
-}
-
-.design-summary-grid p {
-  margin: 0;
-  color: #453b4f;
+.design-summary-pattern {
+  color: #000000;
+  font-size: 1.1rem;
+  font-weight: 700;
 }
 
 .design-map-layout {
@@ -361,8 +365,22 @@ button:disabled {
 
 .genome-map-center-name {
   fill: var(--accent-800);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
+}
+
+.genome-map-center-name--medium {
+  font-size: 13px;
+}
+
+.genome-map-center-name--small {
+  font-size: 11.5px;
+}
+
+.genome-map-center-length {
+  fill: #5e4d74;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .genome-map-center-enzyme {
@@ -647,7 +665,7 @@ label {
   color: #2a2133;
 }
 
-input,
+input:not([type='file']),
 select,
 textarea {
   width: 100%;
@@ -656,6 +674,66 @@ textarea {
   padding: 0.74rem 0.9rem;
   background: #ffffff;
   color: var(--text);
+}
+
+select {
+  appearance: none;
+  padding-right: 3.15rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'%3E%3Cpath d='M2 2L7 7L12 2' stroke='%231D1724' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1.45rem center;
+}
+
+.design-upload-zone {
+  position: relative;
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+  min-height: 156px;
+  padding: 1.15rem 1.2rem;
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.design-upload-zone.is-drag-active {
+  border-color: var(--accent-500);
+  background: #fcf9ff;
+}
+
+.design-upload-zone > span:first-child,
+.design-select-field > span {
+  font-weight: 600;
+  color: #2a2133;
+}
+
+.design-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.design-upload-copy {
+  color: #5a5164;
+  font-size: 0.97rem;
+  line-height: 1.65;
+}
+
+.design-upload-file {
+  color: var(--accent-700);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.design-select-field {
+  align-content: start;
 }
 
 input:focus,

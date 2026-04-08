@@ -7,6 +7,14 @@ interface CircularGenomeMapProps {
   sites: EnzymeSite[];
 }
 
+function truncateText(value: string, maxLength: number) {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, Math.max(0, maxLength - 3))}...`;
+}
+
 function polarToCartesian(center: number, radius: number, angleDegrees: number) {
   const angleRadians = ((angleDegrees - 90) * Math.PI) / 180;
 
@@ -21,6 +29,13 @@ export function CircularGenomeMap({ sequenceName, sequenceLength, enzymeName, si
   const radius = 120;
   const innerRadius = 102;
   const showLabels = sites.length > 0 && sites.length <= 12;
+  const displayName = truncateText(sequenceName, 26);
+  const nameClassName =
+    sequenceName.length > 34
+      ? 'genome-map-center-name genome-map-center-name--small'
+      : sequenceName.length > 26
+        ? 'genome-map-center-name genome-map-center-name--medium'
+        : 'genome-map-center-name';
 
   return (
     <svg
@@ -37,8 +52,8 @@ export function CircularGenomeMap({ sequenceName, sequenceLength, enzymeName, si
 
       {Array.from({ length: 12 }, (_, index) => {
         const angle = index * 30;
-        const outer = polarToCartesian(center, radius + 8, angle);
-        const inner = polarToCartesian(center, radius - 4, angle);
+        const outer = polarToCartesian(center, radius + 5, angle);
+        const inner = polarToCartesian(center, radius - 1, angle);
 
         return <line key={angle} className="genome-map-tick" x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} />;
       })}
@@ -63,13 +78,16 @@ export function CircularGenomeMap({ sequenceName, sequenceLength, enzymeName, si
       })}
 
       <g className="genome-map-center">
-        <text x={center} y={center - 18} textAnchor="middle" className="genome-map-center-name">
-          {sequenceName}
+        <text x={center} y={center - 30} textAnchor="middle" className={nameClassName}>
+          {displayName}
         </text>
-        <text x={center} y={center + 4} textAnchor="middle" className="genome-map-center-enzyme">
+        <text x={center} y={center - 8} textAnchor="middle" className="genome-map-center-length">
+          {sequenceLength.toLocaleString()} bp
+        </text>
+        <text x={center} y={center + 18} textAnchor="middle" className="genome-map-center-enzyme">
           {enzymeName}
         </text>
-        <text x={center} y={center + 28} textAnchor="middle" className="genome-map-center-count">
+        <text x={center} y={center + 42} textAnchor="middle" className="genome-map-center-count">
           {sites.length} sites
         </text>
       </g>

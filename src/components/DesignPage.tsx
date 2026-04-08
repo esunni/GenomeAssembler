@@ -1,4 +1,4 @@
-import { ChangeEvent, useMemo, useState } from 'react';
+import { ChangeEvent, DragEvent, useMemo, useState } from 'react';
 
 import { CircularGenomeMap } from './CircularGenomeMap';
 import { ENZYMES, findCircularEnzymeSites, parseSingleCircularFasta, type ParsedCircularFasta } from '../utils/designTools';
@@ -10,7 +10,9 @@ interface DesignPageProps {
 export function DesignPage({ onOpenJanus }: DesignPageProps) {
   const [selectedEnzymeId, setSelectedEnzymeId] = useState(ENZYMES[0]?.id ?? '');
   const [uploadedGenome, setUploadedGenome] = useState<ParsedCircularFasta | null>(null);
+  const [selectedFileName, setSelectedFileName] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const selectedEnzyme = useMemo(
     () => ENZYMES.find((enzyme) => enzyme.id === selectedEnzymeId) ?? ENZYMES[0],
@@ -21,12 +23,7 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
     [selectedEnzyme, uploadedGenome],
   );
 
-  const handleGenomeUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
+  const handleGenomeFile = async (file: File) => {
     try {
       const text = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -36,13 +33,38 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
       });
       const parsedGenome = parseSingleCircularFasta(text);
       setUploadedGenome(parsedGenome);
+      setSelectedFileName(file.name);
       setErrorMessage(null);
     } catch (error) {
       setUploadedGenome(null);
+      setSelectedFileName(file.name);
       setErrorMessage(error instanceof Error ? error.message : 'Unable to read the FASTA file.');
+    }
+  };
+
+  const handleGenomeUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      await handleGenomeFile(file);
     } finally {
       event.target.value = '';
     }
+  };
+
+  const handleDrop = async (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragActive(false);
+
+    const file = event.dataTransfer.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    await handleGenomeFile(file);
   };
 
   return (
@@ -66,14 +88,43 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
       </div>
 
       <div className="design-controls">
-        <label>
-          Upload genome FASTA
-          <input type="file" accept=".fa,.fasta,.fna,text/plain" onChange={(event) => void handleGenomeUpload(event)} />
+        <label
+          className={`design-upload-zone${isDragActive ? ' is-drag-active' : ''}`}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setIsDragActive(true);
+          }}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            setIsDragActive(true);
+          }}
+          onDragLeave={(event) => {
+            if (event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              return;
+            }
+            setIsDragActive(false);
+          }}
+          onDrop={(event) => void handleDrop(event)}
+        >
+          <span>Upload genome FASTA</span>
+          <input
+            aria-label="Upload genome FASTA"
+            className="design-file-input"
+            type="file"
+            accept=".fa,.fasta,.fna,text/plain"
+            onChange={(event) => void handleGenomeUpload(event)}
+          />
+          <span className="design-upload-copy">
+            Drag and drop one circular FASTA file here, or click to browse.
+          </span>
+          <span className="design-upload-file">
+            {selectedFileName ? `Selected file: ${selectedFileName}` : 'No file selected'}
+          </span>
         </label>
 
-        <label>
-          Type IIS enzyme
-          <select value={selectedEnzymeId} onChange={(event) => setSelectedEnzymeId(event.target.value)}>
+        <label className="design-select-field">
+          <span>Type IIS enzyme</span>
+          <select aria-label="Type IIS enzyme" value={selectedEnzymeId} onChange={(event) => setSelectedEnzymeId(event.target.value)}>
             {ENZYMES.map((enzyme) => (
               <option key={enzyme.id} value={enzyme.id}>
                 {enzyme.name}
@@ -88,14 +139,10 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
       {uploadedGenome && selectedEnzyme ? (
         <>
           <section className="design-summary">
-            <p className="design-summary-count">{detectedSites.length} sites found</p>
-            <div className="design-summary-grid">
-              <p>Sequence name: {uploadedGenome.name}</p>
-              <p>Genome length: {uploadedGenome.length.toLocaleString()} bp</p>
-              <p>Enzyme: {selectedEnzyme.name}</p>
-              <p>Recognition sequence: {selectedEnzyme.recognitionSite}</p>
-              <p>Cut pattern: {selectedEnzyme.cutPattern}</p>
-            </div>
+            <p className="design-summary-line">
+              <span className="design-summary-count">{detectedSites.length} sites found</span>
+              <span className="design-summary-pattern">{selectedEnzyme.cutPattern}</span>
+            </p>
           </section>
 
           <div className="design-map-layout">
