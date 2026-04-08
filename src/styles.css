@@ -796,8 +796,8 @@ button:focus-visible {
 }
 
 .icon-button:hover:not(:disabled) {
-  color: var(--accent-600);
-  background: var(--accent-100);
+  color: #c41e3a;
+  background: #fef2f2;
 }
 
 .icon-button:disabled {
@@ -864,31 +864,40 @@ button:focus-visible {
 }
 
 .transfer-settings-input {
-  width: 140px;
+  width: 160px;
+  height: 38px;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
   background: #ffffff;
   color: var(--text);
+  font-size: 0.9rem;
 }
 
 /* Color circle input */
 .color-circle-input {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   padding: 0;
-  border: none;
+  border: 2px solid #ffffff;
   border-radius: 50%;
   cursor: pointer;
   overflow: hidden;
-  box-shadow: 0 0 0 2px var(--line-strong);
+  box-shadow: 0 0 0 1px var(--line-strong), 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .color-circle-input::-webkit-color-swatch-wrapper {
   padding: 0;
+  margin: 0;
 }
 
 .color-circle-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+  margin: 0;
+}
+
+.color-circle-input::-moz-color-swatch {
   border: none;
   border-radius: 50%;
 }
@@ -896,7 +905,7 @@ button:focus-visible {
 /* Subitems cell */
 .subitems-cell {
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
   gap: 0.5rem;
 }
 
@@ -904,10 +913,11 @@ button:focus-visible {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .subitems-header .chip-row {
-  flex: 1;
+  flex-shrink: 0;
 }
 
 .toggle-button {
@@ -921,6 +931,7 @@ button:focus-visible {
   background: transparent;
   color: var(--muted);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .toggle-button:hover {
@@ -934,32 +945,45 @@ button:focus-visible {
 
 .subitems-expanded {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem;
-  background: #faf7fd;
-  border-radius: 6px;
+  padding: 0.5rem 0;
+  flex-wrap: wrap;
 }
 
 .subitems-add-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .subitems-add-row input {
-  flex: 1;
-  min-width: 100px;
-  max-width: 160px;
+  width: 120px;
   padding: 0.4rem 0.6rem;
   border: 1px solid var(--line-strong);
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .subitems-add-row input:focus {
   outline: 2px solid rgba(132, 48, 191, 0.3);
   outline-offset: 1px;
+}
+
+.subitems-add-row .btn-like {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--accent-500);
+  border-radius: 6px;
+  background: var(--accent-100);
+  color: var(--accent-700);
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.subitems-add-row .btn-like:hover {
+  background: var(--accent-500);
+  color: #ffffff;
 }
 
 .pattern-row {

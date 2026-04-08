@@ -16,7 +16,15 @@ import type {
   SourceType,
 } from '../types';
 
-const DEFAULT_COLORS = ['#63239a', '#8430bf', '#b35bdd', '#4a1b74', '#780650', '#0e6252', '#1a6b5a'];
+const DEFAULT_COLORS = ['#F3000E', '#F25016', '#6596F3', '#83B366', '#D3A4EA', '#EAD094', '#B2DCE2', '#D7EAAC'];
+
+function generateRandomColor(existingColors: string[]): string {
+  let color: string;
+  do {
+    color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+  } while (existingColors.includes(color.toUpperCase()));
+  return color;
+}
 
 let idCounter = 0;
 
@@ -26,11 +34,15 @@ export function createId(prefix: string): string {
 }
 
 export function createProtocolComponent(): ProtocolComponent {
+  const colorIndex = idCounter % DEFAULT_COLORS.length;
+  const color = colorIndex < DEFAULT_COLORS.length 
+    ? DEFAULT_COLORS[colorIndex] 
+    : generateRandomColor(DEFAULT_COLORS);
   return {
     id: createId('component'),
     name: '',
     transferVolume: 1,
-    color: DEFAULT_COLORS[idCounter % DEFAULT_COLORS.length],
+    color: color,
     deadVolumeMode: 'global',
     customDeadVolume: null,
     subItems: [],

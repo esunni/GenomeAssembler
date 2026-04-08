@@ -177,9 +177,9 @@ export function ReactionSetupSection({
           <thead>
             <tr>
               <th>Component</th>
-              <th style={{ width: '80px' }}>Volume</th>
-              <th style={{ width: '50px' }}>Color</th>
-              <th>Dead volume</th>
+              <th style={{ width: '60px' }}>Vol</th>
+              <th style={{ width: '40px' }}></th>
+              <th style={{ width: '120px' }}>Dead vol</th>
               <th>Subitems</th>
               <th style={{ width: '40px' }}></th>
             </tr>
@@ -203,7 +203,7 @@ export function ReactionSetupSection({
                   />
                 </td>
                 <td>
-                  <div className="control-stack">
+                  <div className="control-stack" style={{ flexDirection: 'row', gap: '0.3rem' }}>
                     <select
                       value={component.deadVolumeMode}
                       onChange={(event) =>
@@ -212,8 +212,9 @@ export function ReactionSetupSection({
                           deadVolumeMode: event.target.value as ProtocolComponent['deadVolumeMode'],
                         }))
                       }
+                      style={{ flex: '0 0 70px' }}
                     >
-                      <option value="global">Use global</option>
+                      <option value="global">Global</option>
                       <option value="custom">Custom</option>
                     </select>
                     {component.deadVolumeMode === 'custom' ? (
@@ -228,6 +229,7 @@ export function ReactionSetupSection({
                             customDeadVolume: Number(event.target.value) || 0,
                           }))
                         }
+                        style={{ width: '60px' }}
                       />
                     ) : null}
                   </div>
@@ -276,7 +278,7 @@ export function ReactionSetupSection({
                         <div className="subitems-add-row">
                           <input
                             type="text"
-                            placeholder="Subitem name"
+                            placeholder="Name"
                             onKeyDown={(event) => {
                               if (event.key === 'Enter') {
                                 const input = event.target as HTMLInputElement;
@@ -294,7 +296,7 @@ export function ReactionSetupSection({
                           />
                           <button
                             type="button"
-                            className="secondary"
+                            className="btn-like"
                             onClick={(event) => {
                               const input = (event.target as HTMLElement).parentElement?.querySelector('input') as HTMLInputElement;
                               const name = input?.value.trim();
@@ -384,7 +386,7 @@ export function ReactionSetupSection({
                               }
                             />
                           </label>
-                          <button type="button" className="secondary" onClick={() => handlePatternGenerate(component.id)}>
+                          <button type="button" className="btn-like" onClick={() => handlePatternGenerate(component.id)}>
                             Generate
                           </button>
                         </div>
