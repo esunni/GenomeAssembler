@@ -16,7 +16,7 @@ import type {
   SourceType,
 } from '../types';
 
-const DEFAULT_COLORS = ['#0b6e4f', '#8f250c', '#005f73', '#bc6c25', '#3d405b', '#6d597a', '#c1121f'];
+const DEFAULT_COLORS = ['#63239a', '#8430bf', '#b35bdd', '#4a1b74', '#780650', '#0e6252', '#1a6b5a'];
 
 let idCounter = 0;
 

@@ -59,14 +59,14 @@ export function ReactionSetupSection({
         Define components, transfer volumes, dead-volume behavior, reusable subitem lists, and premix groups.
       </p>
 
-      <div className="helper-box" style={{ marginTop: '1.5rem' }}>
+      <div className="protocol-box">
         <h3>Protocol</h3>
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Component</th>
-                <th>Volume (uL)</th>
+                <th style={{ width: '100px' }}>Volume (uL)</th>
                 <th style={{ width: '40px' }}></th>
               </tr>
             </thead>
@@ -96,7 +96,7 @@ export function ReactionSetupSection({
                       }
                     />
                   </td>
-                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                  <td style={{ textAlign: 'center' }}>
                     <button
                       type="button"
                       className="icon-button"
@@ -177,8 +177,8 @@ export function ReactionSetupSection({
           <thead>
             <tr>
               <th>Component</th>
-              <th>Volume (uL)</th>
-              <th>Color</th>
+              <th style={{ width: '80px' }}>Volume</th>
+              <th style={{ width: '50px' }}>Color</th>
               <th>Dead volume</th>
               <th>Subitems</th>
               <th style={{ width: '40px' }}></th>
@@ -273,21 +273,44 @@ export function ReactionSetupSection({
 
                     {expandedSubitems[component.id] && (
                       <div className="subitems-expanded">
-                        <button
-                          type="button"
-                          className="secondary"
-                          onClick={() =>
-                            updateProtocolComponent(component.id, (current) => ({
-                              ...current,
-                              subItems: [
-                                ...current.subItems,
-                                { id: createId('item'), name: `${current.name || 'Item'}_${current.subItems.length + 1}` },
-                              ],
-                            }))
-                          }
-                        >
-                          + Add
-                        </button>
+                        <div className="subitems-add-row">
+                          <input
+                            type="text"
+                            placeholder="Subitem name"
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter') {
+                                const input = event.target as HTMLInputElement;
+                                const name = input.value.trim();
+                                updateProtocolComponent(component.id, (current) => ({
+                                  ...current,
+                                  subItems: [
+                                    ...current.subItems,
+                                    { id: createId('item'), name: name || `${current.name}_${current.subItems.length + 1}` },
+                                  ],
+                                }));
+                                input.value = '';
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={(event) => {
+                              const input = (event.target as HTMLElement).parentElement?.querySelector('input') as HTMLInputElement;
+                              const name = input?.value.trim();
+                              updateProtocolComponent(component.id, (current) => ({
+                                ...current,
+                                subItems: [
+                                  ...current.subItems,
+                                  { id: createId('item'), name: name || `${current.name}_${current.subItems.length + 1}` },
+                                ],
+                              }));
+                              if (input) input.value = '';
+                            }}
+                          >
+                            Add
+                          </button>
+                        </div>
                         <div className="pattern-row">
                           <label>
                             <span>Prefix</span>
@@ -369,7 +392,7 @@ export function ReactionSetupSection({
                     )}
                   </div>
                 </td>
-                <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                <td style={{ textAlign: 'center' }}>
                   <button
                     type="button"
                     className="icon-button"
@@ -414,7 +437,7 @@ export function ReactionSetupSection({
                     id: createId('premix'),
                     name: `Premix_${current.premixGroups.length + 1}`,
                     componentIds: [],
-                    color: current.protocolComponents[0]?.color ?? '#0b6e4f',
+                    color: current.protocolComponents[0]?.color ?? '#63239a',
                   } satisfies PremixGroup,
                 ],
               }))

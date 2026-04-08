@@ -649,7 +649,7 @@ td {
   text-align: left;
   padding: 0.78rem;
   border-bottom: 1px solid var(--line);
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 th {
@@ -834,6 +834,19 @@ button:focus-visible {
   color: var(--text);
 }
 
+/* Protocol section box */
+.protocol-box {
+  margin-top: 1.5rem;
+  border: 2px solid var(--accent-400);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.protocol-box h3 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
 /* Transfer settings compact row */
 .transfer-settings-row {
   display: flex;
@@ -851,7 +864,7 @@ button:focus-visible {
 }
 
 .transfer-settings-input {
-  width: 120px;
+  width: 140px;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
@@ -861,13 +874,14 @@ button:focus-visible {
 
 /* Color circle input */
 .color-circle-input {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   padding: 0;
-  border: 2px solid var(--line-strong);
+  border: none;
   border-radius: 50%;
   cursor: pointer;
   overflow: hidden;
+  box-shadow: 0 0 0 2px var(--line-strong);
 }
 
 .color-circle-input::-webkit-color-swatch-wrapper {
@@ -927,6 +941,27 @@ button:focus-visible {
   border-radius: 6px;
 }
 
+.subitems-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subitems-add-row input {
+  flex: 1;
+  min-width: 100px;
+  max-width: 160px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.subitems-add-row input:focus {
+  outline: 2px solid rgba(132, 48, 191, 0.3);
+  outline-offset: 1px;
+}
+
 .pattern-row {
   display: flex;
   align-items: flex-end;
@@ -950,6 +985,11 @@ button:focus-visible {
   padding: 0.35rem 0.5rem;
   border: 1px solid var(--line-strong);
   border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.pattern-row .secondary {
+  padding: 0.4rem 0.8rem;
   font-size: 0.85rem;
 }
 
