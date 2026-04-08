@@ -51,77 +51,81 @@ export function ReactionSetupSection({
         Define components, transfer volumes, dead-volume behavior, reusable subitem lists, and premix groups.
       </p>
 
-      <div className="helper-box">
-        <h3>Quick protocol</h3>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Component</th>
-                <th>Volume (uL)</th>
-                <th>Actions</th>
+      <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Protocol</h3>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Volume (uL)</th>
+              <th style={{ width: '40px' }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {project.protocolComponents.map((component) => (
+              <tr key={component.id}>
+                <td>
+                  <input
+                    value={component.name}
+                    onChange={(event) => updateProtocolComponent(component.id, (current) => ({ ...current, name: event.target.value }))}
+                    placeholder="Component name"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={component.transferVolume}
+                    onChange={(event) =>
+                      updateProtocolComponent(component.id, (current) => ({
+                        ...current,
+                        transferVolume: Number(event.target.value) || 0,
+                      }))
+                    }
+                  />
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    onClick={() =>
+                      onProjectChange((current) => ({
+                        ...current,
+                        protocolComponents: current.protocolComponents.filter((candidate) => candidate.id !== component.id),
+                      }))
+                    }
+                    disabled={project.protocolComponents.length <= 2}
+                    title="Remove"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                    </svg>
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {project.protocolComponents.map((component) => (
-                <tr key={component.id}>
-                  <td>
-                    <input
-                      value={component.name}
-                      onChange={(event) => updateProtocolComponent(component.id, (current) => ({ ...current, name: event.target.value }))}
-                      placeholder="Component name"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={component.transferVolume}
-                      onChange={(event) =>
-                        updateProtocolComponent(component.id, (current) => ({
-                          ...current,
-                          transferVolume: Number(event.target.value) || 0,
-                        }))
-                      }
-                    />
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="ghost"
-                      onClick={() =>
-                        onProjectChange((current) => ({
-                          ...current,
-                          protocolComponents: current.protocolComponents.filter((candidate) => candidate.id !== component.id),
-                        }))
-                      }
-                      disabled={project.protocolComponents.length <= 2}
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <button
-          type="button"
-          className="ghost"
-          onClick={() =>
-            onProjectChange((current) => ({
-              ...current,
-              protocolComponents: [...current.protocolComponents, createProtocolComponent()],
-            }))
-          }
-          style={{ marginTop: '0.75rem' }}
-        >
-          + Add row
-        </button>
+            ))}
+          </tbody>
+        </table>
       </div>
+      <button
+        type="button"
+        className="icon-button"
+        onClick={() =>
+          onProjectChange((current) => ({
+            ...current,
+            protocolComponents: [...current.protocolComponents, createProtocolComponent()],
+          }))
+        }
+        title="Add row"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
 
-      <div className="inline-grid" style={{ marginTop: '1rem' }}>
+      <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Transfer Settings</h3>
+      <div className="inline-grid" style={{ marginTop: '0.5rem' }}>
         <label>
           Global dead volume (uL)
           <input

@@ -205,6 +205,7 @@ button:disabled {
   padding: 0.62rem 0.92rem 0.62rem 1.1rem;
   text-align: left;
   font-weight: 600;
+  font-size: 0.85rem;
 }
 
 .menu-item:hover,
@@ -777,6 +778,36 @@ textarea:focus,
 button:focus-visible {
   outline: 2px solid rgba(132, 48, 191, 0.3);
   outline-offset: 2px;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 140ms ease, background 140ms ease;
+}
+
+.icon-button:hover:not(:disabled) {
+  color: #9b2226;
+  background: #fef2f2;
+}
+
+.icon-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
 }
 
 .control-stack,
