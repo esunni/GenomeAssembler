@@ -35,6 +35,7 @@ function App() {
   const [project, setProject] = useState<ExperimentProject>(() => createDefaultProject());
   const [activeView, setActiveView] = useState<PortalView>('design');
   const [buildMenuOpen, setBuildMenuOpen] = useState(false);
+  const [buildMenuPinned, setBuildMenuPinned] = useState(false);
   const [bulkProtocolText, setBulkProtocolText] = useState(defaultProtocolPaste);
   const [exportErrors, setExportErrors] = useState<string[]>([]);
   const [generatedFiles, setGeneratedFiles] = useState<Array<{ filename: string; content: string }>>([]);
@@ -50,6 +51,25 @@ function App() {
     () => dispensingAssignments.filter((assignment) => assignment.items.length > 0).length,
     [dispensingAssignments],
   );
+
+  const closeBuildMenu = () => {
+    setBuildMenuOpen(false);
+    setBuildMenuPinned(false);
+  };
+
+  const openBuildMenu = () => {
+    setBuildMenuOpen(true);
+  };
+
+  const toggleBuildMenuPin = () => {
+    if (buildMenuPinned) {
+      closeBuildMenu();
+      return;
+    }
+
+    setBuildMenuOpen(true);
+    setBuildMenuPinned(true);
+  };
 
   useEffect(() => {
     if (!buildMenuOpen) {
@@ -68,7 +88,7 @@ function App() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setBuildMenuOpen(false);
+        closeBuildMenu();
       }
     };
 
@@ -142,12 +162,12 @@ function App() {
 
   const openDesign = () => {
     setActiveView('design');
-    setBuildMenuOpen(false);
+    closeBuildMenu();
   };
 
   const openJanus = () => {
     setActiveView('janus');
-    setBuildMenuOpen(false);
+    closeBuildMenu();
   };
 
   return (
@@ -181,13 +201,20 @@ function App() {
             <div
               className="nav-item"
               ref={buildMenuRef}
-              onMouseLeave={() => setBuildMenuOpen(false)}
+              onMouseEnter={openBuildMenu}
+              onMouseLeave={() => {
+                if (!buildMenuPinned) {
+                  setBuildMenuOpen(false);
+                }
+              }}
               onBlur={(event) => {
                 const nextTarget = event.relatedTarget;
                 if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
                   return;
                 }
-                setBuildMenuOpen(false);
+                if (!buildMenuPinned) {
+                  setBuildMenuOpen(false);
+                }
               }}
             >
               <button
@@ -197,15 +224,15 @@ function App() {
                 aria-haspopup="menu"
                 aria-expanded={buildMenuOpen}
                 aria-controls="build-submenu"
-                onMouseEnter={() => setBuildMenuOpen(true)}
-                onFocus={() => setBuildMenuOpen(true)}
-                onClick={() => setBuildMenuOpen(true)}
+                onMouseEnter={openBuildMenu}
+                onFocus={openBuildMenu}
+                onClick={toggleBuildMenuPin}
               >
                 Build
               </button>
 
               {buildMenuOpen ? (
-                <div id="build-submenu" className="nav-menu" role="menu" aria-label="Build submenu" onMouseEnter={() => setBuildMenuOpen(true)}>
+                <div id="build-submenu" className="nav-menu" role="menu" aria-label="Build submenu" onMouseEnter={openBuildMenu}>
                   <button type="button" className="menu-item" role="menuitem" onClick={openJanus}>
                     Janus
                   </button>
@@ -545,8 +572,8 @@ function App() {
                           type="button"
                           className="drag-chip"
                           style={{
-                            background: splitSelection.includes(plate.id) ? '#164e43' : '#d6dfdb',
-                            color: splitSelection.includes(plate.id) ? '#fff' : '#17313f',
+                            background: splitSelection.includes(plate.id) ? '#4a1b74' : '#f4edfb',
+                            color: splitSelection.includes(plate.id) ? '#fff' : '#2c1047',
                           }}
                           onClick={() =>
                             setSplitSelection((current) =>

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import App from '../App';
@@ -22,6 +22,28 @@ describe('portal navigation', () => {
 
     const menu = screen.getByRole('menu', { name: 'Build submenu' });
     expect(within(menu).getByRole('menuitem', { name: 'Janus' })).toBeInTheDocument();
+  });
+
+  test('keeps the Build submenu open after click until it is dismissed', async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    const buildNav = screen.getByRole('button', { name: 'Build' });
+    await user.click(buildNav);
+
+    expect(screen.getByRole('menu', { name: 'Build submenu' })).toBeInTheDocument();
+
+    const navItem = buildNav.closest('.nav-item');
+    expect(navItem).not.toBeNull();
+
+    fireEvent.mouseLeave(navItem!);
+
+    expect(screen.getByRole('menu', { name: 'Build submenu' })).toBeInTheDocument();
+
+    await user.click(document.body);
+
+    expect(screen.queryByRole('menu', { name: 'Build submenu' })).not.toBeInTheDocument();
   });
 
   test('opens Janus from Design and keeps export validation working', async () => {
