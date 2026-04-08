@@ -20,8 +20,11 @@ const DEFAULT_COLORS = ['#F3000E', '#F25016', '#6596F3', '#83B366', '#D3A4EA', '
 
 function generateRandomColor(existingColors: string[]): string {
   let color: string;
+  let attempts = 0;
   do {
     color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    attempts++;
+    if (attempts > 100) break;
   } while (existingColors.includes(color.toUpperCase()));
   return color;
 }
@@ -33,11 +36,20 @@ export function createId(prefix: string): string {
   return `${prefix}-${idCounter}`;
 }
 
-export function createProtocolComponent(): ProtocolComponent {
-  const colorIndex = idCounter % DEFAULT_COLORS.length;
-  const color = colorIndex < DEFAULT_COLORS.length 
-    ? DEFAULT_COLORS[colorIndex] 
-    : generateRandomColor(DEFAULT_COLORS);
+export function createProtocolComponent(existingComponents?: ProtocolComponent[]): ProtocolComponent {
+  const existingColors = existingComponents 
+    ? existingComponents.map(c => c.color.toUpperCase()) 
+    : [];
+  
+  let color: string;
+  if (existingComponents && existingComponents.length < DEFAULT_COLORS.length) {
+    // Try to find the first default color that isn't already used
+    const availableDefault = DEFAULT_COLORS.find(c => !existingColors.includes(c.toUpperCase()));
+    color = availableDefault || generateRandomColor([...existingColors, ...DEFAULT_COLORS]);
+  } else {
+    color = generateRandomColor([...existingColors, ...DEFAULT_COLORS]);
+  }
+
   return {
     id: createId('component'),
     name: '',
@@ -64,7 +76,7 @@ export function createDefaultProject(): ExperimentProject {
     experimentName: '',
     globalDeadVolume: 30,
     useGlobalDeadVolume: true,
-    protocolComponents: [createProtocolComponent()],
+    protocolComponents: [createProtocolComponent([])],
     premixGroups: [],
     aspirationPlates: [],
     dispensingPlate: {

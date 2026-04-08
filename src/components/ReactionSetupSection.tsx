@@ -99,14 +99,14 @@ export function ReactionSetupSection({
                   <td style={{ textAlign: 'center' }}>
                     <button
                       type="button"
-                      className="icon-button"
+                      className="icon-button icon-remove"
                       onClick={() =>
                         onProjectChange((current) => ({
                           ...current,
                           protocolComponents: current.protocolComponents.filter((candidate) => candidate.id !== component.id),
                         }))
                       }
-                      disabled={project.protocolComponents.length <= 2}
+                      disabled={project.protocolComponents.length <= 1}
                       title="Remove"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -121,11 +121,11 @@ export function ReactionSetupSection({
         </div>
         <button
           type="button"
-          className="icon-button"
+          className="icon-button icon-add"
           onClick={() =>
             onProjectChange((current) => ({
               ...current,
-              protocolComponents: [...current.protocolComponents, createProtocolComponent()],
+              protocolComponents: [...current.protocolComponents, createProtocolComponent(current.protocolComponents)],
             }))
           }
           title="Add row"
@@ -176,7 +176,7 @@ export function ReactionSetupSection({
         <table>
           <thead>
             <tr>
-              <th style={{ width: '200px' }}>Component</th>
+              <th style={{ width: '240px' }}>Component</th>
               <th style={{ width: '50px' }}>Vol</th>
               <th style={{ width: '40px' }}>Color</th>
               {project.useGlobalDeadVolume ? null : (
@@ -268,6 +268,7 @@ export function ReactionSetupSection({
                         <div className="subitems-row">
                           <input
                             type="text"
+                            className="subitem-name-input"
                             placeholder="Name"
                             onKeyDown={(event) => {
                               if (event.key === 'Enter') {
@@ -305,6 +306,7 @@ export function ReactionSetupSection({
                           <label>
                             <span>Prefix</span>
                             <input
+                              type="text"
                               value={patternConfig[component.id]?.prefix ?? ''}
                               onChange={(event) =>
                                 setPatternConfig((current) => ({
@@ -360,6 +362,7 @@ export function ReactionSetupSection({
                           <label>
                             <span>Suffix</span>
                             <input
+                              type="text"
                               value={patternConfig[component.id]?.suffix ?? ''}
                               onChange={(event) =>
                                 setPatternConfig((current) => ({
@@ -389,7 +392,7 @@ export function ReactionSetupSection({
                 <td style={{ textAlign: 'center' }}>
                   <button
                     type="button"
-                    className="icon-button"
+                    className="icon-button icon-remove"
                     onClick={() =>
                       onProjectChange((current) => ({
                         ...current,

@@ -795,9 +795,14 @@ button:focus-visible {
   transition: color 140ms ease, background 140ms ease;
 }
 
-.icon-button:hover:not(:disabled) {
+.icon-button.icon-remove:hover:not(:disabled) {
   color: #c41e3a;
   background: #fef2f2;
+}
+
+.icon-button.icon-add:hover:not(:disabled) {
+  color: var(--accent-600);
+  background: var(--accent-100);
 }
 
 .icon-button:disabled {
@@ -858,7 +863,7 @@ button:focus-visible {
 .transfer-settings-label {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.4rem;
   font-weight: 600;
   color: #2a2133;
 }
@@ -970,11 +975,16 @@ button:focus-visible {
 }
 
 .subitems-row input[type="text"] {
-  width: 80px;
+  width: 45px;
+  height: 28px;
   padding: 0.3rem 0.4rem;
   border: 1px solid var(--line-strong);
   border-radius: 4px;
   font-size: 0.8rem;
+}
+
+.subitems-row input.subitem-name-input {
+  width: 80px;
 }
 
 .subitems-row input[type="text"]:focus {
@@ -983,7 +993,8 @@ button:focus-visible {
 }
 
 .subitems-row input[type="number"] {
-  width: 55px;
+  width: 50px;
+  height: 28px;
   padding: 0.3rem 0.4rem;
   border: 1px solid var(--line-strong);
   border-radius: 4px;
@@ -992,6 +1003,9 @@ button:focus-visible {
 
 .subitems-row .btn-like {
   padding: 0.3rem 0.5rem;
+  height: 28px;
+  display: flex;
+  align-items: center;
   font-size: 0.8rem;
   border: 1px solid var(--accent-500);
   border-radius: 4px;
@@ -1000,6 +1014,7 @@ button:focus-visible {
   cursor: pointer;
   transition: all 140ms ease;
   white-space: nowrap;
+  margin-right: 0.8rem;
 }
 
 .subitems-row .btn-like:hover {
@@ -1009,6 +1024,9 @@ button:focus-visible {
 
 .subitems-row .btn-generate {
   padding: 0.3rem 0.5rem;
+  height: 28px;
+  display: flex;
+  align-items: center;
   font-size: 0.8rem;
   border: 1px solid var(--accent-500);
   border-radius: 4px;
