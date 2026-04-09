@@ -127,19 +127,7 @@ export function buildAvailableSources(project: ExperimentProject): AvailableSour
     });
   });
 
-  const premixSources: AvailableSource[] = project.protocolComponents
-    .filter(c => c.isPremix)
-    .map((premix) => ({
-      sourceId: premix.id,
-      sourceType: 'premix',
-      displayName: premix.name || 'Unnamed premix',
-      componentId: premix.id,
-      parentColor: premix.color,
-      familyId: premix.id,
-      familyLabel: premix.name || 'Unnamed premix',
-    }));
-
-  return [...itemSources, ...premixSources];
+  return itemSources;
 }
 
 export function getComponentForSource(

@@ -14,7 +14,6 @@ interface AspirationPlatesSectionProps {
 
 interface PlateAutofillState {
   familyId: string;
-  startWell: string;
   direction: FillDirection;
 }
 
@@ -131,7 +130,10 @@ export function AspirationPlatesSection({
       return;
     }
 
-    const wells = getSequentialWellIds(plate.labware, config.startWell, config.direction, group.items.length);
+    const wellOptions = getWellIds(plate.labware);
+    const startWell = selectedWells[plate.id] ?? wellOptions[0] ?? 'A1';
+
+    const wells = getSequentialWellIds(plate.labware, startWell, config.direction, group.items.length);
 
     updateAspirationPlate(plate.id, (currentPlate) => {
       const nextWells = { ...currentPlate.wells };
@@ -196,7 +198,6 @@ export function AspirationPlatesSection({
           const selectedAssignment = plate.wells[selectedWell];
           const currentAutofill = autofillState[plate.id] ?? {
             familyId: Array.from(groupedSources.keys())[0] ?? '',
-            startWell: wellOptions[0] ?? 'A1',
             direction: 'horizontal' as FillDirection,
           };
 
@@ -261,7 +262,7 @@ export function AspirationPlatesSection({
 
               {importMessages[plate.id] ? <p className="muted">{importMessages[plate.id]}</p> : null}
 
-              <div className="helper-box" style={{ padding: '0.5rem 0.75rem', border: '1px solid var(--line)', marginTop: '1rem', backgroundColor: '#f5edfc', fontSize: '0.85rem' }}>
+              <div className="helper-box" style={{ padding: '0.5rem 0.75rem', border: 'none', marginTop: '1rem', backgroundColor: '#f5edfc', fontSize: '0.85rem' }}>
                 <div className="inline-grid" style={{ alignItems: 'end', gap: '0.75rem' }}>
                   <label style={{ fontSize: '0.85rem' }}>
                     Autofill family
@@ -283,25 +284,6 @@ export function AspirationPlatesSection({
                   </select>
                 </label>
                 <label style={{ fontSize: '0.85rem' }}>
-                  Start well
-                  <select
-                    style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem' }}
-                    value={currentAutofill.startWell}
-                    onChange={(event) =>
-                      setAutofillState((current) => ({
-                        ...current,
-                        [plate.id]: { ...currentAutofill, startWell: event.target.value },
-                      }))
-                    }
-                  >
-                    {wellOptions.map((wellId) => (
-                      <option key={wellId} value={wellId}>
-                        {wellId}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label style={{ fontSize: '0.85rem' }}>
                   Direction
                   <select
                     style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem' }}
@@ -317,7 +299,7 @@ export function AspirationPlatesSection({
                     <option value="vertical">Vertical</option>
                   </select>
                 </label>
-                <button type="button" className="primary-cta" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem' }} onClick={() => handleFamilyAutofill(plate)}>
+                <button type="button" className="primary-cta" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', fontWeight: 500 }} onClick={() => handleFamilyAutofill(plate)}>
                   Autofill
                 </button>
               </div>
@@ -357,7 +339,7 @@ export function AspirationPlatesSection({
                   })}
                 </div>
 
-                <div className="editor-box" style={{ backgroundColor: '#f8f9fa', borderLeft: '1px solid var(--line)' }}>
+                <div className="editor-box" style={{ backgroundColor: '#f8f9fa', border: 'none' }}>
                   <div className="palette">
                     {Array.from(groupedSources.values()).map((group) => (
                       <div key={group.familyId} className="palette-group">
@@ -381,7 +363,7 @@ export function AspirationPlatesSection({
                     ))}
                   </div>
 
-                  <div className="helper-box" style={{ marginTop: '1rem' }}>
+                  <div className="helper-box" style={{ marginTop: '1rem', backgroundColor: '#ffffff' }}>
                     <h3>{selectedWell}</h3>
                     {selectedAssignment ? (
                       <>

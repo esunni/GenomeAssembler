@@ -98,7 +98,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
               {
                 sourceId: source.sourceId,
                 sourceType: source.sourceType,
-                displayName: source.displayName,
+                displayName: `${source.displayName} (${source.plateName ? `${source.plateName}, ` : ''}${source.wellId})`,
                 componentId: source.componentId,
                 parentColor: source.parentColor,
               },
@@ -238,7 +238,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
                     addItemToDispensingWell(wellId, {
                       sourceId: source.sourceId,
                       sourceType: source.sourceType,
-                      displayName: source.displayName,
+                      displayName: `${source.displayName} (${source.plateName ? `${source.plateName}, ` : ''}${source.wellId})`,
                       componentId: source.componentId,
                       parentColor: source.parentColor,
                     });
@@ -267,7 +267,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
                   addItemToDispensingWell(selectedWell, {
                     sourceId: source.sourceId,
                     sourceType: source.sourceType,
-                    displayName: source.displayName,
+                    displayName: `${source.displayName} (${source.plateName ? `${source.plateName}, ` : ''}${source.wellId})`,
                     componentId: source.componentId,
                     parentColor: source.parentColor,
                   })

@@ -632,8 +632,9 @@ button:disabled {
 }
 
 .plate-box {
-  background: #f8f9fa;
-  border: none;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent-400);
   border-radius: 8px;
   padding: 1rem;
 }
@@ -1149,7 +1150,7 @@ button:focus-visible {
 .well-button {
   min-height: 74px;
   border-radius: 10px;
-  border: none;
+  border: 1px solid var(--line-strong);
   background: #ffffff;
   padding: 0.45rem;
   text-align: left;
@@ -1168,7 +1169,7 @@ button:focus-visible {
 
 .well-button.selected {
   border-color: var(--accent-500);
-  box-shadow: inset 0 0 0 1px var(--accent-500);
+  box-shadow: inset 0 0 0 2px var(--accent-500);
 }
 
 .well-button.filled {
