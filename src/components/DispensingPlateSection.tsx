@@ -164,7 +164,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
             <option value="">Choose source</option>
             {aspirationPlacedSources.map((source) => (
               <option key={`${source.sourceType}:${source.sourceId}`} value={`${source.sourceType}:${source.sourceId}`}>
-                {source.displayName} ({source.plateName || 'Unnamed'} {source.wellId})
+                {source.displayName} ({source.plateName ? `${source.plateName}, ` : ''}{source.wellId})
               </option>
             ))}
           </select>
@@ -272,7 +272,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
                   })
                 }
               >
-                {source.displayName} ({source.plateName || 'Unnamed'} {source.wellId})
+                {source.displayName} ({source.plateName ? `${source.plateName}, ` : ''}{source.wellId})
               </button>
             ))}
           </div>

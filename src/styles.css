@@ -827,6 +827,7 @@ button:focus-visible {
 .table-inline-input:focus {
   outline: none;
   background: transparent;
+  box-shadow: none;
 }
 
 .table-inline-input::placeholder {

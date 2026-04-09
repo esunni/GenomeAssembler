@@ -160,26 +160,32 @@ export function AspirationPlatesSection({
 
   return (
     <section className="section-card">
-      <h2>Aspiration Plates</h2>
-      <p className="section-lead">
-        Place one source per well by drag-and-drop, template import, or family autofill. Each plate needs a name for export.
-      </p>
-
-      <div className="button-row">
-        <button
-          type="button"
-          onClick={() =>
-            onProjectChange((current) => ({
-              ...current,
-              aspirationPlates: [...current.aspirationPlates, createAspirationPlate()],
-            }))
-          }
-        >
-          Add aspiration plate
-        </button>
-        <button type="button" className="secondary" onClick={() => onDownloadTextFile('aspiration_template.csv', createAspirationTemplateCsv())}>
-          Download aspiration template
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h2>Aspiration Plates</h2>
+          <p className="section-lead">
+            Place one source per well by drag-and-drop, template import, or family autofill. Each plate needs a name for export.
+          </p>
+        </div>
+        <div className="button-row" style={{ marginTop: 0 }}>
+          <button type="button" className="secondary" onClick={() => onDownloadTextFile('aspiration_template.csv', createAspirationTemplateCsv())}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '0.5rem' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Template
+          </button>
+          <button
+            type="button"
+            className="icon-button icon-add"
+            title="Add aspiration plate"
+            onClick={() =>
+              onProjectChange((current) => ({
+                ...current,
+                aspirationPlates: [...current.aspirationPlates, createAspirationPlate()],
+              }))
+            }
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+        </div>
       </div>
 
       <div className="content-grid" style={{ padding: '1rem 0 0' }}>
@@ -194,8 +200,33 @@ export function AspirationPlatesSection({
           };
 
           return (
-            <div key={plate.id} className="plate-box">
-              <div className="inline-grid">
+            <div key={plate.id} className="plate-box" style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.25rem' }}>
+                <label className="icon-button" title="Template CSV import" style={{ cursor: 'pointer', width: '24px', height: '24px' }}>
+                  <input type="file" accept=".csv,text/csv" style={{ display: 'none' }} onChange={(event) => void handleTemplateImport(plate, event)} />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                </label>
+                <button
+                  type="button"
+                  className="icon-button icon-remove"
+                  title="Remove plate"
+                  style={{ width: '24px', height: '24px' }}
+                  onClick={() =>
+                    onProjectChange((current) => ({
+                      ...current,
+                      aspirationPlates: current.aspirationPlates.filter((candidate) => candidate.id !== plate.id),
+                      mappingSplitGroups: current.mappingSplitGroups.map((group) => ({
+                        ...group,
+                        plateIds: group.plateIds.filter((plateId) => plateId !== plate.id),
+                      })),
+                    }))
+                  }
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+              </div>
+
+              <div className="inline-grid" style={{ paddingRight: '4rem' }}>
                 <label>
                   Plate name
                   <input
@@ -225,17 +256,14 @@ export function AspirationPlatesSection({
                     <option value="rack-4x6">4x6 rack</option>
                   </select>
                 </label>
-                <label>
-                  Template CSV import
-                  <input type="file" accept=".csv,text/csv" onChange={(event) => void handleTemplateImport(plate, event)} />
-                </label>
               </div>
 
               {importMessages[plate.id] ? <p className="muted">{importMessages[plate.id]}</p> : null}
 
-              <div className="inline-grid" style={{ marginTop: '1rem' }}>
-                <label>
-                  Autofill family
+              <div className="helper-box" style={{ padding: '0.5rem', border: '1px solid var(--line)', marginTop: '1rem' }}>
+                <div className="inline-grid" style={{ alignItems: 'end' }}>
+                  <label>
+                    Autofill family
                   <select
                     value={currentAutofill.familyId}
                     onChange={(event) =>
@@ -285,28 +313,11 @@ export function AspirationPlatesSection({
                     <option value="vertical">Vertical</option>
                   </select>
                 </label>
-                <div className="button-row">
-                  <button type="button" className="secondary" onClick={() => handleFamilyAutofill(plate)}>
-                    Autofill family
-                  </button>
-                  <button
-                    type="button"
-                    className="ghost"
-                    onClick={() =>
-                      onProjectChange((current) => ({
-                        ...current,
-                        aspirationPlates: current.aspirationPlates.filter((candidate) => candidate.id !== plate.id),
-                        mappingSplitGroups: current.mappingSplitGroups.map((group) => ({
-                          ...group,
-                          plateIds: group.plateIds.filter((plateId) => plateId !== plate.id),
-                        })),
-                      }))
-                    }
-                  >
-                    Remove plate
-                  </button>
-                </div>
+                <button type="button" className="secondary" onClick={() => handleFamilyAutofill(plate)}>
+                  Autofill
+                </button>
               </div>
+            </div>
 
               <div className="plate-grid-wrap" style={{ marginTop: '1rem' }}>
                 <div className="plate-grid" data-labware={plate.labware}>
@@ -336,14 +347,13 @@ export function AspirationPlatesSection({
                         }}
                       >
                         <strong>{wellId}</strong>
-                        <small>{assignment?.displayName ?? 'Drop source'}</small>
+                        {assignment ? <small>{assignment.displayName}</small> : null}
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="editor-box">
-                  <h3>Palette and selected well</h3>
+                <div className="editor-box" style={{ backgroundColor: '#f8f9fa', borderLeft: '1px solid var(--line)' }}>
                   <div className="palette">
                     {Array.from(groupedSources.values()).map((group) => (
                       <div key={group.familyId} className="palette-group">
@@ -368,12 +378,12 @@ export function AspirationPlatesSection({
                   </div>
 
                   <div className="helper-box" style={{ marginTop: '1rem' }}>
-                    <h3>Selected well {selectedWell}</h3>
+                    <h3>{selectedWell}</h3>
                     {selectedAssignment ? (
                       <>
-                        <p className="muted">{selectedAssignment.displayName}</p>
+                        <p className="muted" style={{ fontWeight: 600 }}>{selectedAssignment.displayName}</p>
                         <label>
-                          Optional well label
+                          Label
                           <input
                             value={selectedAssignment.wellLabel}
                             onChange={(event) =>
@@ -390,7 +400,7 @@ export function AspirationPlatesSection({
                             }
                           />
                         </label>
-                        <div className="button-row" style={{ marginTop: '0.75rem' }}>
+                        <div className="button-row" style={{ marginTop: '0.75rem', justifyContent: 'flex-end' }}>
                           <button
                             type="button"
                             className="ghost"
@@ -405,7 +415,7 @@ export function AspirationPlatesSection({
                               })
                             }
                           >
-                            Clear selected well
+                            Clear
                           </button>
                         </div>
                       </>

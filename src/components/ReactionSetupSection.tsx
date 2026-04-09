@@ -212,7 +212,7 @@ export function ReactionSetupSection({
                       <span className="table-inline-value">
                         {component.id === project.protocolComponents.find(c => c.id === component.premixParentId)?.premixInfo?.comp1Id 
                           ? "X" 
-                          : "vol - X"}
+                          : `${project.protocolComponents.find(c => c.id === component.premixParentId)?.transferVolume ?? 0} - X`}
                       </span>
                     ) : (
                       <input
@@ -338,10 +338,10 @@ export function ReactionSetupSection({
           <thead>
             <tr>
               <th style={{ width: '288px' }}>Component</th>
-              <th style={{ width: '75px', textAlign: 'center' }}>Vol</th>
-              <th style={{ width: '40px' }}>Color</th>
+              <th style={{ width: '75px', textAlign: 'center' }}>Vol (ul)</th>
+              <th style={{ width: '40px', textAlign: 'center' }}>Color</th>
               {project.useGlobalDeadVolume ? null : (
-                <th style={{ width: '80px' }}>Dead vol</th>
+                <th style={{ width: '80px', textAlign: 'center' }}>Dead vol (ul)</th>
               )}
               <th>Subitems</th>
               <th style={{ width: '40px' }}></th>
@@ -363,11 +363,11 @@ export function ReactionSetupSection({
                     {isPremixComponent
                       ? (component.id === project.protocolComponents.find(c => c.id === component.premixParentId)?.premixInfo?.comp1Id
                         ? "X"
-                        : "vol - X")
+                        : `${project.protocolComponents.find(c => c.id === component.premixParentId)?.transferVolume ?? 0} - X`)
                       : component.transferVolume}
                   </span>
                 </td>
-                <td>
+                <td style={{ textAlign: 'center' }}>
                   <input
                     type="color"
                     value={component.color}
@@ -377,7 +377,7 @@ export function ReactionSetupSection({
                   />
                 </td>
                 {!project.useGlobalDeadVolume && (
-                  <td>
+                  <td style={{ textAlign: 'center' }}>
                     <input
                       type="number"
                       min="0"
@@ -636,7 +636,7 @@ export function ReactionSetupSection({
                 onChange={(e) => setPremixModal({ ...premixModal, vol: Number(e.target.value) || 0 })}
               />
             </label>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+            <div className="button-row" style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
               <button type="button" className="secondary" onClick={() => setPremixModal(null)}>Cancel</button>
               <button type="button" className="primary-cta" onClick={handleCreatePremix}>Create</button>
             </div>
