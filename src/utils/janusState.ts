@@ -262,7 +262,10 @@ export function findAssignedSource(
     .find((well) => well.sourceId === sourceId && well.sourceType === sourceType);
 
   if (aspirationMatch) {
-    return aspirationMatch;
+    return {
+      ...aspirationMatch,
+      displayName: aspirationMatch.wellLabel ? aspirationMatch.wellLabel : aspirationMatch.displayName,
+    };
   }
 
   return buildAvailableSources(project).find((source) => source.sourceId === sourceId && source.sourceType === sourceType) ?? null;

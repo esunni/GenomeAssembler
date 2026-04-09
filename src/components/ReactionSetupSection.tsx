@@ -39,7 +39,9 @@ export function ReactionSetupSection({
           
           if (comp1 && comp2) {
             let newSubItems: any[] = [];
-            if (comp1.subItems.length > 0 && comp2.subItems.length === 0) {
+            if (comp1.subItems.length === 0 && comp2.subItems.length === 0) {
+              newSubItems = [{ id: createId('item'), name: `${comp1.name}+${comp2.name}` }];
+            } else if (comp1.subItems.length > 0 && comp2.subItems.length === 0) {
               newSubItems = comp1.subItems.map(item => ({ id: createId('item'), name: `${item.name}+${comp2.name}` }));
             } else if (comp2.subItems.length > 0 && comp1.subItems.length === 0) {
               newSubItems = comp2.subItems.map(item => ({ id: createId('item'), name: `${comp1.name}+${item.name}` }));
@@ -103,6 +105,21 @@ export function ReactionSetupSection({
       const filtered = components.filter(c => c.id !== comp1.id && c.id !== comp2.id);
       const insertIdx = Math.min(idx1, idx2);
       
+      let newSubItems: any[] = [];
+      if (comp1.subItems.length === 0 && comp2.subItems.length === 0) {
+        newSubItems = [{ id: createId('item'), name: `${comp1.name}+${comp2.name}` }];
+      } else if (comp1.subItems.length > 0 && comp2.subItems.length === 0) {
+        newSubItems = comp1.subItems.map(item => ({ id: createId('item'), name: `${item.name}+${comp2.name}` }));
+      } else if (comp2.subItems.length > 0 && comp1.subItems.length === 0) {
+        newSubItems = comp2.subItems.map(item => ({ id: createId('item'), name: `${comp1.name}+${item.name}` }));
+      } else if (comp1.subItems.length > 0 && comp2.subItems.length > 0) {
+        comp1.subItems.forEach(i1 => {
+          comp2.subItems.forEach(i2 => {
+            newSubItems.push({ id: createId('item'), name: `${i1.name}+${i2.name}` });
+          });
+        });
+      }
+      
       const newPremix: ProtocolComponent = {
         id: createId('premix'),
         name: premixModal.name,
@@ -110,7 +127,7 @@ export function ReactionSetupSection({
         color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
         deadVolumeMode: 'global',
         customDeadVolume: null,
-        subItems: [],
+        subItems: newSubItems,
         isPremix: true,
         premixInfo: { comp1Id: comp1.id, comp2Id: comp2.id }
       };

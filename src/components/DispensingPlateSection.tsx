@@ -35,6 +35,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
       project.aspirationPlates.flatMap((plate) =>
         Object.entries(plate.wells).map(([wellId, assignment]) => ({
           ...assignment,
+          displayName: assignment.wellLabel ? assignment.wellLabel : assignment.displayName,
           plateId: plate.id,
           plateName: plate.name,
           wellId,

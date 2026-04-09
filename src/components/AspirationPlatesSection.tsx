@@ -167,7 +167,7 @@ export function AspirationPlatesSection({
             Place one source per well by drag-and-drop, template import, or family autofill. Each plate needs a name for export.
           </p>
         </div>
-        <div className="button-row" style={{ marginTop: 0 }}>
+        <div className="button-row" style={{ marginTop: 0, alignItems: 'stretch' }}>
           <button type="button" className="secondary" onClick={() => onDownloadTextFile('aspiration_template.csv', createAspirationTemplateCsv())}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '0.5rem' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Template
@@ -176,6 +176,7 @@ export function AspirationPlatesSection({
             type="button"
             className="icon-button icon-add"
             title="Add aspiration plate"
+            style={{ height: 'auto', width: 'auto', aspectRatio: '1 / 1' }}
             onClick={() =>
               onProjectChange((current) => ({
                 ...current,
@@ -260,11 +261,12 @@ export function AspirationPlatesSection({
 
               {importMessages[plate.id] ? <p className="muted">{importMessages[plate.id]}</p> : null}
 
-              <div className="helper-box" style={{ padding: '0.5rem', border: '1px solid var(--line)', marginTop: '1rem' }}>
-                <div className="inline-grid" style={{ alignItems: 'end' }}>
-                  <label>
+              <div className="helper-box" style={{ padding: '0.5rem 0.75rem', border: '1px solid var(--line)', marginTop: '1rem', backgroundColor: '#f5edfc', fontSize: '0.85rem' }}>
+                <div className="inline-grid" style={{ alignItems: 'end', gap: '0.75rem' }}>
+                  <label style={{ fontSize: '0.85rem' }}>
                     Autofill family
                   <select
+                    style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem' }}
                     value={currentAutofill.familyId}
                     onChange={(event) =>
                       setAutofillState((current) => ({
@@ -280,9 +282,10 @@ export function AspirationPlatesSection({
                     ))}
                   </select>
                 </label>
-                <label>
+                <label style={{ fontSize: '0.85rem' }}>
                   Start well
                   <select
+                    style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem' }}
                     value={currentAutofill.startWell}
                     onChange={(event) =>
                       setAutofillState((current) => ({
@@ -298,9 +301,10 @@ export function AspirationPlatesSection({
                     ))}
                   </select>
                 </label>
-                <label>
+                <label style={{ fontSize: '0.85rem' }}>
                   Direction
                   <select
+                    style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem' }}
                     value={currentAutofill.direction}
                     onChange={(event) =>
                       setAutofillState((current) => ({
@@ -313,7 +317,7 @@ export function AspirationPlatesSection({
                     <option value="vertical">Vertical</option>
                   </select>
                 </label>
-                <button type="button" className="secondary" onClick={() => handleFamilyAutofill(plate)}>
+                <button type="button" className="primary-cta" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem' }} onClick={() => handleFamilyAutofill(plate)}>
                   Autofill
                 </button>
               </div>
