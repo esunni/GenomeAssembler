@@ -252,8 +252,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
           })}
         </div>
 
-        <div className="editor-box">
-          <h3>Placed source palette</h3>
+        <div className="editor-box" style={{ border: 'none', backgroundColor: '#f8f9fa' }}>
           <div className="chip-row">
             {aspirationPlacedSources.map((source) => (
               <button
@@ -278,10 +277,10 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
             ))}
           </div>
 
-          <div className="helper-box" style={{ marginTop: '1rem' }}>
-            <h3>Selected well {selectedWell}</h3>
+          <div className="helper-box" style={{ backgroundColor: '#ffffff', border: 'none', marginTop: '1rem' }}>
+            <h3>{selectedWell}</h3>
             <label>
-              Optional well name
+              Label
               <input
                 value={createDispensingAssignment(project.dispensingPlate.wells[selectedWell]).wellName}
                 onChange={(event) =>

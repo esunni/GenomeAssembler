@@ -363,7 +363,7 @@ export function AspirationPlatesSection({
                     ))}
                   </div>
 
-                  <div className="helper-box" style={{ marginTop: '1rem', backgroundColor: '#ffffff' }}>
+                  <div className="helper-box" style={{ backgroundColor: '#ffffff', border: 'none', marginTop: '1rem' }}>
                     <h3>{selectedWell}</h3>
                     {selectedAssignment ? (
                       <>
