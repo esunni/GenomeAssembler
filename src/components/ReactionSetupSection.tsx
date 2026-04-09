@@ -107,7 +107,7 @@ export function ReactionSetupSection({
         id: createId('premix'),
         name: premixModal.name,
         transferVolume: premixModal.vol,
-        color: '#e0d4f5',
+        color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
         deadVolumeMode: 'global',
         customDeadVolume: null,
         subItems: [],
@@ -115,8 +115,8 @@ export function ReactionSetupSection({
         premixInfo: { comp1Id: comp1.id, comp2Id: comp2.id }
       };
       
-      const updatedComp1 = { ...comp1, isPremixComponent: true, premixParentId: newPremix.id, color: '#f5edfc' };
-      const updatedComp2 = { ...comp2, isPremixComponent: true, premixParentId: newPremix.id, color: '#f5edfc' };
+      const updatedComp1 = { ...comp1, isPremixComponent: true, premixParentId: newPremix.id };
+      const updatedComp2 = { ...comp2, isPremixComponent: true, premixParentId: newPremix.id };
       
       filtered.splice(insertIdx, 0, updatedComp1, updatedComp2, newPremix);
       
@@ -142,7 +142,7 @@ export function ReactionSetupSection({
           <h3 style={{ margin: 0 }}>Protocol</h3>
           <button
             type="button"
-            className="secondary"
+            className="primary-cta"
             disabled={selectedForPremix.length !== 2}
             onClick={() => {
               if (selectedForPremix.length === 2) {
@@ -169,7 +169,7 @@ export function ReactionSetupSection({
               <tr>
                 <th style={{ width: '40px' }}></th>
                 <th>Component</th>
-                <th style={{ width: '200px' }}>Volume (uL)</th>
+                <th style={{ width: '200px', textAlign: 'center' }}>Volume (uL)</th>
                 <th style={{ width: '40px' }}></th>
               </tr>
             </thead>
@@ -207,16 +207,17 @@ export function ReactionSetupSection({
                       placeholder="Component name"
                     />
                   </td>
-                  <td>
+                  <td style={{ textAlign: 'center' }}>
                     {isPremixComponent ? (
                       <span className="table-inline-value">
                         {component.id === project.protocolComponents.find(c => c.id === component.premixParentId)?.premixInfo?.comp1Id 
-                          ? component.transferVolume 
-                          : `${project.protocolComponents.find(c => c.id === component.premixParentId)?.transferVolume ?? 0} - ${project.protocolComponents.find(c => c.id === project.protocolComponents.find(p => p.id === component.premixParentId)?.premixInfo?.comp1Id)?.transferVolume ?? 0}`}
+                          ? "X" 
+                          : "vol - X"}
                       </span>
                     ) : (
                       <input
                         className="table-inline-input"
+                        style={{ textAlign: 'center' }}
                         type="number"
                         min="0"
                         step="0.1"
@@ -243,7 +244,7 @@ export function ReactionSetupSection({
                               ...current,
                               protocolComponents: current.protocolComponents
                                 .filter((candidate) => candidate.id !== component.id)
-                                .map(c => (c.id === comp1Id || c.id === comp2Id) ? { ...c, isPremixComponent: false, premixParentId: undefined, color: '#ffffff' } : c)
+                                .map(c => (c.id === comp1Id || c.id === comp2Id) ? { ...c, isPremixComponent: false, premixParentId: undefined } : c)
                             };
                           });
                         } else if (isPremixComponent) {
@@ -255,7 +256,7 @@ export function ReactionSetupSection({
                               ...current,
                               protocolComponents: current.protocolComponents
                                 .filter((candidate) => candidate.id !== component.id && candidate.id !== premixId)
-                                .map(c => c.id === otherCompId ? { ...c, isPremixComponent: false, premixParentId: undefined, color: '#ffffff' } : c)
+                                .map(c => c.id === otherCompId ? { ...c, isPremixComponent: false, premixParentId: undefined } : c)
                             };
                           });
                         } else {
@@ -336,8 +337,8 @@ export function ReactionSetupSection({
         <table>
           <thead>
             <tr>
-              <th style={{ width: '240px' }}>Component</th>
-              <th style={{ width: '50px' }}>Vol</th>
+              <th style={{ width: '288px' }}>Component</th>
+              <th style={{ width: '75px', textAlign: 'center' }}>Vol</th>
               <th style={{ width: '40px' }}>Color</th>
               {project.useGlobalDeadVolume ? null : (
                 <th style={{ width: '80px' }}>Dead vol</th>
@@ -357,10 +358,12 @@ export function ReactionSetupSection({
                 <td>
                   <span className="table-inline-value">{component.name || '—'}</span>
                 </td>
-                <td>
+                <td style={{ textAlign: 'center' }}>
                   <span className="table-inline-value">
-                    {isPremixComponent && component.id !== project.protocolComponents.find(c => c.id === component.premixParentId)?.premixInfo?.comp1Id
-                      ? `${project.protocolComponents.find(c => c.id === component.premixParentId)?.transferVolume ?? 0} - ${project.protocolComponents.find(c => c.id === project.protocolComponents.find(p => p.id === component.premixParentId)?.premixInfo?.comp1Id)?.transferVolume ?? 0}`
+                    {isPremixComponent
+                      ? (component.id === project.protocolComponents.find(c => c.id === component.premixParentId)?.premixInfo?.comp1Id
+                        ? "X"
+                        : "vol - X")
                       : component.transferVolume}
                   </span>
                 </td>
@@ -571,7 +574,7 @@ export function ReactionSetupSection({
                             ...current,
                             protocolComponents: current.protocolComponents
                               .filter((candidate) => candidate.id !== component.id)
-                              .map(c => (c.id === comp1Id || c.id === comp2Id) ? { ...c, isPremixComponent: false, premixParentId: undefined, color: '#ffffff' } : c)
+                              .map(c => (c.id === comp1Id || c.id === comp2Id) ? { ...c, isPremixComponent: false, premixParentId: undefined } : c)
                           };
                         });
                       } else if (isPremixComponent) {
@@ -583,7 +586,7 @@ export function ReactionSetupSection({
                             ...current,
                             protocolComponents: current.protocolComponents
                               .filter((candidate) => candidate.id !== component.id && candidate.id !== premixId)
-                              .map(c => c.id === otherCompId ? { ...c, isPremixComponent: false, premixParentId: undefined, color: '#ffffff' } : c)
+                              .map(c => c.id === otherCompId ? { ...c, isPremixComponent: false, premixParentId: undefined } : c)
                           };
                         });
                       } else {
@@ -634,7 +637,7 @@ export function ReactionSetupSection({
               />
             </label>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
-              <button type="button" className="ghost" onClick={() => setPremixModal(null)}>Cancel</button>
+              <button type="button" className="secondary" onClick={() => setPremixModal(null)}>Cancel</button>
               <button type="button" className="primary-cta" onClick={handleCreatePremix}>Create</button>
             </div>
           </div>

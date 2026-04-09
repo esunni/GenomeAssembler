@@ -903,17 +903,17 @@ button:focus-visible {
 
 .color-circle-input::-webkit-color-swatch {
   border: none;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
+  border-radius: 6px;
+  width: 32px;
+  height: 16px;
   margin: 0 auto;
 }
 
 .color-circle-input::-moz-color-swatch {
   border: none;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
+  border-radius: 6px;
+  width: 32px;
+  height: 16px;
   margin: 0 auto;
 }
 
@@ -1033,10 +1033,10 @@ button:focus-visible {
   display: flex;
   align-items: center;
   font-size: 0.8rem;
-  border: 1px solid var(--accent-500);
+  border: 1px solid var(--accent-600);
   border-radius: 4px;
-  background: var(--accent-100);
-  color: var(--accent-700);
+  background: var(--accent-500);
+  color: #ffffff;
   cursor: pointer;
   transition: all 140ms ease;
   white-space: nowrap;
@@ -1044,7 +1044,7 @@ button:focus-visible {
 }
 
 .subitems-row .btn-like:hover {
-  background: var(--accent-500);
+  background: var(--accent-600);
   color: #ffffff;
 }
 
