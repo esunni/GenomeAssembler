@@ -8,6 +8,11 @@ export interface ComponentSubItem {
   name: string;
 }
 
+export interface PremixInfo {
+  comp1Id: string;
+  comp2Id: string;
+}
+
 export interface ProtocolComponent {
   id: string;
   name: string;
@@ -16,13 +21,10 @@ export interface ProtocolComponent {
   deadVolumeMode: DeadVolumeMode;
   customDeadVolume: number | null;
   subItems: ComponentSubItem[];
-}
-
-export interface PremixGroup {
-  id: string;
-  name: string;
-  componentIds: string[];
-  color: string;
+  isPremix?: boolean;
+  premixInfo?: PremixInfo;
+  isPremixComponent?: boolean;
+  premixParentId?: string;
 }
 
 export interface AspirationWellAssignment {
@@ -82,7 +84,6 @@ export interface ExperimentProject {
   globalDeadVolume: number;
   useGlobalDeadVolume: boolean;
   protocolComponents: ProtocolComponent[];
-  premixGroups: PremixGroup[];
   aspirationPlates: AspirationPlate[];
   dispensingPlate: DispensingPlate;
   remainderConfig: RemainderConfig;

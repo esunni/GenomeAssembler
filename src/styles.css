@@ -881,32 +881,40 @@ button:focus-visible {
 
 /* Color circle input */
 .color-circle-input {
-  width: 24px;
+  width: 40px;
   height: 24px;
-  padding: 0;
+  padding: 2px;
   border: 1px solid var(--line-strong);
-  border-radius: 50%;
+  border-radius: 12px;
   cursor: pointer;
-  overflow: hidden;
-  background: none;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .color-circle-input::-webkit-color-swatch-wrapper {
   padding: 0;
   margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .color-circle-input::-webkit-color-swatch {
   border: none;
   border-radius: 50%;
-  margin: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0 auto;
 }
 
 .color-circle-input::-moz-color-swatch {
   border: none;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
+  margin: 0 auto;
 }
 
 /* Subitems cell */
@@ -933,13 +941,13 @@ button:focus-visible {
 }
 
 .subitems-header .chip {
-  font-size: 0.75rem;
-  padding: 0.2rem 0.4rem;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.6rem;
 }
 
 .subitems-header .chip button {
-  font-size: 0.75rem;
-  padding: 0 0.2rem;
+  font-size: 0.85rem;
+  padding: 0 0.3rem;
 }
 
 .toggle-button {
@@ -970,7 +978,7 @@ button:focus-visible {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.2rem 0 0.5rem;
+  padding: 0.2rem 0 0.5rem 32px;
   flex-wrap: wrap;
   width: 100%;
 }
@@ -983,7 +991,7 @@ button:focus-visible {
 }
 
 .subitems-row input[type="text"] {
-  width: 70px;
+  width: 90px;
   height: 28px;
   padding: 0.3rem 0.4rem;
   border: 1px solid var(--line-strong);
@@ -996,33 +1004,13 @@ button:focus-visible {
 }
 
 .subitems-expanded .chip-row .chip {
-  font-size: 0.75rem;
-  padding: 0.2rem 0.4rem;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.6rem;
 }
 
 .subitems-expanded .chip-row .chip button {
-  font-size: 0.75rem;
-  padding: 0 0.2rem;
-}
-
-.subitems-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.subitems-row input[type="text"] {
-  width: 45px;
-  height: 28px;
-  padding: 0.3rem 0.4rem;
-  border: 1px solid var(--line-strong);
-  border-radius: 4px;
-  font-size: 0.8rem;
-}
-
-.subitems-row input.subitem-name-input {
-  width: 80px;
+  font-size: 0.85rem;
+  padding: 0 0.3rem;
 }
 
 .subitems-row input[type="text"]:focus {

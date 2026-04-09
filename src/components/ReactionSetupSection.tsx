@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { createId, createProtocolComponent } from '../utils/janusState';
-import type { ExperimentProject, PremixGroup, ProtocolComponent } from '../types';
+import type { ExperimentProject, ProtocolComponent } from '../types';
 
 interface ReactionSetupSectionProps {
   project: ExperimentProject;
@@ -20,14 +20,49 @@ export function ReactionSetupSection({
 }: ReactionSetupSectionProps) {
   const [patternConfig, setPatternConfig] = useState<Record<string, { prefix: string; start: number; end: number; suffix: string }>>({});
   const [expandedSubitems, setExpandedSubitems] = useState<Record<string, boolean>>({});
+  const [selectedForPremix, setSelectedForPremix] = useState<string[]>([]);
+  const [premixModal, setPremixModal] = useState<{ isOpen: boolean; comp1Id: string; comp2Id: string; name: string; vol: number } | null>(null);
 
   const updateProtocolComponent = (componentId: string, updater: (component: ProtocolComponent) => ProtocolComponent) => {
-    onProjectChange((current) => ({
-      ...current,
-      protocolComponents: current.protocolComponents.map((component) =>
+    onProjectChange((current) => {
+      let newComponents = current.protocolComponents.map((component) =>
         component.id === componentId ? updater(component) : component,
-      ),
-    }));
+      );
+      
+      const updatedComponent = newComponents.find(c => c.id === componentId);
+      if (updatedComponent && updatedComponent.isPremixComponent && updatedComponent.premixParentId) {
+        const premixId = updatedComponent.premixParentId;
+        const premix = newComponents.find(c => c.id === premixId);
+        if (premix && premix.premixInfo) {
+          const comp1 = newComponents.find(c => c.id === premix.premixInfo!.comp1Id);
+          const comp2 = newComponents.find(c => c.id === premix.premixInfo!.comp2Id);
+          
+          if (comp1 && comp2) {
+            let newSubItems: any[] = [];
+            if (comp1.subItems.length > 0 && comp2.subItems.length === 0) {
+              newSubItems = comp1.subItems.map(item => ({ id: createId('item'), name: `${item.name}+${comp2.name}` }));
+            } else if (comp2.subItems.length > 0 && comp1.subItems.length === 0) {
+              newSubItems = comp2.subItems.map(item => ({ id: createId('item'), name: `${comp1.name}+${item.name}` }));
+            } else if (comp1.subItems.length > 0 && comp2.subItems.length > 0) {
+              comp1.subItems.forEach(i1 => {
+                comp2.subItems.forEach(i2 => {
+                  newSubItems.push({ id: createId('item'), name: `${i1.name}+${i2.name}` });
+                });
+              });
+            }
+            
+            newComponents = newComponents.map(c => 
+              c.id === premixId ? { ...c, subItems: newSubItems } : c
+            );
+          }
+        }
+      }
+      
+      return {
+        ...current,
+        protocolComponents: newComponents,
+      };
+    });
   };
 
   const handlePatternGenerate = (componentId: string) => {
@@ -52,6 +87,49 @@ export function ReactionSetupSection({
     }));
   };
 
+  const handleCreatePremix = () => {
+    if (!premixModal) return;
+    
+    onProjectChange((current) => {
+      const components = [...current.protocolComponents];
+      const idx1 = components.findIndex(c => c.id === premixModal.comp1Id);
+      const idx2 = components.findIndex(c => c.id === premixModal.comp2Id);
+      
+      if (idx1 === -1 || idx2 === -1) return current;
+      
+      const comp1 = components[idx1];
+      const comp2 = components[idx2];
+      
+      const filtered = components.filter(c => c.id !== comp1.id && c.id !== comp2.id);
+      const insertIdx = Math.min(idx1, idx2);
+      
+      const newPremix: ProtocolComponent = {
+        id: createId('premix'),
+        name: premixModal.name,
+        transferVolume: premixModal.vol,
+        color: '#e0d4f5',
+        deadVolumeMode: 'global',
+        customDeadVolume: null,
+        subItems: [],
+        isPremix: true,
+        premixInfo: { comp1Id: comp1.id, comp2Id: comp2.id }
+      };
+      
+      const updatedComp1 = { ...comp1, isPremixComponent: true, premixParentId: newPremix.id, color: '#f5edfc' };
+      const updatedComp2 = { ...comp2, isPremixComponent: true, premixParentId: newPremix.id, color: '#f5edfc' };
+      
+      filtered.splice(insertIdx, 0, updatedComp1, updatedComp2, newPremix);
+      
+      return {
+        ...current,
+        protocolComponents: filtered
+      };
+    });
+    
+    setSelectedForPremix([]);
+    setPremixModal(null);
+  };
+
   return (
     <section className="section-card">
       <h2>Reaction Setup</h2>
@@ -60,19 +138,67 @@ export function ReactionSetupSection({
       </p>
 
       <div className="protocol-box">
-        <h3>Protocol</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <h3 style={{ margin: 0 }}>Protocol</h3>
+          <button
+            type="button"
+            className="secondary"
+            disabled={selectedForPremix.length !== 2}
+            onClick={() => {
+              if (selectedForPremix.length === 2) {
+                const comp1 = project.protocolComponents.find(c => c.id === selectedForPremix[0]);
+                const comp2 = project.protocolComponents.find(c => c.id === selectedForPremix[1]);
+                if (comp1 && comp2) {
+                  setPremixModal({
+                    isOpen: true,
+                    comp1Id: comp1.id,
+                    comp2Id: comp2.id,
+                    name: `${comp1.name || 'comp1'}+${comp2.name || 'comp2'}`,
+                    vol: comp1.transferVolume + comp2.transferVolume
+                  });
+                }
+              }
+            }}
+          >
+            Premix
+          </button>
+        </div>
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
+                <th style={{ width: '40px' }}></th>
                 <th>Component</th>
                 <th style={{ width: '200px' }}>Volume (uL)</th>
                 <th style={{ width: '40px' }}></th>
               </tr>
             </thead>
             <tbody>
-              {project.protocolComponents.map((component) => (
-                <tr key={component.id}>
+              {project.protocolComponents.map((component) => {
+                const isSelected = selectedForPremix.includes(component.id);
+                const isPremix = component.isPremix;
+                const isPremixComponent = component.isPremixComponent;
+                const rowColor = isPremix ? '#e0d4f5' : isPremixComponent ? '#f5edfc' : 'transparent';
+                
+                return (
+                <tr key={component.id} style={{ backgroundColor: rowColor }}>
+                  <td style={{ textAlign: 'center' }}>
+                    {!isPremix && !isPremixComponent && (
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            if (selectedForPremix.length < 2) {
+                              setSelectedForPremix([...selectedForPremix, component.id]);
+                            }
+                          } else {
+                            setSelectedForPremix(selectedForPremix.filter(id => id !== component.id));
+                          }
+                        }}
+                      />
+                    )}
+                  </td>
                   <td>
                     <input
                       className="table-inline-input"
@@ -82,30 +208,63 @@ export function ReactionSetupSection({
                     />
                   </td>
                   <td>
-                    <input
-                      className="table-inline-input"
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={component.transferVolume}
-                      onChange={(event) =>
-                        updateProtocolComponent(component.id, (current) => ({
-                          ...current,
-                          transferVolume: Number(event.target.value) || 0,
-                        }))
-                      }
-                    />
+                    {isPremixComponent ? (
+                      <span className="table-inline-value">
+                        {component.id === project.protocolComponents.find(c => c.id === component.premixParentId)?.premixInfo?.comp1Id 
+                          ? component.transferVolume 
+                          : `${project.protocolComponents.find(c => c.id === component.premixParentId)?.transferVolume ?? 0} - ${project.protocolComponents.find(c => c.id === project.protocolComponents.find(p => p.id === component.premixParentId)?.premixInfo?.comp1Id)?.transferVolume ?? 0}`}
+                      </span>
+                    ) : (
+                      <input
+                        className="table-inline-input"
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={component.transferVolume}
+                        onChange={(event) =>
+                          updateProtocolComponent(component.id, (current) => ({
+                            ...current,
+                            transferVolume: Number(event.target.value) || 0,
+                          }))
+                        }
+                      />
+                    )}
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <button
                       type="button"
                       className="icon-button icon-remove"
-                      onClick={() =>
-                        onProjectChange((current) => ({
-                          ...current,
-                          protocolComponents: current.protocolComponents.filter((candidate) => candidate.id !== component.id),
-                        }))
-                      }
+                      onClick={() => {
+                        if (isPremix) {
+                          onProjectChange((current) => {
+                            const comp1Id = component.premixInfo?.comp1Id;
+                            const comp2Id = component.premixInfo?.comp2Id;
+                            return {
+                              ...current,
+                              protocolComponents: current.protocolComponents
+                                .filter((candidate) => candidate.id !== component.id)
+                                .map(c => (c.id === comp1Id || c.id === comp2Id) ? { ...c, isPremixComponent: false, premixParentId: undefined, color: '#ffffff' } : c)
+                            };
+                          });
+                        } else if (isPremixComponent) {
+                          onProjectChange((current) => {
+                            const premixId = component.premixParentId;
+                            const premix = current.protocolComponents.find(c => c.id === premixId);
+                            const otherCompId = premix?.premixInfo?.comp1Id === component.id ? premix?.premixInfo?.comp2Id : premix?.premixInfo?.comp1Id;
+                            return {
+                              ...current,
+                              protocolComponents: current.protocolComponents
+                                .filter((candidate) => candidate.id !== component.id && candidate.id !== premixId)
+                                .map(c => c.id === otherCompId ? { ...c, isPremixComponent: false, premixParentId: undefined, color: '#ffffff' } : c)
+                            };
+                          });
+                        } else {
+                          onProjectChange((current) => ({
+                            ...current,
+                            protocolComponents: current.protocolComponents.filter((candidate) => candidate.id !== component.id),
+                          }));
+                        }
+                      }}
                       disabled={project.protocolComponents.length <= 1}
                       title="Remove"
                     >
@@ -115,7 +274,8 @@ export function ReactionSetupSection({
                     </button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -187,13 +347,22 @@ export function ReactionSetupSection({
             </tr>
           </thead>
           <tbody>
-            {project.protocolComponents.map((component) => (
-              <tr key={component.id}>
+            {project.protocolComponents.map((component) => {
+              const isPremix = component.isPremix;
+              const isPremixComponent = component.isPremixComponent;
+              const rowColor = isPremix ? '#e0d4f5' : isPremixComponent ? '#f5edfc' : 'transparent';
+              
+              return (
+              <tr key={component.id} style={{ backgroundColor: rowColor }}>
                 <td>
                   <span className="table-inline-value">{component.name || '—'}</span>
                 </td>
                 <td>
-                  <span className="table-inline-value">{component.transferVolume}</span>
+                  <span className="table-inline-value">
+                    {isPremixComponent && component.id !== project.protocolComponents.find(c => c.id === component.premixParentId)?.premixInfo?.comp1Id
+                      ? `${project.protocolComponents.find(c => c.id === component.premixParentId)?.transferVolume ?? 0} - ${project.protocolComponents.find(c => c.id === project.protocolComponents.find(p => p.id === component.premixParentId)?.premixInfo?.comp1Id)?.transferVolume ?? 0}`
+                      : component.transferVolume}
+                  </span>
                 </td>
                 <td>
                   <input
@@ -393,16 +562,37 @@ export function ReactionSetupSection({
                   <button
                     type="button"
                     className="icon-button icon-remove"
-                    onClick={() =>
-                      onProjectChange((current) => ({
-                        ...current,
-                        protocolComponents: current.protocolComponents.filter((candidate) => candidate.id !== component.id),
-                        premixGroups: current.premixGroups.map((group) => ({
-                          ...group,
-                          componentIds: group.componentIds.filter((componentId) => componentId !== component.id),
-                        })),
-                      }))
-                    }
+                    onClick={() => {
+                      if (isPremix) {
+                        onProjectChange((current) => {
+                          const comp1Id = component.premixInfo?.comp1Id;
+                          const comp2Id = component.premixInfo?.comp2Id;
+                          return {
+                            ...current,
+                            protocolComponents: current.protocolComponents
+                              .filter((candidate) => candidate.id !== component.id)
+                              .map(c => (c.id === comp1Id || c.id === comp2Id) ? { ...c, isPremixComponent: false, premixParentId: undefined, color: '#ffffff' } : c)
+                          };
+                        });
+                      } else if (isPremixComponent) {
+                        onProjectChange((current) => {
+                          const premixId = component.premixParentId;
+                          const premix = current.protocolComponents.find(c => c.id === premixId);
+                          const otherCompId = premix?.premixInfo?.comp1Id === component.id ? premix?.premixInfo?.comp2Id : premix?.premixInfo?.comp1Id;
+                          return {
+                            ...current,
+                            protocolComponents: current.protocolComponents
+                              .filter((candidate) => candidate.id !== component.id && candidate.id !== premixId)
+                              .map(c => c.id === otherCompId ? { ...c, isPremixComponent: false, premixParentId: undefined, color: '#ffffff' } : c)
+                          };
+                        });
+                      } else {
+                        onProjectChange((current) => ({
+                          ...current,
+                          protocolComponents: current.protocolComponents.filter((candidate) => candidate.id !== component.id),
+                        }));
+                      }
+                    }}
                     disabled={project.protocolComponents.length === 1}
                     title="Remove"
                   >
@@ -412,106 +602,44 @@ export function ReactionSetupSection({
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      <div className="premix-box" style={{ marginTop: '1rem' }}>
-        <h3>Premix groups</h3>
-        <p className="muted">Keep protocol rows separate, then combine selected rows into one premix source for aspiration.</p>
-
-        <div className="button-row" style={{ marginBottom: '0.75rem' }}>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() =>
-              onProjectChange((current) => ({
-                ...current,
-                premixGroups: [
-                  ...current.premixGroups,
-                  {
-                    id: createId('premix'),
-                    name: `Premix_${current.premixGroups.length + 1}`,
-                    componentIds: [],
-                    color: current.protocolComponents[0]?.color ?? '#63239a',
-                  } satisfies PremixGroup,
-                ],
-              }))
-            }
-          >
-            Add premix group
-          </button>
-        </div>
-
-        <div className="inline-grid">
-          {project.premixGroups.map((group) => (
-            <div key={group.id} className="helper-box">
-              <label>
-                Premix name
-                <input
-                  value={group.name}
-                  onChange={(event) =>
-                    onProjectChange((current) => ({
-                      ...current,
-                      premixGroups: current.premixGroups.map((candidate) =>
-                        candidate.id === group.id ? { ...candidate, name: event.target.value } : candidate,
-                      ),
-                    }))
-                  }
-                />
-              </label>
-
-              <div className="chip-row" style={{ marginTop: '0.75rem' }}>
-                {project.protocolComponents.map((component) => {
-                  const active = group.componentIds.includes(component.id);
-                  return (
-                    <button
-                      key={component.id}
-                      type="button"
-                      className="drag-chip"
-                      style={{ background: active ? component.color : '#d9e2ec', color: active ? '#fff' : '#183b56' }}
-                      onClick={() =>
-                        onProjectChange((current) => ({
-                          ...current,
-                          premixGroups: current.premixGroups.map((candidate) =>
-                            candidate.id === group.id
-                              ? {
-                                  ...candidate,
-                                  color: active ? candidate.color : component.color,
-                                  componentIds: active
-                                    ? candidate.componentIds.filter((componentId) => componentId !== component.id)
-                                    : [...candidate.componentIds, component.id],
-                                }
-                              : candidate,
-                          ),
-                        }))
-                      }
-                    >
-                      {component.name || 'Unnamed component'}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="button-row" style={{ marginTop: '0.75rem' }}>
-                <button
-                  type="button"
-                  className="ghost"
-                  onClick={() =>
-                    onProjectChange((current) => ({
-                      ...current,
-                      premixGroups: current.premixGroups.filter((candidate) => candidate.id !== group.id),
-                    }))
-                  }
-                >
-                  Remove premix
-                </button>
-              </div>
+      {premixModal && premixModal.isOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', width: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ margin: 0 }}>Create Premix</h3>
+            <label>
+              Name
+              <input
+                type="text"
+                value={premixModal.name}
+                onChange={(e) => setPremixModal({ ...premixModal, name: e.target.value })}
+              />
+            </label>
+            <label>
+              Volume (uL)
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={premixModal.vol}
+                onChange={(e) => setPremixModal({ ...premixModal, vol: Number(e.target.value) || 0 })}
+              />
+            </label>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+              <button type="button" className="ghost" onClick={() => setPremixModal(null)}>Cancel</button>
+              <button type="button" className="primary-cta" onClick={handleCreatePremix}>Create</button>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

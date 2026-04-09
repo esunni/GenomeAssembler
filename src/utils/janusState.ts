@@ -77,7 +77,6 @@ export function createDefaultProject(): ExperimentProject {
     globalDeadVolume: 30,
     useGlobalDeadVolume: true,
     protocolComponents: [createProtocolComponent([])],
-    premixGroups: [],
     aspirationPlates: [],
     dispensingPlate: {
       id: createId('dispensing'),
@@ -128,15 +127,17 @@ export function buildAvailableSources(project: ExperimentProject): AvailableSour
     });
   });
 
-  const premixSources: AvailableSource[] = project.premixGroups.map((premix) => ({
-    sourceId: premix.id,
-    sourceType: 'premix',
-    displayName: premix.name || 'Unnamed premix',
-    componentId: null,
-    parentColor: premix.color,
-    familyId: premix.id,
-    familyLabel: premix.name || 'Unnamed premix',
-  }));
+  const premixSources: AvailableSource[] = project.protocolComponents
+    .filter(c => c.isPremix)
+    .map((premix) => ({
+      sourceId: premix.id,
+      sourceType: 'premix',
+      displayName: premix.name || 'Unnamed premix',
+      componentId: premix.id,
+      parentColor: premix.color,
+      familyId: premix.id,
+      familyLabel: premix.name || 'Unnamed premix',
+    }));
 
   return [...itemSources, ...premixSources];
 }
@@ -145,10 +146,6 @@ export function getComponentForSource(
   project: ExperimentProject,
   item: { sourceId: string; sourceType: SourceType; componentId: string | null },
 ) {
-  if (item.sourceType === 'premix') {
-    return null;
-  }
-
   return project.protocolComponents.find((component) => component.id === item.componentId) ?? null;
 }
 
@@ -157,17 +154,13 @@ export function getSourceTransferVolume(
   item: { sourceId: string; sourceType: SourceType; componentId: string | null },
 ): number {
   if (item.sourceType === 'premix') {
-    const premix = project.premixGroups.find((group) => group.id === item.sourceId);
+    const premix = project.protocolComponents.find((c) => c.id === item.sourceId);
 
     if (!premix) {
       return 0;
     }
 
-    return calculatePremixTransferVolume(
-      premix.componentIds
-        .map((componentId) => project.protocolComponents.find((component) => component.id === componentId)?.transferVolume ?? 0)
-        .filter((value) => value > 0),
-    );
+    return premix.transferVolume;
   }
 
   return getComponentForSource(project, item)?.transferVolume ?? 0;

@@ -23,7 +23,6 @@ const baseProject: ExperimentProject = {
       subItems: [],
     },
   ],
-  premixGroups: [],
   aspirationPlates: [
     {
       id: 'asp-1',
