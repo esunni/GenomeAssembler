@@ -253,7 +253,7 @@ export function ReactionSetupSection({
                       </span>
                     ) : (
                       <input
-                        className="table-inline-input"
+                        className="table-inline-input focus:bg-transparent focus:outline-none"
                         style={{ textAlign: 'center' }}
                         type="number"
                         min="0"
@@ -262,7 +262,7 @@ export function ReactionSetupSection({
                         onChange={(event) =>
                           updateProtocolComponent(component.id, (current) => ({
                             ...current,
-                            transferVolume: Number(event.target.value) || 0,
+                            transferVolume: (event.target.value === '' ? '' : Number(event.target.value)) as unknown as number,
                           }))
                         }
                       />
@@ -419,15 +419,15 @@ export function ReactionSetupSection({
                       type="number"
                       min="0"
                       step="0.1"
-                      value={component.customDeadVolume ?? 0}
+                      value={component.customDeadVolume ?? ''}
                       onChange={(event) =>
                         updateProtocolComponent(component.id, (current) => ({
                           ...current,
-                          customDeadVolume: Number(event.target.value) || 0,
+                          customDeadVolume: event.target.value === '' ? null : Number(event.target.value),
                           deadVolumeMode: 'custom',
                         }))
                       }
-                      className="table-inline-input"
+                      className="table-inline-input focus:bg-transparent focus:outline-none"
                       style={{ padding: '0.2rem 0.5rem', height: '28px' }}
                       placeholder="0"
                     />

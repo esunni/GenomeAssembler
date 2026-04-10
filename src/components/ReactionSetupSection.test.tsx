@@ -180,4 +180,66 @@ describe('ReactionSetupSection', () => {
     expect(localMockOnProjectChange).toHaveBeenCalled();
     expect(currentProject.protocolComponents[0].subItems.map(i => i.name)).toEqual(['Item 2', 'Item 3', 'Item 1']);
   });
+
+  it('allows clearing and typing in the volume input', async () => {
+    const user = userEvent.setup();
+    let currentProject = mockProject;
+
+    const localMockOnProjectChange = vi.fn().mockImplementation((updater) => {
+      currentProject = updater(currentProject);
+    });
+
+    const { rerender } = render(
+      <ReactionSetupSection
+        project={currentProject}
+        bulkProtocolText=""
+        onBulkProtocolTextChange={() => {}}
+        onImportProtocolPaste={() => {}}
+        onProjectChange={localMockOnProjectChange}
+      />
+    );
+
+    // Find the volume input
+    // It's a number input with step="0.1". It has value 5 from mockProject initially.
+    const volumeInputs = screen.getAllByRole('spinbutton');
+    // The first one should be the transfer volume for the first component
+    const volumeInput = volumeInputs[0];
+    
+    expect(volumeInput).toHaveValue(5);
+
+    // Clear the input
+    await user.clear(volumeInput);
+
+    // After clearing, it should be empty (not 0)
+    expect(localMockOnProjectChange).toHaveBeenCalled();
+    
+    // Rerender with empty volume
+    rerender(
+      <ReactionSetupSection
+        project={currentProject}
+        bulkProtocolText=""
+        onBulkProtocolTextChange={() => {}}
+        onImportProtocolPaste={() => {}}
+        onProjectChange={localMockOnProjectChange}
+      />
+    );
+    
+    expect(volumeInput).toHaveValue(null); // empty state
+
+    // Use fireEvent.change because the component is not in a stateful wrapper
+    // so user.type would fail to update between keystrokes
+    fireEvent.change(volumeInput, { target: { value: '12' } });
+
+    rerender(
+      <ReactionSetupSection
+        project={currentProject}
+        bulkProtocolText=""
+        onBulkProtocolTextChange={() => {}}
+        onImportProtocolPaste={() => {}}
+        onProjectChange={localMockOnProjectChange}
+      />
+    );
+
+    expect(volumeInput).toHaveValue(12);
+  });
 });
