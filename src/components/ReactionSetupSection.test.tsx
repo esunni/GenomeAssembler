@@ -6,17 +6,22 @@ import { ExperimentProject } from '../types';
 
 describe('ReactionSetupSection', () => {
   const mockProject: ExperimentProject = {
-    id: 'proj-1',
-    name: 'Test Project',
+    experimentName: 'Test Project',
+    globalDeadVolume: 10,
+    useGlobalDeadVolume: true,
+    aspirationPlates: [],
+    dispensingPlate: { id: 'disp-1', name: 'Dispensing', kind: 'dispensing', labware: 'plate-96', wells: {} },
+    remainderConfig: { enabled: false, fixedComponentId: null, remainderComponentId: null, targetReactionVolume: '', manualBatchVolume: '', dnaConcentration: '' },
+    mappingSplitGroups: [],
     protocolComponents: [
       {
         id: 'comp-1',
         name: 'Test Component',
-        type: 'Template',
+        transferVolume: 5,
+        deadVolumeMode: 'global',
+        customDeadVolume: null,
         subItems: [],
         color: '#ff0000',
-        stockConcentration: 10,
-        stockUnit: 'mM',
         isPremixComponent: false,
       }
     ]
