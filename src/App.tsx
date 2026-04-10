@@ -310,25 +310,39 @@ function App() {
                 </div>
               </section>
 
-              <div className="section-stack">
-                <ReactionSetupSection
-                  project={project}
-                  bulkProtocolText={bulkProtocolText}
-                  onBulkProtocolTextChange={setBulkProtocolText}
-                  onImportProtocolPaste={handleProtocolPasteImport}
-                  onProjectChange={updateProject}
-                />
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '2rem' }}>
+                <nav className="quick-menu" style={{ position: 'sticky', top: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '150px' }}>
+                  <a href="#reaction-setup" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 600 }}>Protocol</a>
+                  <a href="#aspiration-plates" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 600 }}>Aspiration Plates</a>
+                  <a href="#dispensing-plate" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 600 }}>Dispensing Plate</a>
+                  <a href="#preparation" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 600 }}>Preparation Summary</a>
+                </nav>
 
-                <AspirationPlatesSection
-                  project={project}
-                  availableSources={availableSources}
-                  onProjectChange={updateProject}
-                  onDownloadTextFile={downloadTextFile}
-                />
+                <div className="section-stack" style={{ flex: 1, minWidth: 0 }}>
+                  <div id="reaction-setup" style={{ scrollMarginTop: '2rem' }}>
+                    <ReactionSetupSection
+                      project={project}
+                      bulkProtocolText={bulkProtocolText}
+                      onBulkProtocolTextChange={setBulkProtocolText}
+                      onImportProtocolPaste={handleProtocolPasteImport}
+                      onProjectChange={updateProject}
+                    />
+                  </div>
 
-                <DispensingPlateSection project={project} onProjectChange={updateProject} />
+                  <div id="aspiration-plates" style={{ scrollMarginTop: '2rem' }}>
+                    <AspirationPlatesSection
+                      project={project}
+                      availableSources={availableSources}
+                      onProjectChange={updateProject}
+                    />
+                  </div>
 
-                <section className="section-card">
+                  <div id="dispensing-plate" style={{ scrollMarginTop: '2rem' }}>
+                    <DispensingPlateSection project={project} onProjectChange={updateProject} />
+                  </div>
+
+                  <div id="preparation" style={{ scrollMarginTop: '2rem' }}>
+                    <section className="section-card">
                   <h2>Preparation Volumes</h2>
                   <p className="section-lead">
                     Review required preparation volume for each source, using component-volume whole-reaction rounding and the optional remainder helper.
@@ -516,6 +530,7 @@ function App() {
                     )}
                   </div>
                 </section>
+                </div>
 
                 <section className="section-card">
                   <h2>Mapping Files</h2>
@@ -622,6 +637,7 @@ function App() {
                     ))}
                   </div>
                 </section>
+              </div>
               </div>
             </>
           )}

@@ -249,7 +249,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
           </div>
         </div>
 
-        <div className="helper-box" style={{ padding: '0.5rem 0.75rem', border: 'none', marginTop: '1rem', backgroundColor: '#f5edfc', fontSize: '0.85rem' }}>
+        <div className="helper-box" style={{ padding: '0.75rem', border: 'none', marginTop: '1rem', backgroundColor: '#f8f9fa', fontSize: '0.85rem' }}>
           <div className="inline-grid" style={{ alignItems: 'end', gap: '0.75rem', marginBottom: '1rem' }}>
             <label style={{ fontSize: '0.85rem' }}>
               Direction
@@ -275,66 +275,64 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
             <div style={{ flex: 1 }}></div>
           </div>
           
-          <div className="inline-grid" style={{ alignItems: 'end', gap: '0.75rem', marginBottom: '1rem' }}>
-            <label style={{ fontSize: '0.85rem' }}>
-              Component
-              <select
-                style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem' }}
-                value={autofillState.componentId}
-                onChange={(event) => setAutofillState((current) => ({ ...current, componentId: event.target.value, subitemId: '' }))}
-              >
-                <option value="">Choose component</option>
-                {project.protocolComponents.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name || 'Unnamed component'}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label style={{ fontSize: '0.85rem' }}>
-              Subitem
-              <select
-                style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem' }}
-                value={autofillState.subitemId}
-                onChange={(event) => setAutofillState((current) => ({ ...current, subitemId: event.target.value }))}
-                disabled={!autofillState.componentId || (project.protocolComponents.find(c => c.id === autofillState.componentId)?.subItems.length ?? 0) === 0}
-              >
-                <option value="">All subitems</option>
-                {autofillState.componentId && project.protocolComponents.find(c => c.id === autofillState.componentId)?.subItems.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5rem' }}>
-              <button type="button" className="primary-cta" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', fontWeight: 500, height: '34px' }} onClick={handleSourceAutofill}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, backgroundColor: '#f5edfc', padding: '0.75rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', minWidth: '400px' }}>
+              <label style={{ fontSize: '0.85rem', flex: 1 }}>
+                Component
+                <select
+                  style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem', width: '100%' }}
+                  value={autofillState.componentId}
+                  onChange={(event) => setAutofillState((current) => ({ ...current, componentId: event.target.value, subitemId: '' }))}
+                >
+                  <option value="">Choose component</option>
+                  {project.protocolComponents.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name || 'Unnamed component'}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label style={{ fontSize: '0.85rem', flex: 1 }}>
+                Subitem
+                <select
+                  style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem', width: '100%' }}
+                  value={autofillState.subitemId}
+                  onChange={(event) => setAutofillState((current) => ({ ...current, subitemId: event.target.value }))}
+                  disabled={!autofillState.componentId || (project.protocolComponents.find(c => c.id === autofillState.componentId)?.subItems.length ?? 0) === 0}
+                >
+                  <option value="">All subitems</option>
+                  {autofillState.componentId && project.protocolComponents.find(c => c.id === autofillState.componentId)?.subItems.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="button" className="primary-cta" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', fontWeight: 500, height: '34px', whiteSpace: 'nowrap' }} onClick={handleSourceAutofill}>
                 Autofill Sources
               </button>
             </div>
-          </div>
 
-          <div className="inline-grid" style={{ alignItems: 'end', gap: '0.75rem' }}>
-            <label style={{ fontSize: '0.85rem' }}>
-              Well name prefix
-              <input
-                style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', boxSizing: 'border-box' }}
-                value={autofillState.wellNamePrefix}
-                onChange={(event) => setAutofillState((current) => ({ ...current, wellNamePrefix: event.target.value }))}
-              />
-            </label>
-            <label style={{ fontSize: '0.85rem' }}>
-              Start number
-              <input
-                type="number"
-                style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', width: '4rem', boxSizing: 'border-box' }}
-                value={autofillState.startNumber}
-                onChange={(event) => setAutofillState((current) => ({ ...current, startNumber: Number(event.target.value) || 1 }))}
-              />
-            </label>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5rem' }}>
-              <button type="button" className="primary-cta" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', fontWeight: 500, height: '34px', backgroundColor: '#8430bf', borderColor: '#8430bf' }} onClick={handleSampleAutofill}>
-                Autofill Sample Names
+            <div style={{ flex: 1, backgroundColor: '#eef2f5', padding: '0.75rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', minWidth: '350px' }}>
+              <label style={{ fontSize: '0.85rem', flex: 1 }}>
+                Well name prefix
+                <input
+                  style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }}
+                  value={autofillState.wellNamePrefix}
+                  onChange={(event) => setAutofillState((current) => ({ ...current, wellNamePrefix: event.target.value }))}
+                />
+              </label>
+              <label style={{ fontSize: '0.85rem', width: '80px' }}>
+                Start number
+                <input
+                  type="number"
+                  style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }}
+                  value={autofillState.startNumber}
+                  onChange={(event) => setAutofillState((current) => ({ ...current, startNumber: Number(event.target.value) || 1 }))}
+                />
+              </label>
+              <button type="button" className="primary-cta" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', fontWeight: 500, height: '34px', backgroundColor: '#8430bf', borderColor: '#8430bf', whiteSpace: 'nowrap' }} onClick={handleSampleAutofill}>
+                Autofill Names
               </button>
             </div>
           </div>
