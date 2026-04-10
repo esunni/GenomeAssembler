@@ -18,7 +18,7 @@ export function ReactionSetupSection({
   onImportProtocolPaste,
   onProjectChange,
 }: ReactionSetupSectionProps) {
-  const [patternConfig, setPatternConfig] = useState<Record<string, { prefix: string; start: number; end: number; suffix: string }>>({});
+  const [patternConfig, setPatternConfig] = useState<Record<string, { prefix: string; start: number | string; end: number | string; suffix: string }>>({});
   const [expandedSubitems, setExpandedSubitems] = useState<Record<string, boolean>>({});
   const [selectedForPremix, setSelectedForPremix] = useState<string[]>([]);
   const [premixModal, setPremixModal] = useState<{ isOpen: boolean; comp1Id: string; comp2Id: string; name: string; vol: number } | null>(null);
@@ -73,13 +73,32 @@ export function ReactionSetupSection({
       return;
     }
 
+    const start = Number(config.start) || 1;
+    const end = Number(config.end) || 3;
+
+    updateProtocolComponent(componentId, (component) => {
+      const newSubItems = Array.from({ length: Math.max(end - start + 1, 0) }, (_, index) => ({
+        id: createId('item'),
+        name: `${config.prefix}${start + index}${config.suffix}`,
+      }));
+
+      return {
+        ...component,
+        subItems: [...(component.subItems || []), ...newSubItems],
+      };
+    });
+  };
+
+  const handleClearSubitems = (componentId: string) => {
     updateProtocolComponent(componentId, (component) => ({
       ...component,
-      subItems: Array.from({ length: Math.max(config.end - config.start + 1, 0) }, (_, index) => ({
-        id: createId('item'),
-        name: `${config.prefix}${config.start + index}${config.suffix}`,
-      })),
+      subItems: [],
     }));
+    setPatternConfig((current) => {
+      const newState = { ...current };
+      delete newState[componentId];
+      return newState;
+    });
   };
 
   const toggleSubitems = (componentId: string) => {
@@ -521,7 +540,7 @@ export function ReactionSetupSection({
                                   ...current,
                                   [component.id]: {
                                     prefix: current[component.id]?.prefix ?? '',
-                                    start: Number(event.target.value) || 1,
+                                    start: event.target.value === '' ? '' : Number(event.target.value),
                                     end: current[component.id]?.end ?? 3,
                                     suffix: current[component.id]?.suffix ?? '',
                                   },
@@ -541,7 +560,7 @@ export function ReactionSetupSection({
                                   [component.id]: {
                                     prefix: current[component.id]?.prefix ?? '',
                                     start: current[component.id]?.start ?? 1,
-                                    end: Number(event.target.value) || 3,
+                                    end: event.target.value === '' ? '' : Number(event.target.value),
                                     suffix: current[component.id]?.suffix ?? '',
                                   },
                                 }))
@@ -572,6 +591,14 @@ export function ReactionSetupSection({
                             onClick={() => handlePatternGenerate(component.id)}
                           >
                             Generate
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-generate"
+                            style={{ backgroundColor: '#dc3545' }}
+                            onClick={() => handleClearSubitems(component.id)}
+                          >
+                            Clear
                           </button>
                         </div>
                       </div>
