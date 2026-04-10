@@ -135,4 +135,49 @@ describe('ReactionSetupSection', () => {
 
     expect(startInput).toHaveValue(null); // or empty string
   });
+
+  it('allows drag-and-drop reordering of subitems', async () => {
+    const user = userEvent.setup();
+    let currentProject = {
+      ...mockProject,
+      protocolComponents: [
+        {
+          ...mockProject.protocolComponents[0],
+          subItems: [
+            { id: 'item-1', name: 'Item 1' },
+            { id: 'item-2', name: 'Item 2' },
+            { id: 'item-3', name: 'Item 3' }
+          ]
+        }
+      ]
+    };
+
+    const localMockOnProjectChange = vi.fn().mockImplementation((updater) => {
+      currentProject = updater(currentProject);
+    });
+
+    render(
+      <ReactionSetupSection
+        project={currentProject}
+        bulkProtocolText=""
+        onBulkProtocolTextChange={() => {}}
+        onImportProtocolPaste={() => {}}
+        onProjectChange={localMockOnProjectChange}
+      />
+    );
+
+    // Expand the subitems section to ensure they are visible
+    const expandButton = screen.getAllByRole('button', { name: /Expand/i })[0];
+    await user.click(expandButton);
+
+    const item1 = screen.getByText('Item 1');
+    const item3 = screen.getByText('Item 3');
+
+    fireEvent.dragStart(item1);
+    fireEvent.dragOver(item3);
+    fireEvent.drop(item3);
+
+    expect(localMockOnProjectChange).toHaveBeenCalled();
+    expect(currentProject.protocolComponents[0].subItems.map(i => i.name)).toEqual(['Item 2', 'Item 3', 'Item 1']);
+  });
 });

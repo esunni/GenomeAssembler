@@ -22,6 +22,7 @@ export function ReactionSetupSection({
   const [expandedSubitems, setExpandedSubitems] = useState<Record<string, boolean>>({});
   const [selectedForPremix, setSelectedForPremix] = useState<string[]>([]);
   const [premixModal, setPremixModal] = useState<{ isOpen: boolean; comp1Id: string; comp2Id: string; name: string; vol: number } | null>(null);
+  const [draggedSubitem, setDraggedSubitem] = useState<{ componentId: string; index: number } | null>(null);
 
   const updateProtocolComponent = (componentId: string, updater: (component: ProtocolComponent) => ProtocolComponent) => {
     onProjectChange((current) => {
@@ -452,8 +453,36 @@ export function ReactionSetupSection({
                         </svg>
                       </button>
                       <div className="chip-row">
-                        {component.subItems.map((item) => (
-                          <span key={item.id} className="chip" style={{ background: component.color }}>
+                        {component.subItems.map((item, index) => (
+                          <span
+                            key={item.id}
+                            className="chip"
+                            style={{
+                              background: component.color,
+                              cursor: 'grab',
+                              opacity: draggedSubitem?.componentId === component.id && draggedSubitem.index === index ? 0.5 : 1
+                            }}
+                            draggable={true}
+                            onDragStart={() => setDraggedSubitem({ componentId: component.id, index })}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              if (draggedSubitem && draggedSubitem.componentId === component.id) {
+                                const fromIndex = draggedSubitem.index;
+                                const toIndex = index;
+                                if (fromIndex !== toIndex) {
+                                  updateProtocolComponent(component.id, (current) => {
+                                    const newSubItems = [...current.subItems];
+                                    const [movedItem] = newSubItems.splice(fromIndex, 1);
+                                    newSubItems.splice(toIndex, 0, movedItem);
+                                    return { ...current, subItems: newSubItems };
+                                  });
+                                }
+                              }
+                              setDraggedSubitem(null);
+                            }}
+                            onDragEnd={() => setDraggedSubitem(null)}
+                          >
                             {item.name}
                             <button
                               type="button"
