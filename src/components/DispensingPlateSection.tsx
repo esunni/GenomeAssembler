@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { buildAvailableSources } from '../utils/janusState';
 import { getSequentialWellIds, getWellIds } from '../utils/plateUtils';
-import type { DispensingWellAssignment, DispensingWellItem, ExperimentProject, FillDirection, LabwareId } from '../types';
+import type { DispensingWellAssignment, DispensingWellItem, ExperimentProject, FillDirection, LabwareId, SourceType } from '../types';
 
 interface DispensingPlateSectionProps {
   project: ExperimentProject;
