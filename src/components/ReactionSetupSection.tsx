@@ -373,11 +373,11 @@ export function ReactionSetupSection({
         <table>
           <thead>
             <tr>
-              <th style={{ width: '288px' }}>Component</th>
+              <th style={{ width: '208px' }}>Component</th>
               <th style={{ width: '75px', textAlign: 'center' }}>Vol (ul)</th>
               <th style={{ width: '40px', textAlign: 'center' }}>Color</th>
               {project.useGlobalDeadVolume ? null : (
-                <th style={{ width: '80px', textAlign: 'center' }}>Dead vol (ul)</th>
+                <th style={{ width: '160px', textAlign: 'center' }}>Dead vol (ul)</th>
               )}
               <th>Subitems</th>
               <th style={{ width: '40px' }}></th>
