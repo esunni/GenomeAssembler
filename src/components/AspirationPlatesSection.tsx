@@ -54,20 +54,29 @@ export function AspirationPlatesSection({
   };
 
   const setAspirationWell = (plateId: string, wellId: string, source: AvailableSource) => {
-    updateAspirationPlate(plateId, (plate) => ({
-      ...plate,
-      wells: {
-        ...plate.wells,
-        [wellId]: {
-          sourceId: source.sourceId,
-          sourceType: source.sourceType,
-          displayName: source.displayName,
-          componentId: source.componentId,
-          parentColor: source.parentColor,
-          wellLabel: plate.wells[wellId]?.wellLabel ?? '',
-        },
-      },
-    }));
+    updateAspirationPlate(plateId, (plate) => {
+      const nextWells = { ...plate.wells };
+      
+      for (const [id, assignment] of Object.entries(nextWells)) {
+        if (assignment.sourceId === source.sourceId && assignment.sourceType === source.sourceType) {
+          delete nextWells[id];
+        }
+      }
+
+      nextWells[wellId] = {
+        sourceId: source.sourceId,
+        sourceType: source.sourceType,
+        displayName: source.displayName,
+        componentId: source.componentId,
+        parentColor: source.parentColor,
+        wellLabel: plate.wells[wellId]?.wellLabel ?? '',
+      };
+
+      return {
+        ...plate,
+        wells: nextWells,
+      };
+    });
   };
 
   const handleTemplateImport = async (plate: AspirationPlate, event: ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +103,22 @@ export function AspirationPlatesSection({
 
     updateAspirationPlate(plate.id, (currentPlate) => {
       const nextWells = { ...currentPlate.wells };
+      
+      const importedSources = new Set<string>();
+      rows.forEach((row) => {
+        const key = `${row.component.toLowerCase()}::${(row.itemName || row.component).toLowerCase()}`;
+        const source = sourceLookup.get(key);
+        if (source) {
+          importedSources.add(`${source.sourceType}:${source.sourceId}`);
+        }
+      });
+
+      for (const [id, assignment] of Object.entries(nextWells)) {
+        if (importedSources.has(`${assignment.sourceType}:${assignment.sourceId}`)) {
+          delete nextWells[id];
+        }
+      }
+
       rows.forEach((row) => {
         const key = `${row.component.toLowerCase()}::${(row.itemName || row.component).toLowerCase()}`;
         const source = sourceLookup.get(key);
@@ -140,6 +165,14 @@ export function AspirationPlatesSection({
 
     updateAspirationPlate(plate.id, (currentPlate) => {
       const nextWells = { ...currentPlate.wells };
+
+      const familySourceKeys = new Set(group.items.map(s => `${s.sourceType}:${s.sourceId}`));
+      for (const [id, assignment] of Object.entries(nextWells)) {
+        if (familySourceKeys.has(`${assignment.sourceType}:${assignment.sourceId}`)) {
+          delete nextWells[id];
+        }
+      }
+
       group.items.forEach((source, index) => {
         const wellId = wells[index * (1 + interval)];
         if (!wellId) {
@@ -246,22 +279,32 @@ export function AspirationPlatesSection({
                     placeholder="Aspiration plate name"
                   />
                 </label>
-                <label>
-                  Labware
-                  <select
-                    value={plate.labware}
-                    onChange={(event) =>
-                      updateAspirationPlate(plate.id, (current) => ({
-                        ...current,
-                        labware: event.target.value as LabwareId,
-                        wells: {},
-                      }))
-                    }
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                  <label style={{ flex: 1 }}>
+                    Labware
+                    <select
+                      value={plate.labware}
+                      onChange={(event) =>
+                        updateAspirationPlate(plate.id, (current) => ({
+                          ...current,
+                          labware: event.target.value as LabwareId,
+                          wells: {},
+                        }))
+                      }
+                    >
+                      <option value="plate-96">96-well plate</option>
+                      <option value="rack-4x6">4x6 rack</option>
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="btn-like"
+                    style={{ backgroundColor: 'white', color: '#dc3545', border: '1px solid #dc3545', padding: '0.74rem 1rem', borderRadius: '10px', height: '48px', fontWeight: 600 }}
+                    onClick={() => updateAspirationPlate(plate.id, (current) => ({ ...current, wells: {} }))}
                   >
-                    <option value="plate-96">96-well plate</option>
-                    <option value="rack-4x6">4x6 rack</option>
-                  </select>
-                </label>
+                    Clear Wells
+                  </button>
+                </div>
               </div>
 
               {importMessages[plate.id] ? <p className="muted">{importMessages[plate.id]}</p> : null}
@@ -303,26 +346,28 @@ export function AspirationPlatesSection({
                     <option value="vertical">Vertical</option>
                   </select>
                 </label>
-                <label style={{ fontSize: '0.85rem' }}>
-                  Interval
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', width: '4rem' }}
-                    value={currentAutofill.interval}
-                    onChange={(event) => {
-                      const val = parseInt(event.target.value, 10);
-                      setAutofillState((current) => ({
-                        ...current,
-                        [plate.id]: { ...currentAutofill, interval: isNaN(val) ? 0 : Math.max(0, val) },
-                      }));
-                    }}
-                  />
-                </label>
-                <button type="button" className="primary-cta" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', fontWeight: 500 }} onClick={() => handleFamilyAutofill(plate)}>
-                  Autofill
-                </button>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem' }}>
+                  <label style={{ fontSize: '0.85rem' }}>
+                    Interval
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', width: '4rem', boxSizing: 'border-box' }}
+                      value={currentAutofill.interval}
+                      onChange={(event) => {
+                        const val = parseInt(event.target.value, 10);
+                        setAutofillState((current) => ({
+                          ...current,
+                          [plate.id]: { ...currentAutofill, interval: isNaN(val) ? 0 : Math.max(0, val) },
+                        }));
+                      }}
+                    />
+                  </label>
+                  <button type="button" className="primary-cta" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', fontWeight: 500, height: '34px' }} onClick={() => handleFamilyAutofill(plate)}>
+                    Autofill
+                  </button>
+                </div>
               </div>
             </div>
 

@@ -239,6 +239,7 @@ export function ReactionSetupSection({
                   <td>
                     <input
                       className="table-inline-input"
+                      style={{ backgroundColor: 'transparent' }}
                       value={component.name}
                       onChange={(event) => updateProtocolComponent(component.id, (current) => ({ ...current, name: event.target.value }))}
                       placeholder="Component name"
@@ -253,8 +254,8 @@ export function ReactionSetupSection({
                       </span>
                     ) : (
                       <input
-                        className="table-inline-input focus:bg-transparent focus:outline-none"
-                        style={{ textAlign: 'center' }}
+                        className="table-inline-input"
+                        style={{ textAlign: 'center', backgroundColor: 'transparent' }}
                         type="number"
                         min="0"
                         step="0.1"
@@ -378,7 +379,7 @@ export function ReactionSetupSection({
               <th style={{ width: '75px', textAlign: 'center' }}>Vol (ul)</th>
               <th style={{ width: '40px', textAlign: 'center' }}>Color</th>
               {project.useGlobalDeadVolume ? null : (
-                <th style={{ width: '160px', textAlign: 'center' }}>Dead vol (ul)</th>
+                <th style={{ width: '96px', textAlign: 'center' }}>Dead vol (ul)</th>
               )}
               <th>Subitems</th>
               <th style={{ width: '40px' }}></th>
@@ -427,8 +428,8 @@ export function ReactionSetupSection({
                           deadVolumeMode: 'custom',
                         }))
                       }
-                      className="table-inline-input focus:bg-transparent focus:outline-none"
-                      style={{ padding: '0.2rem 0.5rem', height: '28px' }}
+                      className="table-inline-input"
+                      style={{ padding: '0.2rem 0.5rem', height: '28px', backgroundColor: 'transparent' }}
                       placeholder="0"
                     />
                   </td>
@@ -624,7 +625,7 @@ export function ReactionSetupSection({
                           <button
                             type="button"
                             className="btn-generate"
-                            style={{ backgroundColor: '#dc3545' }}
+                            style={{ backgroundColor: 'white', color: '#dc3545', border: '1px solid #dc3545', marginLeft: '0.5rem' }}
                             onClick={() => handleClearSubitems(component.id)}
                           >
                             Clear
