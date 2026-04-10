@@ -334,6 +334,7 @@ function App() {
                       project={project}
                       availableSources={availableSources}
                       onProjectChange={updateProject}
+                      onDownloadTextFile={downloadTextFile}
                     />
                   </div>
 
