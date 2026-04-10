@@ -279,7 +279,7 @@ export function AspirationPlatesSection({
                     placeholder="Aspiration plate name"
                   />
                 </label>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-end' }}>
                   <label style={{ flex: 1 }}>
                     Labware
                     <select
@@ -302,7 +302,7 @@ export function AspirationPlatesSection({
                     style={{ backgroundColor: 'white', color: '#dc3545', border: '1px solid #dc3545', padding: '0.74rem 1rem', borderRadius: '10px', height: '48px', fontWeight: 600 }}
                     onClick={() => updateAspirationPlate(plate.id, (current) => ({ ...current, wells: {} }))}
                   >
-                    Clear Wells
+                    Clear
                   </button>
                 </div>
               </div>
@@ -346,7 +346,7 @@ export function AspirationPlatesSection({
                     <option value="vertical">Vertical</option>
                   </select>
                 </label>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5rem' }}>
                   <label style={{ fontSize: '0.85rem' }}>
                     Interval
                     <input

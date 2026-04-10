@@ -826,14 +826,15 @@ button:focus-visible {
 .table-inline-input {
   width: 100%;
   border: none;
-  background: transparent;
-  padding: 0.4rem 0;
+  background: #ffffff;
+  padding: 0.4rem 0.5rem;
+  border-radius: 4px;
   color: var(--text);
 }
 
 .table-inline-input:focus {
   outline: none;
-  background: transparent;
+  background: #ffffff;
   box-shadow: none;
 }
 
@@ -1009,6 +1010,7 @@ button:focus-visible {
 
 .subitems-row input.subitem-name-input {
   width: 80px;
+  background: #ffffff;
 }
 
 .subitems-expanded .chip-row .chip {

@@ -8,7 +8,7 @@ describe('portal navigation', () => {
     render(<App />);
 
     expect(screen.getByRole('button', { name: 'Design' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('heading', { name: 'Design Workspace' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Fragment Design' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Reaction Setup' })).not.toBeInTheDocument();
   });
 
@@ -23,7 +23,7 @@ describe('portal navigation', () => {
     );
     await user.selectOptions(screen.getByLabelText('Type IIS enzyme'), 'bsai-hfv2');
 
-    expect(screen.getByText('Selected file: pDemo.fasta')).toBeInTheDocument();
+    expect(screen.getByText('pDemo.fasta')).toBeInTheDocument();
     expect(screen.getByText('3 sites found')).toBeInTheDocument();
     expect(screen.getByText('GGTCTCn^nnnn_')).toBeInTheDocument();
     expect(screen.queryByText('Sequence name: pDemo')).not.toBeInTheDocument();
@@ -41,7 +41,7 @@ describe('portal navigation', () => {
     await user.hover(buildNav);
 
     const menu = screen.getByRole('menu', { name: 'Build submenu' });
-    expect(within(menu).getByRole('menuitem', { name: 'Janus' })).toBeInTheDocument();
+    expect(within(menu).getByRole('menuitem', { name: 'JANUS' })).toBeInTheDocument();
   });
 
   test('keeps the Build submenu open after click until it is dismissed', async () => {
@@ -71,13 +71,13 @@ describe('portal navigation', () => {
 
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: 'Open Janus Builder' }));
+    await user.click(screen.getByRole('button', { name: 'Mapping File Generator' }));
 
     expect(screen.getByRole('button', { name: 'Build' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { name: 'Reaction Setup' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Build' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Janus' }));
+    await user.click(screen.getByRole('menuitem', { name: 'JANUS' }));
     await user.click(screen.getByRole('button', { name: 'Add aspiration plate' }));
     await user.click(screen.getByRole('button', { name: 'Generate mapping files' }));
 

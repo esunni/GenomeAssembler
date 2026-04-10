@@ -622,14 +622,14 @@ export function ReactionSetupSection({
                           >
                             Generate
                           </button>
-                          <button
-                            type="button"
-                            className="btn-generate"
-                            style={{ backgroundColor: 'white', color: '#dc3545', border: '1px solid #dc3545', marginLeft: '0.5rem' }}
-                            onClick={() => handleClearSubitems(component.id)}
-                          >
-                            Clear
-                          </button>
+                            <button
+                              type="button"
+                              className="btn-generate"
+                              style={{ backgroundColor: '#dc3545', color: 'white', border: '1px solid white', marginLeft: '1.5rem' }}
+                              onClick={() => handleClearSubitems(component.id)}
+                            >
+                              Clear
+                            </button>
                         </div>
                       </div>
                     )}
