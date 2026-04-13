@@ -11,20 +11,22 @@ describe('janus math', () => {
     expect(
       calculateWholeReactionCount({
         requiredReactionCount: 10,
+        mixLoss: 1,
         componentVolume: 2,
         deadVolume: 3,
       }),
-    ).toBe(12);
+    ).toBe(12.5);
   });
 
   test('calculates preparation volume from whole reaction count', () => {
     expect(
       calculatePreparationVolume({
         requiredReactionCount: 10,
+        mixLoss: 1,
         componentVolume: 2,
         deadVolume: 3,
       }),
-    ).toBe(24);
+    ).toBe(25);
   });
 
   test('sums premix transfer volume from grouped components', () => {

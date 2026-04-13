@@ -9,6 +9,7 @@ describe('ReactionSetupSection', () => {
     experimentName: 'Test Project',
     globalDeadVolume: 10,
     useGlobalDeadVolume: true,
+    mixLossEnabled: true,
     aspirationPlates: [],
     dispensingPlate: { id: 'disp-1', name: 'Dispensing', kind: 'dispensing', labware: 'plate-96', wells: {} },
     remainderConfig: { enabled: false, fixedComponentId: null, remainderComponentId: null, targetReactionVolume: '', manualBatchVolume: '', dnaConcentration: '' },
