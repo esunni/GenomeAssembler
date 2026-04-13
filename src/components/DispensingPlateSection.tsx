@@ -279,8 +279,8 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
           </div>
           
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1.25, backgroundColor: '#f5edfc', padding: '0.75rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', minWidth: '420px' }}>
-              <label style={{ fontSize: '0.85rem', flex: 0.76 }}>
+            <div style={{ flex: 1.8, backgroundColor: '#f5edfc', padding: '0.75rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', minWidth: '420px' }}>
+              <label style={{ fontSize: '0.85rem', flex: 1 }}>
                 Component
                 <select
                   style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem', width: '100%' }}
@@ -295,7 +295,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
                   ))}
                 </select>
               </label>
-              <label style={{ fontSize: '0.85rem', flex: 0.64 }}>
+              <label style={{ fontSize: '0.85rem', flex: 1 }}>
                 Subitem
                 <select
                   style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem', width: '100%' }}
@@ -327,8 +327,8 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
               </button>
             </div>
 
-            <div style={{ flex: 1.05, backgroundColor: '#eef2f5', padding: '0.75rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', minWidth: '320px' }}>
-              <label style={{ fontSize: '0.85rem', flex: 1.5 }}>
+            <div style={{ flex: 0.6, backgroundColor: '#eef2f5', padding: '0.75rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', minWidth: '200px' }}>
+              <label style={{ fontSize: '0.85rem', flex: 1 }}>
                 Well name prefix
                 <input
                   style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }}

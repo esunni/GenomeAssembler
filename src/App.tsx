@@ -345,7 +345,7 @@ function App() {
                     <section className="section-card">
                   <h2>Preparation Volumes</h2>
                   <p className="section-lead">
-                    Review required preparation volume for each source, using component-volume whole-reaction rounding and the optional remainder helper.
+                    Review required preparation volume for each source, using component-volume whole-reaction rounding and optional mix loss calculations.
                   </p>
 
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', marginTop: '1rem' }}>
@@ -468,7 +468,7 @@ function App() {
 
                     <div className="chip-row" style={{ paddingTop: '1rem' }}>
                       {project.mappingSplitGroups.map((group, index) => (
-                        <span key={group.id} className="chip" style={{ background: 'var(--accent-700)', color: '#ffffff', fontWeight: 600 }}>
+                        <span key={group.id} className="chip" style={{ background: 'var(--accent-500)', color: '#ffffff', fontWeight: 600 }}>
                           Group {index + 1}:&nbsp;&nbsp;&nbsp;{group.plateIds.map((plateId) => project.aspirationPlates.find((plate) => plate.id === plateId)?.name || 'Unnamed').join(', ')}
                           <button
                             type="button"
