@@ -944,6 +944,11 @@ button:focus-visible {
 }
 
 /* Color circle input */
+input:disabled {
+  background-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
 .color-circle-input {
   width: 40px;
   height: 24px;

@@ -259,7 +259,7 @@ function App() {
                     </p>
                   </div>
 
-                  <div className="page-stat-grid">
+                  <div className="page-stat-grid" style={{ display: 'flex', justifyContent: 'flex-end', gap: '2.5rem' }}>
                     <article className="stat-card">
                       <span>Aspiration plates</span>
                       <strong>{project.aspirationPlates.length}</strong>
