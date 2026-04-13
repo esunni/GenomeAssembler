@@ -12,6 +12,7 @@ interface DispensingPlateSectionProps {
 interface DispenseAutofillState {
   componentId: string;
   subitemId: string;
+  sourceStartNumber: number;
   direction: FillDirection;
   count: number;
   wellNamePrefix: string;
@@ -27,6 +28,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
   const [autofillState, setAutofillState] = useState<DispenseAutofillState>({
     componentId: '',
     subitemId: '',
+    sourceStartNumber: 1,
     direction: 'horizontal',
     count: 8,
     wellNamePrefix: 'Sample',
@@ -107,7 +109,8 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
           }
         }
       } else {
-        const subitemsToUse = component.subItems.slice(0, targetWells.length);
+        const startIdx = Math.max(0, autofillState.sourceStartNumber - 1);
+        const subitemsToUse = component.subItems.slice(startIdx, startIdx + targetWells.length);
         for (const subitem of subitemsToUse) {
           const actualSource = availableSources.find(s => s.sourceId === subitem.id && s.sourceType === 'item');
           if (actualSource) {
@@ -276,8 +279,8 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
           </div>
           
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1.2, backgroundColor: '#f5edfc', padding: '0.75rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', minWidth: '480px' }}>
-              <label style={{ fontSize: '0.85rem', flex: 1.2 }}>
+            <div style={{ flex: 1.5, backgroundColor: '#f5edfc', padding: '0.75rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', minWidth: '480px' }}>
+              <label style={{ fontSize: '0.85rem', flex: 0.9 }}>
                 Component
                 <select
                   style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem', width: '100%' }}
@@ -292,7 +295,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
                   ))}
                 </select>
               </label>
-              <label style={{ fontSize: '0.85rem', flex: 1 }}>
+              <label style={{ fontSize: '0.85rem', flex: 0.75 }}>
                 Subitem
                 <select
                   style={{ padding: '0.4rem 2rem 0.4rem 0.75rem', fontSize: '0.85rem', width: '100%' }}
@@ -308,13 +311,24 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
                   ))}
                 </select>
               </label>
+              <label style={{ fontSize: '0.85rem', width: '60px' }}>
+                Start #
+                <input
+                  type="number"
+                  min="1"
+                  style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }}
+                  value={autofillState.sourceStartNumber}
+                  onChange={(event) => setAutofillState((current) => ({ ...current, sourceStartNumber: Number(event.target.value) || 1 }))}
+                  disabled={!autofillState.componentId || autofillState.subitemId !== '' || (project.protocolComponents.find(c => c.id === autofillState.componentId)?.subItems.length ?? 0) === 0}
+                />
+              </label>
               <button type="button" className="primary-cta" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', fontWeight: 500, height: '34px', whiteSpace: 'nowrap' }} onClick={handleSourceAutofill}>
                 Autofill Sources
               </button>
             </div>
 
             <div style={{ flex: 0.8, backgroundColor: '#eef2f5', padding: '0.75rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', minWidth: '280px' }}>
-              <label style={{ fontSize: '0.85rem', flex: 1 }}>
+              <label style={{ fontSize: '0.85rem', flex: 0.75 }}>
                 Well name prefix
                 <input
                   style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }}

@@ -321,7 +321,7 @@ function App() {
                   </nav>
                 </div>
                 
-                <div style={{ width: '1px', backgroundColor: '#d1d5db', flexShrink: 0 }}></div>
+                <div style={{ width: '1px', backgroundColor: '#e5e7eb', flexShrink: 0 }}></div>
 
                 <div className="section-stack" style={{ flex: 1, minWidth: 0, paddingBottom: '2rem' }}>
                   <div id="reaction-setup" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
@@ -354,17 +354,34 @@ function App() {
                     Review required preparation volume for each source, using component-volume whole-reaction rounding and the optional remainder helper.
                   </p>
 
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', marginTop: '1rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600 }}>
+                      <input
+                        type="checkbox"
+                        checked={project.mixLossEnabled}
+                        onChange={(event) =>
+                          updateProject((current) => ({
+                            ...current,
+                            mixLossEnabled: event.target.checked,
+                          }))
+                        }
+                        style={{ width: 'auto' }}
+                      />
+                      Add mix loss (0.5 rxns for every 5 rxns)
+                    </label>
+                  </div>
+
                   <div className="table-wrap">
                     <table>
                       <thead>
                         <tr>
                           <th>Source</th>
-                          <th>Dispensing count</th>
-                          <th>Component volume</th>
-                          <th>Dead volume</th>
-                          <th>Mix loss (rxns)</th>
-                          <th>Whole required rxn</th>
-                          <th>Total prep volume</th>
+                          <th style={{ textAlign: 'center' }}>Dispensing count</th>
+                          <th style={{ textAlign: 'center' }}>Vol for 1 rxn (ul)</th>
+                          <th style={{ textAlign: 'center' }}>Mix loss (Rxns)</th>
+                          <th style={{ textAlign: 'center' }}>Whole required rxn</th>
+                          <th style={{ textAlign: 'center' }}>Dead vol (ul)</th>
+                          <th style={{ textAlign: 'center' }}>Total prep volume</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -374,190 +391,16 @@ function App() {
                             style={summary.isPremixRow ? { backgroundColor: '#f5edfc', fontWeight: 600 } : {}}
                           >
                             <td>{summary.displayName}</td>
-                            <td>{summary.isPremixRow ? summary.usageCount : (summary.displayName.startsWith('↳') ? '' : summary.usageCount)}</td>
-                            <td>{summary.componentVolume}</td>
-                            <td>{summary.isPremixRow || !summary.displayName.startsWith('↳') ? summary.deadVolume : ''}</td>
-                            <td>{summary.isPremixRow || !summary.displayName.startsWith('↳') ? summary.mixLoss : ''}</td>
-                            <td>{summary.wholeReactionCount}</td>
-                            <td>{summary.totalPreparationVolume}</td>
+                            <td style={{ textAlign: 'center' }}>{summary.isPremixRow ? summary.usageCount : (summary.displayName.startsWith('↳') ? '' : summary.usageCount)}</td>
+                            <td style={{ textAlign: 'center' }}>{summary.componentVolume}</td>
+                            <td style={{ textAlign: 'center' }}>{summary.isPremixRow || !summary.displayName.startsWith('↳') ? summary.mixLoss : ''}</td>
+                            <td style={{ textAlign: 'center' }}>{summary.wholeReactionCount}</td>
+                            <td style={{ textAlign: 'center' }}>{summary.isPremixRow || !summary.displayName.startsWith('↳') ? summary.deadVolume : ''}</td>
+                            <td style={{ textAlign: 'center' }}>{summary.totalPreparationVolume}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                  </div>
-
-                  <div className="helper-box" style={{ marginTop: '1rem' }}>
-                    <h3 style={{ marginBottom: '1rem' }}>Mix Loss Configuration</h3>
-                    <div className="inline-grid">
-                      <label>
-                        Add mix loss for every 5 rxns
-                        <select
-                          value={project.mixLossEnabled ? 'yes' : 'no'}
-                          onChange={(event) =>
-                            updateProject((current) => ({
-                              ...current,
-                              mixLossEnabled: event.target.value === 'yes',
-                            }))
-                          }
-                        >
-                          <option value="yes">Yes</option>
-                          <option value="no">No</option>
-                        </select>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="helper-box" style={{ marginTop: '1rem' }}>
-                    <h3 style={{ marginBottom: '1rem' }}>Remainder-component helper</h3>
-                    <div className="inline-grid">
-                      <label>
-                        Enable helper
-                        <select
-                          value={project.remainderConfig.enabled ? 'yes' : 'no'}
-                          onChange={(event) =>
-                            updateProject((current) => ({
-                              ...current,
-                              remainderConfig: {
-                                ...current.remainderConfig,
-                                enabled: event.target.value === 'yes',
-                              },
-                            }))
-                          }
-                        >
-                          <option value="yes">Yes</option>
-                          <option value="no">No</option>
-                        </select>
-                      </label>
-                      <label>
-                        Fixed/manual component
-                        <select
-                          value={project.remainderConfig.fixedComponentId ?? ''}
-                          onChange={(event) =>
-                            updateProject((current) => ({
-                              ...current,
-                              remainderConfig: {
-                                ...current.remainderConfig,
-                                fixedComponentId: event.target.value || null,
-                              },
-                            }))
-                          }
-                        >
-                          <option value="">Choose component</option>
-                          {project.protocolComponents.map((component) => (
-                            <option key={component.id} value={component.id}>
-                              {component.name || 'Unnamed component'}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        Remainder component
-                        <select
-                          value={project.remainderConfig.remainderComponentId ?? ''}
-                          onChange={(event) =>
-                            updateProject((current) => ({
-                              ...current,
-                              remainderConfig: {
-                                ...current.remainderConfig,
-                                remainderComponentId: event.target.value || null,
-                              },
-                            }))
-                          }
-                        >
-                          <option value="">Choose component</option>
-                          {project.protocolComponents.map((component) => (
-                            <option key={component.id} value={component.id}>
-                              {component.name || 'Unnamed component'}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        Total reaction volume (uL)
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          value={project.remainderConfig.targetReactionVolume}
-                          onChange={(event) =>
-                            updateProject((current) => ({
-                              ...current,
-                              remainderConfig: {
-                                ...current.remainderConfig,
-                                targetReactionVolume: event.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      </label>
-                      <label>
-                        Manual batch volume (uL)
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          value={project.remainderConfig.manualBatchVolume}
-                          onChange={(event) =>
-                            updateProject((current) => ({
-                              ...current,
-                              remainderConfig: {
-                                ...current.remainderConfig,
-                                manualBatchVolume: event.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      </label>
-                      <label>
-                        DNA concentration (ng/uL)
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          value={project.remainderConfig.dnaConcentration}
-                          onChange={(event) =>
-                            updateProject((current) => ({
-                              ...current,
-                              remainderConfig: {
-                                ...current.remainderConfig,
-                                dnaConcentration: event.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      </label>
-                    </div>
-
-                    {remainderCalculation ? (
-                      <div className="inline-grid" style={{ marginTop: '1rem' }}>
-                        <div className="helper-box">
-                          <strong>Required dispensing count</strong>
-                          <p>{remainderCalculation.requiredReactionCount}</p>
-                        </div>
-                        <div className="helper-box">
-                          <strong>Whole required rxn</strong>
-                          <p>{remainderCalculation.wholeReactionCount}</p>
-                        </div>
-                        <div className="helper-box">
-                          <strong>Total batch target volume</strong>
-                          <p>{numberFormatter.format(remainderCalculation.totalBatchTargetVolume)} uL</p>
-                        </div>
-                        <div className="helper-box">
-                          <strong>Remainder volume</strong>
-                          <p>{numberFormatter.format(remainderCalculation.remainderVolume)} uL</p>
-                        </div>
-                        {remainderCalculation.dnaMassPerReaction !== null ? (
-                          <div className="helper-box">
-                            <strong>DNA mass per reaction</strong>
-                            <p>{numberFormatter.format(remainderCalculation.dnaMassPerReaction)} ng</p>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <p className="muted">
-                        Choose the fixed and remainder components, then enter the batch targets to calculate the remainder volume.
-                      </p>
-                    )}
                   </div>
                 </section>
                 </div>
@@ -629,8 +472,8 @@ function App() {
 
                     <div className="chip-row" style={{ paddingTop: '1rem' }}>
                       {project.mappingSplitGroups.map((group, index) => (
-                        <span key={group.id} className="chip" style={{ background: 'var(--accent-900)', color: '#ffffff', fontWeight: 600 }}>
-                          Group {index + 1}: {group.plateIds.map((plateId) => project.aspirationPlates.find((plate) => plate.id === plateId)?.name || 'Unnamed').join(', ')}
+                        <span key={group.id} className="chip" style={{ background: 'var(--accent-700)', color: '#ffffff', fontWeight: 600 }}>
+                          Group {index + 1}:&nbsp;&nbsp;&nbsp;{group.plateIds.map((plateId) => project.aspirationPlates.find((plate) => plate.id === plateId)?.name || 'Unnamed').join(', ')}
                           <button
                             type="button"
                             onClick={() =>
@@ -663,13 +506,13 @@ function App() {
 
                   <div className="mapping-preview-grid" style={{ marginTop: '1rem' }}>
                     {generatedFiles.map((file) => (
-                      <div key={file.filename} className="helper-box">
-                        <div className="button-row">
+                      <div key={file.filename} className="helper-box" style={{ border: 'none', padding: 0 }}>
+                        <div className="button-row" style={{ marginBottom: '1rem' }}>
                           <button type="button" className="secondary" onClick={() => downloadTextFile(file.filename, file.content)}>
                             Download {file.filename}
                           </button>
                         </div>
-                        <pre className="code-preview">{file.content}</pre>
+                        <pre className="code-preview" style={{ borderRadius: '6px' }}>{file.content}</pre>
                       </div>
                     ))}
                   </div>

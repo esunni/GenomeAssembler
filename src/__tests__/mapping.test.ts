@@ -62,14 +62,6 @@ const baseProject: ExperimentProject = {
       },
     },
   },
-  remainderConfig: {
-    enabled: false,
-    fixedComponentId: null,
-    remainderComponentId: null,
-    targetReactionVolume: '',
-    manualBatchVolume: '',
-    dnaConcentration: '',
-  },
   mappingSplitGroups: [],
 };
 

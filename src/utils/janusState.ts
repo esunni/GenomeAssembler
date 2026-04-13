@@ -1,9 +1,7 @@
 import {
   calculateMixLoss,
-  calculateDnaMassPerReaction,
   calculatePreparationVolume,
   calculatePremixTransferVolume,
-  calculateRemainderVolume,
   calculateWholeReactionCount,
 } from './janusMath';
 import type {
@@ -13,7 +11,6 @@ import type {
   ExperimentProject,
   PreparationSummary,
   ProtocolComponent,
-  RemainderCalculationResult,
   SourceType,
 } from '../types';
 
@@ -86,14 +83,6 @@ export function createDefaultProject(): ExperimentProject {
       kind: 'dispensing',
       labware: 'plate-96',
       wells: {},
-    },
-    remainderConfig: {
-      enabled: false,
-      fixedComponentId: null,
-      remainderComponentId: null,
-      targetReactionVolume: '',
-      manualBatchVolume: '',
-      dnaConcentration: '',
     },
     mappingSplitGroups: [],
   };
@@ -181,74 +170,6 @@ function getDispensingUsage(items: DispensingWellItem[]): Map<string, number> {
   }, new Map<string, number>());
 }
 
-export function buildRemainderCalculation(project: ExperimentProject): RemainderCalculationResult | null {
-  const { fixedComponentId, remainderComponentId, targetReactionVolume, manualBatchVolume, dnaConcentration, enabled } =
-    project.remainderConfig;
-
-  if (!enabled || !fixedComponentId || !remainderComponentId) {
-    return null;
-  }
-
-  const fixedComponent = project.protocolComponents.find((component) => component.id === fixedComponentId);
-
-  if (!fixedComponent) {
-    return null;
-  }
-
-  const targetReactionVolumeNumber = Number(targetReactionVolume);
-  const manualBatchVolumeNumber = Number(manualBatchVolume);
-
-  if (targetReactionVolumeNumber <= 0 || manualBatchVolumeNumber < 0) {
-    return null;
-  }
-
-  const allDispensingItems = Object.values(project.dispensingPlate.wells).flatMap((well) => well.items);
-  const requiredReactionCount = allDispensingItems.filter(
-    (item) => item.componentId === fixedComponent.id || item.sourceId === fixedComponent.id
-  ).length;
-
-  const premixComponent = fixedComponent.premixParentId 
-    ? project.protocolComponents.find(c => c.id === fixedComponent.premixParentId) || fixedComponent
-    : fixedComponent;
-
-  const componentVolume = premixComponent.transferVolume;
-  const deadVolume = getSourceDeadVolume(project, {
-    sourceId: premixComponent.id,
-    sourceType: 'component',
-    componentId: premixComponent.id,
-  });
-  
-  const mixLoss = calculateMixLoss(requiredReactionCount, project.mixLossEnabled);
-  const wholeReactionCount = calculateWholeReactionCount({
-    requiredReactionCount,
-    mixLoss,
-    componentVolume,
-    deadVolume,
-  });
-  const remainderVolume = calculateRemainderVolume({
-    wholeReactionCount,
-    targetReactionVolume: targetReactionVolumeNumber,
-    manualBatchVolume: manualBatchVolumeNumber,
-  });
-
-  return {
-    requiredReactionCount,
-    wholeReactionCount,
-    componentVolume,
-    targetReactionVolume: targetReactionVolumeNumber,
-    totalBatchTargetVolume: wholeReactionCount * targetReactionVolumeNumber,
-    remainderVolume,
-    dnaMassPerReaction:
-      dnaConcentration.trim() === ''
-        ? null
-        : calculateDnaMassPerReaction({
-            concentrationNgPerUl: Number(dnaConcentration),
-            wholeBatchVolume: manualBatchVolumeNumber,
-            wholeReactionCount,
-          }),
-  };
-}
-
 export function findAssignedSource(
   project: ExperimentProject,
   sourceId: string,
@@ -270,7 +191,6 @@ export function findAssignedSource(
 
 export function buildPreparationSummaries(project: ExperimentProject): PreparationSummary[] {
   const usage = getDispensingUsage(Object.values(project.dispensingPlate.wells).flatMap((well) => well.items));
-  const remainderCalculation = buildRemainderCalculation(project);
   
   const summaries: PreparationSummary[] = [];
   const processedSourceKeys = new Set<string>();
@@ -318,10 +238,7 @@ export function buildPreparationSummaries(project: ExperimentProject): Preparati
     });
 
     const addChild = (childComp: ProtocolComponent) => {
-      const isRemainderDriven = remainderCalculation && project.remainderConfig.remainderComponentId === childComp.id;
-      const childPrepVol = isRemainderDriven 
-        ? remainderCalculation.remainderVolume 
-        : Number((wholeReactionCount * childComp.transferVolume).toFixed(4));
+      const childPrepVol = Number((wholeReactionCount * childComp.transferVolume).toFixed(4));
 
       summaries.push({
         sourceId: childComp.id,
@@ -355,31 +272,22 @@ export function buildPreparationSummaries(project: ExperimentProject): Preparati
 
     const baseComponentVolume = getSourceTransferVolume(project, assignedSource);
     const deadVolume = getSourceDeadVolume(project, assignedSource);
-    
-    const isRemainderDriven =
-      remainderCalculation &&
-      project.remainderConfig.remainderComponentId &&
-      assignedSource.componentId === project.remainderConfig.remainderComponentId;
       
     const mixLoss = calculateMixLoss(usageCount, project.mixLossEnabled);
 
-    const wholeReactionCount = isRemainderDriven
-      ? remainderCalculation.wholeReactionCount
-      : calculateWholeReactionCount({
-          requiredReactionCount: usageCount,
-          mixLoss,
-          componentVolume: baseComponentVolume,
-          deadVolume,
-        });
+    const wholeReactionCount = calculateWholeReactionCount({
+      requiredReactionCount: usageCount,
+      mixLoss,
+      componentVolume: baseComponentVolume,
+      deadVolume,
+    });
 
-    const totalPreparationVolume = isRemainderDriven
-      ? remainderCalculation.remainderVolume
-      : calculatePreparationVolume({
-          requiredReactionCount: usageCount,
-          mixLoss,
-          componentVolume: baseComponentVolume,
-          deadVolume,
-        });
+    const totalPreparationVolume = calculatePreparationVolume({
+      requiredReactionCount: usageCount,
+      mixLoss,
+      componentVolume: baseComponentVolume,
+      deadVolume,
+    });
 
     summaries.push({
       sourceId,
