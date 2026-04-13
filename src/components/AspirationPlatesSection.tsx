@@ -372,64 +372,42 @@ export function AspirationPlatesSection({
             </div>
 
               <div className="plate-grid-wrap" style={{ marginTop: '1rem' }}>
-                <div className="plate-grid" data-labware={plate.labware}>
-                  {wellOptions.map((wellId) => {
-                    const assignment = plate.wells[wellId];
-                    const selected = selectedWell === wellId;
-                    return (
-                      <button
-                        key={wellId}
-                        type="button"
-                        className={`well-button${assignment ? ' filled' : ''}${selected ? ' selected' : ''}`}
-                        style={{ background: assignment ? assignment.parentColor : undefined }}
-                        onClick={() =>
-                          setSelectedWells((current) => ({
-                            ...current,
-                            [plate.id]: wellId,
-                          }))
-                        }
-                        onDragOver={(event) => event.preventDefault()}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          const payload = event.dataTransfer.getData('application/janus-source');
-                          const source = availableSources.find((candidate) => `${candidate.sourceType}:${candidate.sourceId}` === payload);
-                          if (source) {
-                            setAspirationWell(plate.id, wellId, source);
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div className="plate-grid" data-labware={plate.labware}>
+                    {wellOptions.map((wellId) => {
+                      const assignment = plate.wells[wellId];
+                      const selected = selectedWell === wellId;
+                      return (
+                        <button
+                          key={wellId}
+                          type="button"
+                          className={`well-button${assignment ? ' filled' : ''}${selected ? ' selected' : ''}`}
+                          style={{ background: assignment ? assignment.parentColor : undefined }}
+                          title={assignment ? `Well: ${assignment.wellLabel || wellId}\nSource: ${assignment.displayName}` : `Well: ${wellId}`}
+                          onClick={() =>
+                            setSelectedWells((current) => ({
+                              ...current,
+                              [plate.id]: wellId,
+                            }))
                           }
-                        }}
-                      >
-                        <strong>{wellId}</strong>
-                        {assignment ? <small>{assignment.displayName}</small> : null}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="editor-box" style={{ backgroundColor: '#f8f9fa', border: 'none' }}>
-                  <div className="palette">
-                    {Array.from(groupedSources.values()).map((group) => (
-                      <div key={group.familyId} className="palette-group">
-                        <strong>{group.familyLabel}</strong>
-                        <div className="chip-row">
-                          {group.items.map((source) => (
-                            <button
-                              key={`${source.sourceType}:${source.sourceId}`}
-                              type="button"
-                              className="drag-chip"
-                              style={{ background: source.parentColor }}
-                              draggable
-                              onDragStart={(event) => event.dataTransfer.setData('application/janus-source', `${source.sourceType}:${source.sourceId}`)}
-                              onClick={() => setAspirationWell(plate.id, selectedWell, source)}
-                            >
-                              {source.displayName}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            const payload = event.dataTransfer.getData('application/janus-source');
+                            const source = availableSources.find((candidate) => `${candidate.sourceType}:${candidate.sourceId}` === payload);
+                            if (source) {
+                              setAspirationWell(plate.id, wellId, source);
+                            }
+                          }}
+                        >
+                          <strong>{wellId}</strong>
+                          {assignment ? <small>{assignment.displayName}</small> : null}
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  <div className="helper-box" style={{ backgroundColor: '#ffffff', border: 'none', marginTop: '1rem' }}>
+                  <div className="helper-box" style={{ backgroundColor: '#ffffff', border: 'none' }}>
                     <h3>{selectedWell}</h3>
                     {selectedAssignment ? (
                       <>
@@ -474,6 +452,31 @@ export function AspirationPlatesSection({
                     ) : (
                       <p className="muted">Select or drop a source to edit this aspiration well.</p>
                     )}
+                  </div>
+                </div>
+
+                <div className="editor-box" style={{ backgroundColor: '#f8f9fa', border: 'none' }}>
+                  <div className="palette">
+                    {Array.from(groupedSources.values()).map((group) => (
+                      <div key={group.familyId} className="palette-group">
+                        <strong>{group.familyLabel}</strong>
+                        <div className="chip-row">
+                          {group.items.map((source) => (
+                            <button
+                              key={`${source.sourceType}:${source.sourceId}`}
+                              type="button"
+                              className="drag-chip"
+                              style={{ background: source.parentColor }}
+                              draggable
+                              onDragStart={(event) => event.dataTransfer.setData('application/janus-source', `${source.sourceType}:${source.sourceId}`)}
+                              onClick={() => setAspirationWell(plate.id, selectedWell, source)}
+                            >
+                              {source.displayName}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

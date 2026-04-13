@@ -394,7 +394,7 @@ export function ReactionSetupSection({
               return (
               <tr key={component.id} style={{ backgroundColor: rowColor }}>
                 <td>
-                  <span className="table-inline-value">{component.name || '—'}</span>
+                  <span className="table-inline-value" style={{ fontWeight: 600 }}>{component.name || '—'}</span>
                 </td>
                 <td style={{ textAlign: 'center' }}>
                   <span className="table-inline-value">
@@ -625,7 +625,7 @@ export function ReactionSetupSection({
                             <button
                               type="button"
                               className="btn-generate"
-                              style={{ backgroundColor: '#dc3545', color: 'white', border: '1px solid white', marginLeft: '1.5rem' }}
+                              style={{ backgroundColor: '#dc3545', color: 'white', border: '1px solid white', marginLeft: '1.2rem' }}
                               onClick={() => handleClearSubitems(component.id)}
                             >
                               Clear

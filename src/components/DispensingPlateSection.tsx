@@ -323,7 +323,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
                 />
               </label>
               <label style={{ fontSize: '0.85rem', width: '80px' }}>
-                Start number
+                Start #
                 <input
                   type="number"
                   style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }}
@@ -340,78 +340,59 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
       </div>
 
       <div className="plate-grid-wrap" style={{ marginTop: '1rem' }}>
-        <div className="plate-grid" data-labware={project.dispensingPlate.labware}>
-          {wellOptions.map((wellId) => {
-            const assignment = project.dispensingPlate.wells[wellId];
-            const selected = selectedWell === wellId;
-            return (
-              <button
-                key={wellId}
-                type="button"
-                className={`well-button${assignment ? ' filled' : ''}${selected ? ' selected' : ''}`}
-                style={{ background: assignment && assignment.items.length > 0 ? '#f5edfc' : '#ffffff' }}
-                onClick={() => setSelectedWell(wellId)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  const payload = event.dataTransfer.getData('application/janus-source');
-                  const source = aspirationPlacedSources.find((candidate) => `${candidate.sourceType}:${candidate.sourceId}` === payload);
-
-                  if (source) {
-                    addItemToDispensingWell(wellId, {
-                      sourceId: source.sourceId,
-                      sourceType: source.sourceType,
-                      displayName: `${source.displayName} (${source.plateName ? `${source.plateName}, ` : ''}${source.wellId})`,
-                      componentId: source.componentId,
-                      parentColor: source.parentColor,
-                    });
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="plate-grid" data-labware={project.dispensingPlate.labware}>
+            {wellOptions.map((wellId) => {
+              const assignment = project.dispensingPlate.wells[wellId];
+              const selected = selectedWell === wellId;
+              return (
+                <button
+                  key={wellId}
+                  type="button"
+                  className={`well-button${assignment ? ' filled' : ''}${selected ? ' selected' : ''}`}
+                  style={{ background: assignment && assignment.items.length > 0 ? '#f5edfc' : '#ffffff' }}
+                  title={
+                    assignment && assignment.items.length > 0
+                      ? `Well: ${assignment.wellName || wellId}\nComponents: ${assignment.items.map(i => i.displayName).join(', ')}` 
+                      : `Well: ${wellId}`
                   }
-                }}
-              >
-                <strong style={{ color: 'var(--text)' }}>{wellId}</strong>
-                {assignment?.wellName ? (
-                  <small style={{ color: 'var(--text)', fontSize: '0.65rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', maxWidth: '100%' }}>
-                    {assignment.wellName}
-                  </small>
-                ) : null}
-                {assignment?.items?.length ? (
-                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '2px' }}>
-                    {assignment.items.map((item, idx) => (
-                      <div key={idx} style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.parentColor }} title={item.displayName} />
-                    ))}
-                  </div>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
+                  onClick={() => setSelectedWell(wellId)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    const payload = event.dataTransfer.getData('application/janus-source');
+                    const source = aspirationPlacedSources.find((candidate) => `${candidate.sourceType}:${candidate.sourceId}` === payload);
 
-        <div className="editor-box" style={{ border: 'none', backgroundColor: '#f8f9fa' }}>
-          <div className="chip-row">
-            {aspirationPlacedSources.map((source) => (
-              <button
-                key={`${source.sourceType}:${source.sourceId}`}
-                type="button"
-                className="drag-chip"
-                style={{ background: source.parentColor }}
-                draggable
-                onDragStart={(event) => event.dataTransfer.setData('application/janus-source', `${source.sourceType}:${source.sourceId}`)}
-                onClick={() =>
-                  addItemToDispensingWell(selectedWell, {
-                    sourceId: source.sourceId,
-                    sourceType: source.sourceType,
-                    displayName: `${source.displayName} (${source.plateName ? `${source.plateName}, ` : ''}${source.wellId})`,
-                    componentId: source.componentId,
-                    parentColor: source.parentColor,
-                  })
-                }
-              >
-                {source.displayName} ({source.plateName ? `${source.plateName}, ` : ''}{source.wellId})
-              </button>
-            ))}
+                    if (source) {
+                      addItemToDispensingWell(wellId, {
+                        sourceId: source.sourceId,
+                        sourceType: source.sourceType,
+                        displayName: `${source.displayName} (${source.plateName ? `${source.plateName}, ` : ''}${source.wellId})`,
+                        componentId: source.componentId,
+                        parentColor: source.parentColor,
+                      });
+                    }
+                  }}
+                >
+                  <strong style={{ color: 'var(--text)' }}>{wellId}</strong>
+                  {assignment?.wellName ? (
+                    <small style={{ color: 'var(--text)', fontSize: '0.65rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', maxWidth: '100%' }}>
+                      {assignment.wellName}
+                    </small>
+                  ) : null}
+                  {assignment?.items?.length ? (
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '2px' }}>
+                      {assignment.items.map((item, idx) => (
+                        <div key={idx} style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.parentColor }} title={item.displayName} />
+                      ))}
+                    </div>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="helper-box" style={{ backgroundColor: '#ffffff', border: 'none', marginTop: '1rem' }}>
+          <div className="helper-box" style={{ backgroundColor: '#ffffff', border: 'none' }}>
             <h3>{selectedWell}</h3>
             <label>
               Label
@@ -455,6 +436,32 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
                 </span>
               ))}
             </div>
+          </div>
+        </div>
+
+        <div className="editor-box" style={{ border: 'none', backgroundColor: '#f8f9fa' }}>
+          <div className="chip-row">
+            {aspirationPlacedSources.map((source) => (
+              <button
+                key={`${source.sourceType}:${source.sourceId}`}
+                type="button"
+                className="drag-chip"
+                style={{ background: source.parentColor }}
+                draggable
+                onDragStart={(event) => event.dataTransfer.setData('application/janus-source', `${source.sourceType}:${source.sourceId}`)}
+                onClick={() =>
+                  addItemToDispensingWell(selectedWell, {
+                    sourceId: source.sourceId,
+                    sourceType: source.sourceType,
+                    displayName: `${source.displayName} (${source.plateName ? `${source.plateName}, ` : ''}${source.wellId})`,
+                    componentId: source.componentId,
+                    parentColor: source.parentColor,
+                  })
+                }
+              >
+                {source.displayName} ({source.plateName ? `${source.plateName}, ` : ''}{source.wellId})
+              </button>
+            ))}
           </div>
         </div>
       </div>

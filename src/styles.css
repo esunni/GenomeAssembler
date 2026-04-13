@@ -616,8 +616,13 @@ button:disabled {
 .plate-grid-wrap {
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(340px, 1fr) minmax(280px, 360px);
+  grid-template-columns: minmax(340px, 1fr) minmax(224px, 288px);
   align-items: start;
+}
+
+.editor-box .drag-chip {
+  padding: 0.41rem 0.72rem;
+  font-size: 0.8rem;
 }
 
 .helper-box,
@@ -1050,7 +1055,7 @@ button:focus-visible {
   cursor: pointer;
   transition: all 140ms ease;
   white-space: nowrap;
-  margin-right: 1.5rem;
+  margin-right: 1.2rem;
 }
 
 .subitems-row .btn-like:hover {

@@ -311,15 +311,16 @@ function App() {
               </section>
 
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '2rem' }}>
-                <nav className="quick-menu" style={{ position: 'sticky', top: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '150px' }}>
-                  <a href="#reaction-setup" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 600 }}>Protocol</a>
-                  <a href="#aspiration-plates" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 600 }}>Aspiration Plates</a>
-                  <a href="#dispensing-plate" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 600 }}>Dispensing Plate</a>
-                  <a href="#preparation" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 600 }}>Preparation Summary</a>
+                <nav className="quick-menu" style={{ position: 'sticky', top: 'calc(82px + 2rem)', display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '150px' }}>
+                  <a href="#reaction-setup" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Reaction Setup</a>
+                  <a href="#aspiration-plates" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Aspiration Plates</a>
+                  <a href="#dispensing-plate" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Dispensing Plate</a>
+                  <a href="#preparation" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Preparation Summary</a>
+                  <a href="#mapping-files" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Mapping Files</a>
                 </nav>
 
                 <div className="section-stack" style={{ flex: 1, minWidth: 0 }}>
-                  <div id="reaction-setup" style={{ scrollMarginTop: '2rem' }}>
+                  <div id="reaction-setup" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
                     <ReactionSetupSection
                       project={project}
                       bulkProtocolText={bulkProtocolText}
@@ -329,7 +330,7 @@ function App() {
                     />
                   </div>
 
-                  <div id="aspiration-plates" style={{ scrollMarginTop: '2rem' }}>
+                  <div id="aspiration-plates" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
                     <AspirationPlatesSection
                       project={project}
                       availableSources={availableSources}
@@ -338,11 +339,11 @@ function App() {
                     />
                   </div>
 
-                  <div id="dispensing-plate" style={{ scrollMarginTop: '2rem' }}>
+                  <div id="dispensing-plate" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
                     <DispensingPlateSection project={project} onProjectChange={updateProject} />
                   </div>
 
-                  <div id="preparation" style={{ scrollMarginTop: '2rem' }}>
+                  <div id="preparation" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
                     <section className="section-card">
                   <h2>Preparation Volumes</h2>
                   <p className="section-lead">
@@ -533,7 +534,7 @@ function App() {
                 </section>
                 </div>
 
-                <section className="section-card">
+                <section id="mapping-files" className="section-card" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
                   <h2>Mapping Files</h2>
                   <p className="section-lead">Generate one combined CSV or partition aspiration plates into custom split groups.</p>
 
