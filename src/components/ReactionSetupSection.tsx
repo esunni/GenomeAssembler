@@ -239,7 +239,7 @@ export function ReactionSetupSection({
                   <td>
                     <input
                       className="table-inline-input"
-                      style={{ backgroundColor: 'transparent' }}
+                      style={{ backgroundColor: 'transparent', fontWeight: 600 }}
                       value={component.name}
                       onChange={(event) => updateProtocolComponent(component.id, (current) => ({ ...current, name: event.target.value }))}
                       placeholder="Component name"

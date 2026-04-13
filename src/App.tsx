@@ -261,10 +261,6 @@ function App() {
 
                   <div className="page-stat-grid">
                     <article className="stat-card">
-                      <span>Protocol rows</span>
-                      <strong>{project.protocolComponents.length}</strong>
-                    </article>
-                    <article className="stat-card">
                       <span>Aspiration plates</span>
                       <strong>{project.aspirationPlates.length}</strong>
                     </article>
@@ -353,18 +349,20 @@ function App() {
                   </p>
 
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', marginTop: '1rem' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600 }}>
-                      <input
-                        type="checkbox"
-                        checked={project.mixLossEnabled}
-                        onChange={(event) =>
-                          updateProject((current) => ({
-                            ...current,
-                            mixLossEnabled: event.target.checked,
-                          }))
-                        }
-                        style={{ width: 'auto' }}
-                      />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+                      <div className="toggle-switch">
+                        <input
+                          type="checkbox"
+                          checked={project.mixLossEnabled}
+                          onChange={(event) =>
+                            updateProject((current) => ({
+                              ...current,
+                              mixLossEnabled: event.target.checked,
+                            }))
+                          }
+                        />
+                        <span className="toggle-slider"></span>
+                      </div>
                       Add mix loss (0.5 rxns for every 5 rxns)
                     </label>
                   </div>
@@ -374,8 +372,8 @@ function App() {
                       <thead>
                         <tr>
                           <th>Source</th>
-                          <th style={{ textAlign: 'center' }}>Dispensing count</th>
                           <th style={{ textAlign: 'center' }}>Vol for 1 rxn (ul)</th>
+                          <th style={{ textAlign: 'center' }}>Dispensing count</th>
                           <th style={{ textAlign: 'center' }}>Mix loss (Rxns)</th>
                           <th style={{ textAlign: 'center' }}>Whole required rxn</th>
                           <th style={{ textAlign: 'center' }}>Dead vol (ul)</th>
@@ -388,13 +386,13 @@ function App() {
                             key={`${summary.sourceType}:${summary.sourceId}`}
                             style={summary.isPremixRow ? { backgroundColor: '#f5edfc', fontWeight: 600 } : {}}
                           >
-                            <td>{summary.displayName}</td>
-                            <td style={{ textAlign: 'center' }}>{summary.isPremixRow ? summary.usageCount : (summary.displayName.startsWith('↳') ? '' : summary.usageCount)}</td>
+                            <td style={{ fontWeight: 600 }}>{summary.displayName}</td>
                             <td style={{ textAlign: 'center' }}>{summary.componentVolume}</td>
+                            <td style={{ textAlign: 'center' }}>{summary.isPremixRow ? summary.usageCount : (summary.displayName.startsWith('↳') ? '' : summary.usageCount)}</td>
                             <td style={{ textAlign: 'center' }}>{summary.isPremixRow || !summary.displayName.startsWith('↳') ? summary.mixLoss : ''}</td>
                             <td style={{ textAlign: 'center' }}>{summary.wholeReactionCount}</td>
                             <td style={{ textAlign: 'center' }}>{summary.isPremixRow || !summary.displayName.startsWith('↳') ? summary.deadVolume : ''}</td>
-                            <td style={{ textAlign: 'center' }}>{summary.totalPreparationVolume}</td>
+                            <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{summary.totalPreparationVolume}</td>
                           </tr>
                         ))}
                       </tbody>
