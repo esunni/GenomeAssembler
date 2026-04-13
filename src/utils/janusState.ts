@@ -1,4 +1,5 @@
 import {
+  calculateMixLoss,
   calculateDnaMassPerReaction,
   calculatePreparationVolume,
   calculatePremixTransferVolume,
@@ -76,6 +77,7 @@ export function createDefaultProject(): ExperimentProject {
     experimentName: '',
     globalDeadVolume: 30,
     useGlobalDeadVolume: true,
+    mixLossEnabled: true,
     protocolComponents: [createProtocolComponent([])],
     aspirationPlates: [],
     dispensingPlate: {
@@ -200,19 +202,26 @@ export function buildRemainderCalculation(project: ExperimentProject): Remainder
     return null;
   }
 
-  const usage = getDispensingUsage(Object.values(project.dispensingPlate.wells).flatMap((well) => well.items));
-  const requiredReactionCount =
-    usage.get(`component:${fixedComponent.id}`) ??
-    Array.from(usage.entries()).find(([key]) => key.endsWith(`:${fixedComponent.id}`))?.[1] ??
-    0;
-  const componentVolume = fixedComponent.transferVolume;
+  const allDispensingItems = Object.values(project.dispensingPlate.wells).flatMap((well) => well.items);
+  const requiredReactionCount = allDispensingItems.filter(
+    (item) => item.componentId === fixedComponent.id || item.sourceId === fixedComponent.id
+  ).length;
+
+  const premixComponent = fixedComponent.premixParentId 
+    ? project.protocolComponents.find(c => c.id === fixedComponent.premixParentId) || fixedComponent
+    : fixedComponent;
+
+  const componentVolume = premixComponent.transferVolume;
   const deadVolume = getSourceDeadVolume(project, {
-    sourceId: fixedComponent.id,
+    sourceId: premixComponent.id,
     sourceType: 'component',
-    componentId: fixedComponent.id,
+    componentId: premixComponent.id,
   });
+  
+  const mixLoss = calculateMixLoss(requiredReactionCount, project.mixLossEnabled);
   const wholeReactionCount = calculateWholeReactionCount({
     requiredReactionCount,
+    mixLoss,
     componentVolume,
     deadVolume,
   });
@@ -262,48 +271,129 @@ export function findAssignedSource(
 export function buildPreparationSummaries(project: ExperimentProject): PreparationSummary[] {
   const usage = getDispensingUsage(Object.values(project.dispensingPlate.wells).flatMap((well) => well.items));
   const remainderCalculation = buildRemainderCalculation(project);
+  
+  const summaries: PreparationSummary[] = [];
+  const processedSourceKeys = new Set<string>();
+  const allDispensingItems = Object.values(project.dispensingPlate.wells).flatMap(w => w.items);
 
-  return Array.from(usage.entries())
-    .map(([usageKey, usageCount]) => {
-      const [sourceType, sourceId] = usageKey.split(':') as [SourceType, string];
-      const assignedSource = findAssignedSource(project, sourceId, sourceType);
+  // 1. Process Premixes
+  for (const component of project.protocolComponents) {
+    if (!component.isPremix || !component.premixInfo) continue;
+    
+    const comp1 = project.protocolComponents.find(c => c.id === component.premixInfo!.comp1Id);
+    const comp2 = project.protocolComponents.find(c => c.id === component.premixInfo!.comp2Id);
+    if (!comp1 || !comp2) continue;
 
-      if (!assignedSource) {
-        return null;
-      }
+    const usageCount = allDispensingItems.filter(item => 
+      item.componentId === comp1.id || item.sourceId === comp1.id ||
+      item.componentId === comp2.id || item.sourceId === comp2.id
+    ).length;
 
-      const baseComponentVolume = getSourceTransferVolume(project, assignedSource);
-      const deadVolume = getSourceDeadVolume(project, assignedSource);
-      const isRemainderDriven =
-        remainderCalculation &&
-        project.remainderConfig.remainderComponentId &&
-        assignedSource.componentId === project.remainderConfig.remainderComponentId;
-      const wholeReactionCount = isRemainderDriven
-        ? remainderCalculation.wholeReactionCount
-        : calculateWholeReactionCount({
-            requiredReactionCount: usageCount,
-            componentVolume: baseComponentVolume,
-            deadVolume,
-          });
-      const totalPreparationVolume = isRemainderDriven
-        ? remainderCalculation.remainderVolume
-        : calculatePreparationVolume({
-            requiredReactionCount: usageCount,
-            componentVolume: baseComponentVolume,
-            deadVolume,
-          });
+    if (usageCount === 0) continue;
 
-      return {
-        sourceId,
-        sourceType,
-        displayName: assignedSource.displayName,
-        sourceKind: isRemainderDriven ? 'Remainder-driven' : sourceType === 'premix' ? 'Premix' : 'Plain',
+    const componentVolume = comp1.transferVolume + comp2.transferVolume;
+    const deadVolume = getSourceDeadVolume(project, { sourceId: component.id, sourceType: 'component', componentId: component.id });
+    const mixLoss = calculateMixLoss(usageCount, project.mixLossEnabled);
+    
+    const wholeReactionCount = calculateWholeReactionCount({
+      requiredReactionCount: usageCount, mixLoss, componentVolume, deadVolume
+    });
+
+    const totalPreparationVolume = calculatePreparationVolume({
+      requiredReactionCount: usageCount, mixLoss, componentVolume, deadVolume
+    });
+
+    summaries.push({
+      sourceId: component.id,
+      sourceType: 'component',
+      displayName: component.name || 'Unnamed Premix',
+      isPremixRow: true,
+      parentColor: component.color,
+      usageCount,
+      componentVolume,
+      deadVolume,
+      mixLoss,
+      wholeReactionCount,
+      totalPreparationVolume
+    });
+
+    const addChild = (childComp: ProtocolComponent) => {
+      const isRemainderDriven = remainderCalculation && project.remainderConfig.remainderComponentId === childComp.id;
+      const childPrepVol = isRemainderDriven 
+        ? remainderCalculation.remainderVolume 
+        : Number((wholeReactionCount * childComp.transferVolume).toFixed(4));
+
+      summaries.push({
+        sourceId: childComp.id,
+        sourceType: 'component',
+        displayName: `↳ ${childComp.name}`,
+        isPremixRow: false,
         usageCount,
-        componentVolume: baseComponentVolume,
-        deadVolume,
+        componentVolume: childComp.transferVolume,
+        deadVolume: 0,
+        mixLoss: 0,
         wholeReactionCount,
-        totalPreparationVolume,
-      } satisfies PreparationSummary;
-    })
-    .filter((summary): summary is PreparationSummary => summary !== null);
+        totalPreparationVolume: childPrepVol
+      });
+
+      processedSourceKeys.add(`component:${childComp.id}`);
+      childComp.subItems.forEach(si => processedSourceKeys.add(`item:${si.id}`));
+    };
+
+    addChild(comp1);
+    addChild(comp2);
+  }
+
+  // 2. Process Plain Components
+  for (const [usageKey, usageCount] of usage.entries()) {
+    if (processedSourceKeys.has(usageKey)) continue;
+
+    const [sourceType, sourceId] = usageKey.split(':') as [SourceType, string];
+    const assignedSource = findAssignedSource(project, sourceId, sourceType);
+
+    if (!assignedSource) continue;
+
+    const baseComponentVolume = getSourceTransferVolume(project, assignedSource);
+    const deadVolume = getSourceDeadVolume(project, assignedSource);
+    
+    const isRemainderDriven =
+      remainderCalculation &&
+      project.remainderConfig.remainderComponentId &&
+      assignedSource.componentId === project.remainderConfig.remainderComponentId;
+      
+    const mixLoss = calculateMixLoss(usageCount, project.mixLossEnabled);
+
+    const wholeReactionCount = isRemainderDriven
+      ? remainderCalculation.wholeReactionCount
+      : calculateWholeReactionCount({
+          requiredReactionCount: usageCount,
+          mixLoss,
+          componentVolume: baseComponentVolume,
+          deadVolume,
+        });
+
+    const totalPreparationVolume = isRemainderDriven
+      ? remainderCalculation.remainderVolume
+      : calculatePreparationVolume({
+          requiredReactionCount: usageCount,
+          mixLoss,
+          componentVolume: baseComponentVolume,
+          deadVolume,
+        });
+
+    summaries.push({
+      sourceId,
+      sourceType,
+      displayName: assignedSource.displayName,
+      isPremixRow: false,
+      usageCount,
+      componentVolume: baseComponentVolume,
+      deadVolume,
+      mixLoss,
+      wholeReactionCount,
+      totalPreparationVolume,
+    });
+  }
+
+  return summaries;
 }

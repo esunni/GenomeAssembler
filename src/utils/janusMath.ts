@@ -1,5 +1,6 @@
 export interface WholeReactionCountInput {
   requiredReactionCount: number;
+  mixLoss: number;
   componentVolume: number;
   deadVolume: number;
 }
@@ -18,8 +19,14 @@ export interface DnaMassInput {
 
 const round = (value: number) => Number(value.toFixed(4));
 
+export function calculateMixLoss(requiredReactionCount: number, enabled: boolean): number {
+  if (!enabled || requiredReactionCount <= 0) return 0;
+  return Math.max(0.5, Math.floor(requiredReactionCount / 5) * 0.5);
+}
+
 export function calculateWholeReactionCount({
   requiredReactionCount,
+  mixLoss,
   componentVolume,
   deadVolume,
 }: WholeReactionCountInput): number {
@@ -27,12 +34,12 @@ export function calculateWholeReactionCount({
     return 0;
   }
 
-  return Math.ceil((requiredReactionCount * componentVolume + deadVolume) / componentVolume);
+  return requiredReactionCount + mixLoss + (deadVolume / componentVolume);
 }
 
 export function calculatePreparationVolume(input: WholeReactionCountInput): number {
-  const wholeReactionCount = calculateWholeReactionCount(input);
-  return round(wholeReactionCount * input.componentVolume);
+  if (input.requiredReactionCount <= 0 || input.componentVolume <= 0) return 0;
+  return round((input.requiredReactionCount + input.mixLoss) * input.componentVolume + input.deadVolume);
 }
 
 export function calculatePremixTransferVolume(componentVolumes: number[]): number {

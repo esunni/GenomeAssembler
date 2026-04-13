@@ -83,6 +83,7 @@ export interface ExperimentProject {
   experimentName: string;
   globalDeadVolume: number;
   useGlobalDeadVolume: boolean;
+  mixLossEnabled: boolean;
   protocolComponents: ProtocolComponent[];
   aspirationPlates: AspirationPlate[];
   dispensingPlate: DispensingPlate;
@@ -116,10 +117,12 @@ export interface PreparationSummary {
   sourceId: string;
   sourceType: SourceType;
   displayName: string;
-  sourceKind: 'Plain' | 'Premix' | 'Remainder-driven';
+  isPremixRow?: boolean;
+  parentColor?: string;
   usageCount: number;
   componentVolume: number;
   deadVolume: number;
+  mixLoss: number;
   wholeReactionCount: number;
   totalPreparationVolume: number;
 }

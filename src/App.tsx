@@ -321,7 +321,7 @@ function App() {
                   </nav>
                 </div>
                 
-                <div style={{ width: '1px', backgroundColor: 'var(--line)', flexShrink: 0 }}></div>
+                <div style={{ width: '1px', backgroundColor: '#d1d5db', flexShrink: 0 }}></div>
 
                 <div className="section-stack" style={{ flex: 1, minWidth: 0, paddingBottom: '2rem' }}>
                   <div id="reaction-setup" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
@@ -359,22 +359,25 @@ function App() {
                       <thead>
                         <tr>
                           <th>Source</th>
-                          <th>Kind</th>
                           <th>Dispensing count</th>
                           <th>Component volume</th>
                           <th>Dead volume</th>
+                          <th>Mix loss (rxns)</th>
                           <th>Whole required rxn</th>
                           <th>Total prep volume</th>
                         </tr>
                       </thead>
                       <tbody>
                         {preparationSummaries.map((summary) => (
-                          <tr key={`${summary.sourceType}:${summary.sourceId}`}>
+                          <tr 
+                            key={`${summary.sourceType}:${summary.sourceId}`}
+                            style={summary.isPremixRow ? { backgroundColor: '#f5edfc', fontWeight: 600 } : {}}
+                          >
                             <td>{summary.displayName}</td>
-                            <td>{summary.sourceKind}</td>
-                            <td>{summary.usageCount}</td>
+                            <td>{summary.isPremixRow ? summary.usageCount : (summary.displayName.startsWith('↳') ? '' : summary.usageCount)}</td>
                             <td>{summary.componentVolume}</td>
-                            <td>{summary.deadVolume}</td>
+                            <td>{summary.isPremixRow || !summary.displayName.startsWith('↳') ? summary.deadVolume : ''}</td>
+                            <td>{summary.isPremixRow || !summary.displayName.startsWith('↳') ? summary.mixLoss : ''}</td>
                             <td>{summary.wholeReactionCount}</td>
                             <td>{summary.totalPreparationVolume}</td>
                           </tr>
@@ -384,7 +387,28 @@ function App() {
                   </div>
 
                   <div className="helper-box" style={{ marginTop: '1rem' }}>
-                    <h3>Remainder-component helper</h3>
+                    <h3 style={{ marginBottom: '1rem' }}>Mix Loss Configuration</h3>
+                    <div className="inline-grid">
+                      <label>
+                        Add mix loss for every 5 rxns
+                        <select
+                          value={project.mixLossEnabled ? 'yes' : 'no'}
+                          onChange={(event) =>
+                            updateProject((current) => ({
+                              ...current,
+                              mixLossEnabled: event.target.value === 'yes',
+                            }))
+                          }
+                        >
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="helper-box" style={{ marginTop: '1rem' }}>
+                    <h3 style={{ marginBottom: '1rem' }}>Remainder-component helper</h3>
                     <div className="inline-grid">
                       <label>
                         Enable helper
@@ -540,10 +564,10 @@ function App() {
 
                 <section id="mapping-files" className="section-card" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
                   <h2>Mapping Files</h2>
-                  <p className="section-lead">Generate one combined CSV or partition aspiration plates into custom split groups.</p>
+                  <p className="section-lead">Generate one combined CSV or partition aspiration plates into custom groupings.</p>
 
                   <div className="helper-box">
-                    <h3>Split groups</h3>
+                    <h3 style={{ marginBottom: '1rem' }}>Aspiration Plate Groupings</h3>
                     <div className="chip-row">
                       {project.aspirationPlates.map((plate) => (
                         <button
@@ -587,7 +611,7 @@ function App() {
                           setSplitSelection([]);
                         }}
                       >
-                        Add selected split group
+                        Add selected grouping
                       </button>
                       <button
                         type="button"
@@ -603,15 +627,22 @@ function App() {
                       </button>
                     </div>
 
-                    <div className="content-grid" style={{ padding: '1rem 0 0' }}>
-                      {project.mappingSplitGroups.map((group) => (
-                        <div key={group.id} className="helper-box">
-                          <strong>
-                            {group.plateIds
-                              .map((plateId) => project.aspirationPlates.find((plate) => plate.id === plateId)?.name || 'Unnamed')
-                              .join(', ')}
-                          </strong>
-                        </div>
+                    <div className="chip-row" style={{ paddingTop: '1rem' }}>
+                      {project.mappingSplitGroups.map((group, index) => (
+                        <span key={group.id} className="chip" style={{ background: 'var(--accent-900)', color: '#ffffff', fontWeight: 600 }}>
+                          Group {index + 1}: {group.plateIds.map((plateId) => project.aspirationPlates.find((plate) => plate.id === plateId)?.name || 'Unnamed').join(', ')}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateProject((current) => ({
+                                ...current,
+                                mappingSplitGroups: current.mappingSplitGroups.filter((g) => g.id !== group.id),
+                              }))
+                            }
+                          >
+                            ×
+                          </button>
+                        </span>
                       ))}
                     </div>
                   </div>
