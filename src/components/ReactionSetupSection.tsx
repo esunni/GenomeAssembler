@@ -375,7 +375,7 @@ export function ReactionSetupSection({
         <table>
           <thead>
             <tr>
-              <th style={{ width: '208px' }}>Component</th>
+              <th style={{ width: '187px' }}>Component</th>
               <th style={{ width: '75px', textAlign: 'center' }}>Vol (ul)</th>
               <th style={{ width: '40px', textAlign: 'center' }}>Color</th>
               {project.useGlobalDeadVolume ? null : (
@@ -625,7 +625,7 @@ export function ReactionSetupSection({
                             <button
                               type="button"
                               className="btn-generate"
-                              style={{ backgroundColor: '#dc3545', color: 'white', border: '1px solid white', marginLeft: '1.2rem' }}
+                              style={{ backgroundColor: '#dc3545', color: 'white', border: '1px solid white', marginLeft: '0.6rem' }}
                               onClick={() => handleClearSubitems(component.id)}
                             >
                               Clear

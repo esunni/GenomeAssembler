@@ -407,12 +407,31 @@ export function AspirationPlatesSection({
                     })}
                   </div>
 
-                  <div className="helper-box" style={{ backgroundColor: '#ffffff', border: 'none' }}>
-                    <h3>{selectedWell}</h3>
+                  <div className="helper-box" style={{ backgroundColor: '#ffffff' }}>
+                    <h3 style={{ marginBottom: '1rem' }}>{selectedWell}</h3>
                     {selectedAssignment ? (
                       <>
-                        <p className="muted" style={{ fontWeight: 600 }}>{selectedAssignment.displayName}</p>
-                        <label>
+                        <div className="well-chip-row" style={{ marginBottom: '1rem' }}>
+                          <span className="chip" style={{ background: selectedAssignment.parentColor, fontWeight: 600 }}>
+                            {selectedAssignment.displayName}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateAspirationPlate(plate.id, (current) => {
+                                  const nextWells = { ...current.wells };
+                                  delete nextWells[selectedWell];
+                                  return {
+                                    ...current,
+                                    wells: nextWells,
+                                  };
+                                })
+                              }
+                            >
+                              ×
+                            </button>
+                          </span>
+                        </div>
+                        <label style={{ marginBottom: '1rem' }}>
                           Label
                           <input
                             value={selectedAssignment.wellLabel}
@@ -430,24 +449,6 @@ export function AspirationPlatesSection({
                             }
                           />
                         </label>
-                        <div className="button-row" style={{ marginTop: '0.75rem', justifyContent: 'flex-end' }}>
-                          <button
-                            type="button"
-                            className="ghost"
-                            onClick={() =>
-                              updateAspirationPlate(plate.id, (current) => {
-                                const nextWells = { ...current.wells };
-                                delete nextWells[selectedWell];
-                                return {
-                                  ...current,
-                                  wells: nextWells,
-                                };
-                              })
-                            }
-                          >
-                            Clear
-                          </button>
-                        </div>
                       </>
                     ) : (
                       <p className="muted">Select or drop a source to edit this aspiration well.</p>
@@ -459,7 +460,7 @@ export function AspirationPlatesSection({
                   <div className="palette">
                     {Array.from(groupedSources.values()).map((group) => (
                       <div key={group.familyId} className="palette-group">
-                        <strong>{group.familyLabel}</strong>
+                        <strong style={{ fontSize: '0.85rem' }}>{group.familyLabel}</strong>
                         <div className="chip-row">
                           {group.items.map((source) => (
                             <button

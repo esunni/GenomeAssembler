@@ -314,7 +314,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
             </div>
 
             <div style={{ flex: 1, backgroundColor: '#eef2f5', padding: '0.75rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', minWidth: '350px' }}>
-              <label style={{ fontSize: '0.85rem', flex: 1 }}>
+              <label style={{ fontSize: '0.85rem', flex: 0.75 }}>
                 Well name prefix
                 <input
                   style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }}
@@ -392,9 +392,9 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
             })}
           </div>
 
-          <div className="helper-box" style={{ backgroundColor: '#ffffff', border: 'none' }}>
-            <h3>{selectedWell}</h3>
-            <label>
+          <div className="helper-box" style={{ backgroundColor: '#ffffff' }}>
+            <h3 style={{ marginBottom: '1rem' }}>{selectedWell}</h3>
+            <label style={{ marginBottom: '1rem' }}>
               Label
               <input
                 value={createDispensingAssignment(project.dispensingPlate.wells[selectedWell]).wellName}

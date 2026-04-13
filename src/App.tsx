@@ -310,16 +310,20 @@ function App() {
                 </div>
               </section>
 
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '2rem' }}>
-                <nav className="quick-menu" style={{ position: 'sticky', top: 'calc(82px + 2rem)', display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '150px' }}>
-                  <a href="#reaction-setup" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Reaction Setup</a>
-                  <a href="#aspiration-plates" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Aspiration Plates</a>
-                  <a href="#dispensing-plate" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Dispensing Plate</a>
-                  <a href="#preparation" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Preparation Summary</a>
-                  <a href="#mapping-files" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Mapping Files</a>
-                </nav>
+              <div style={{ display: 'flex', alignItems: 'stretch', gap: '2rem' }}>
+                <div style={{ position: 'sticky', top: 'calc(82px + 2rem)', height: 'fit-content' }}>
+                  <nav className="quick-menu" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '150px' }}>
+                    <a href="#reaction-setup" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Reaction Setup</a>
+                    <a href="#aspiration-plates" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Aspiration Plates</a>
+                    <a href="#dispensing-plate" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Dispensing Plate</a>
+                    <a href="#preparation" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>REAGENT PREP</a>
+                    <a href="#mapping-files" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Mapping Files</a>
+                  </nav>
+                </div>
+                
+                <div style={{ width: '1px', backgroundColor: 'var(--line)', flexShrink: 0 }}></div>
 
-                <div className="section-stack" style={{ flex: 1, minWidth: 0 }}>
+                <div className="section-stack" style={{ flex: 1, minWidth: 0, paddingBottom: '2rem' }}>
                   <div id="reaction-setup" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
                     <ReactionSetupSection
                       project={project}

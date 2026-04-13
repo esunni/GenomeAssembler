@@ -1055,7 +1055,7 @@ button:focus-visible {
   cursor: pointer;
   transition: all 140ms ease;
   white-space: nowrap;
-  margin-right: 1.2rem;
+  margin-right: 0.6rem;
 }
 
 .subitems-row .btn-like:hover {
