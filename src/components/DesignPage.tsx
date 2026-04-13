@@ -195,7 +195,7 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
             </div>
           </div>
 
-          <SilentMutationAnalysis />
+          <SilentMutationAnalysis uploadedGenome={uploadedGenome} detectedSites={detectedSites} />
         </>
       )}
     </section>

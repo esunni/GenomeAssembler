@@ -1,55 +1,71 @@
-import { ChangeEvent, DragEvent, useState } from 'react';
+import { ChangeEvent, DragEvent, useState, useEffect } from 'react';
+import { ParsedCircularFasta, EnzymeSite } from '../utils/designTools';
+import { 
+  parsePhastestDetails, 
+  parseCodonUsage, 
+  analyzeEnzymeSites, 
+  recommendSilentMutations, 
+  applyMutations,
+  SiteAnalysis,
+  CdsRegion,
+  CodonUsage
+} from '../utils/mutationTools';
 
-interface MutationSite {
-  siteNumber: number;
-  position: number;
-  regionType: 'CDS' | 'Intergenic';
-  surroundingSequence: string;
-  suggestedMutation: string;
-  customMutation: string;
+interface SilentMutationAnalysisProps {
+  uploadedGenome: ParsedCircularFasta;
+  detectedSites: EnzymeSite[];
 }
 
-export function SilentMutationAnalysis() {
+export function SilentMutationAnalysis({ uploadedGenome, detectedSites }: SilentMutationAnalysisProps) {
   const [phastestFileName, setPhastestFileName] = useState<string>('');
   const [codonFileName, setCodonFileName] = useState<string>('');
   const [isPhastestDragActive, setIsPhastestDragActive] = useState(false);
   const [isCodonDragActive, setIsCodonDragActive] = useState(false);
-  const [mutationSites, setMutationSites] = useState<MutationSite[]>([]);
+  
+  const [cdsRegions, setCdsRegions] = useState<CdsRegion[]>([]);
+  const [codonUsage, setCodonUsage] = useState<Map<string, CodonUsage[]>>(new Map());
+  const [siteAnalyses, setSiteAnalyses] = useState<SiteAnalysis[]>([]);
+
+  useEffect(() => {
+    if (cdsRegions.length > 0 && codonUsage.size > 0 && detectedSites.length > 0) {
+      const analyses = analyzeEnzymeSites(detectedSites, cdsRegions, uploadedGenome.sequence);
+      
+      // Add suggested mutations
+      const analysesWithSuggestions = analyses.map(analysis => ({
+        ...analysis,
+        suggestedMutation: recommendSilentMutations(analysis, codonUsage),
+        userMutation: ''
+      }));
+      
+      setSiteAnalyses(analysesWithSuggestions);
+    }
+  }, [cdsRegions, codonUsage, detectedSites, uploadedGenome.sequence]);
+
+  const handlePhastestFile = async (file: File) => {
+    const text = await file.text();
+    const regions = parsePhastestDetails(text);
+    setCdsRegions(regions);
+    setPhastestFileName(file.name);
+  };
+
+  const handleCodonFile = async (file: File) => {
+    const text = await file.text();
+    const usage = parseCodonUsage(text);
+    setCodonUsage(usage);
+    setCodonFileName(file.name);
+  };
 
   const handlePhastestUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    setPhastestFileName(file.name);
-    // TODO: Parse PHASTEST file
-    
-    // Mock data for demonstration
-    setMutationSites([
-      {
-        siteNumber: 1,
-        position: 1452,
-        regionType: 'CDS',
-        surroundingSequence: 'ATGCGT...GCTAGC...TTAGCA',
-        suggestedMutation: 'GCTAGC -> GCCAGC',
-        customMutation: '',
-      },
-      {
-        siteNumber: 2,
-        position: 3891,
-        regionType: 'Intergenic',
-        surroundingSequence: 'CCGATA...GCTAGC...AATTGC',
-        suggestedMutation: 'GCTAGC -> GCAAGC',
-        customMutation: '',
-      }
-    ]);
-    
+    await handlePhastestFile(file);
     event.target.value = '';
   };
 
   const handleCodonUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    setCodonFileName(file.name);
-    // TODO: Parse Codon usage CSV
+    await handleCodonFile(file);
     event.target.value = '';
   };
 
@@ -58,8 +74,7 @@ export function SilentMutationAnalysis() {
     setIsPhastestDragActive(false);
     const file = event.dataTransfer.files?.[0];
     if (!file) return;
-    setPhastestFileName(file.name);
-    // TODO: Parse PHASTEST file
+    await handlePhastestFile(file);
   };
 
   const handleCodonDrop = async (event: DragEvent<HTMLLabelElement>) => {
@@ -67,16 +82,65 @@ export function SilentMutationAnalysis() {
     setIsCodonDragActive(false);
     const file = event.dataTransfer.files?.[0];
     if (!file) return;
-    setCodonFileName(file.name);
-    // TODO: Parse Codon usage CSV
+    await handleCodonFile(file);
   };
 
-  const handleCustomMutationChange = (siteNumber: number, value: string) => {
-    setMutationSites((prev) =>
+  const handleCustomMutationChange = (sitePosition: number, value: string) => {
+    setSiteAnalyses((prev) =>
       prev.map((site) =>
-        site.siteNumber === siteNumber ? { ...site, customMutation: value } : site
+        site.sitePosition === sitePosition ? { ...site, userMutation: value } : site
       )
     );
+  };
+
+  const handleDownloadFasta = () => {
+    const mutationsToApply = siteAnalyses.map(site => {
+      // Use custom mutation if provided, otherwise try to parse suggested mutation
+      let mutated = '';
+      if (site.userMutation) {
+        mutated = site.userMutation;
+      } else if (site.suggestedMutation && site.suggestedMutation.includes('->')) {
+        // Parse "Change 1452: GCT -> GCC (A)" or "GCT -> GCC (A)"
+        const match = site.suggestedMutation.match(/->\s*([ACGT]+)/);
+        if (match) {
+          mutated = match[1];
+        }
+      }
+      
+      if (mutated) {
+        // Find the original codon sequence
+        const siteCodon = site.contextCodons.find(c => c.isSite);
+        if (siteCodon) {
+          return {
+            position: siteCodon.globalStart,
+            original: siteCodon.codon,
+            mutated: mutated
+          };
+        } else if (!site.inCds) {
+          // Intergenic mutation
+          return {
+            position: site.sitePosition + Math.floor(site.matchSequence.length / 2),
+            original: site.matchSequence[Math.floor(site.matchSequence.length / 2)],
+            mutated: mutated[0] || 'A'
+          };
+        }
+      }
+      return null;
+    }).filter(Boolean) as { position: number; original: string; mutated: string }[];
+
+    const newSequence = applyMutations(uploadedGenome.sequence, mutationsToApply);
+    
+    // Create and download FASTA
+    const fastaContent = `>${uploadedGenome.name}_mutated\n${newSequence.match(/.{1,80}/g)?.join('\n') || newSequence}`;
+    const blob = new Blob([fastaContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${uploadedGenome.name}_mutated.fasta`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -162,33 +226,50 @@ export function SilentMutationAnalysis() {
         </label>
       </div>
 
-      {mutationSites.length > 0 && (
+      {siteAnalyses.length > 0 && (
         <div className="design-results-panel" style={{ marginTop: '2rem', borderTop: 'none', paddingTop: 0 }}>
-          <h3 style={{ marginBottom: '1rem' }}>Mutation Sites</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0 }}>Mutation Sites</h3>
+            <button 
+              type="button" 
+              className="primary-cta" 
+              onClick={handleDownloadFasta}
+              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+            >
+              Download Mutated FASTA
+            </button>
+          </div>
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Site #</th>
                   <th>Position</th>
                   <th>CDS / Intergenic</th>
-                  <th>Surrounding Sequence</th>
+                  <th>Context Window</th>
                   <th>Suggested Mutation</th>
                   <th>Custom Mutation</th>
                 </tr>
               </thead>
               <tbody>
-                {mutationSites.map((site) => (
-                  <tr key={site.siteNumber}>
-                    <td>{site.siteNumber}</td>
-                    <td>{site.position}</td>
+                {siteAnalyses.map((site) => (
+                  <tr key={site.sitePosition}>
+                    <td>{site.sitePosition}</td>
                     <td>
-                      <span className="chip" style={{ background: site.regionType === 'CDS' ? 'var(--accent-600)' : 'var(--muted)' }}>
-                        {site.regionType}
+                      <span className="chip" style={{ background: site.inCds ? 'var(--accent-600)' : 'var(--muted)' }}>
+                        {site.inCds ? `CDS ${site.cdsId}` : 'Intergenic'}
                       </span>
                     </td>
-                    <td style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>
-                      {site.surroundingSequence}
+                    <td style={{ fontFamily: 'monospace', letterSpacing: '0.05em', whiteSpace: 'pre' }}>
+                      {site.contextCodons.length > 0 ? (
+                        <div>
+                          <div>{site.contextCodons.map(c => c.codon).join(' ')}</div>
+                          <div style={{ color: 'var(--muted-foreground)' }}>
+                            {site.contextCodons.map(c => c.aminoAcid.padEnd(3, ' ')).join(' ')}
+                          </div>
+                        </div>
+                      ) : (
+                        'N/A'
+                      )}
                     </td>
                     <td style={{ fontFamily: 'monospace', color: 'var(--accent-700)', fontWeight: 600 }}>
                       {site.suggestedMutation}
@@ -198,9 +279,9 @@ export function SilentMutationAnalysis() {
                         type="text"
                         className="table-inline-input"
                         style={{ border: '1px solid var(--line-strong)' }}
-                        value={site.customMutation}
-                        onChange={(e) => handleCustomMutationChange(site.siteNumber, e.target.value)}
-                        placeholder="Enter custom mutation"
+                        value={site.userMutation || ''}
+                        onChange={(e) => handleCustomMutationChange(site.sitePosition, e.target.value)}
+                        placeholder="e.g. GCC"
                       />
                     </td>
                   </tr>
