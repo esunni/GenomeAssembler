@@ -27,6 +27,7 @@ export interface SiteAnalysis {
   contextCodons: CodonContext[];
   suggestedMutation?: string;
   userMutation?: string;
+  intergenicLabel?: string;
 }
 
 export interface CodonContext {
@@ -174,10 +175,56 @@ export function analyzeEnzymeSites(
           });
         }
       }
+    } else {
+      let beforeCds: CdsRegion | undefined;
+      let afterCds: CdsRegion | undefined;
+      
+      for (const cds of cdsRegions) {
+        if (cds.end < siteStart) {
+          if (!beforeCds || cds.end > beforeCds.end) beforeCds = cds;
+        }
+        if (cds.start > siteEnd) {
+          if (!afterCds || cds.start < afterCds.start) afterCds = cds;
+        }
+      }
+      
+      if (!beforeCds && cdsRegions.length > 0) {
+        beforeCds = cdsRegions.reduce((prev, curr) => curr.end > prev.end ? curr : prev);
+      }
+      if (!afterCds && cdsRegions.length > 0) {
+        afterCds = cdsRegions.reduce((prev, curr) => curr.start < prev.start ? curr : prev);
+      }
+
+      if (beforeCds && afterCds) {
+        analysis.intergenicLabel = `Between CDS ${beforeCds.id} and CDS ${afterCds.id}`;
+      } else {
+        analysis.intergenicLabel = 'Intergenic region';
+      }
+
+      // Add context characters for intergenic (no translation)
+      const startPos = Math.max(1, siteStart - 5);
+      const endPos = Math.min(genomeSequence.length, siteEnd + 5);
+      const rawSeq = genomeSequence.substring(startPos - 1, endPos);
+      
+      // Just put the raw string as one "codon" to be displayed
+      analysis.contextCodons.push({
+        codon: rawSeq,
+        aminoAcid: '',
+        isSite: true, // We'll highlight precisely using substring math in the UI
+        globalStart: startPos
+      });
     }
 
     return analysis;
   });
+}
+
+function getHammingDistance(s1: string, s2: string): number {
+  let dist = 0;
+  for (let i = 0; i < s1.length; i++) {
+    if (s1[i] !== s2[i]) dist++;
+  }
+  return dist;
 }
 
 export function recommendSilentMutations(
@@ -185,24 +232,76 @@ export function recommendSilentMutations(
   codonUsage: Map<string, CodonUsage[]>
 ): string {
   if (!analysis.inCds || analysis.contextCodons.length === 0) {
-    return 'Intergenic: Any mutation';
+    return ''; // Intergenic: no automatic suggestion
   }
 
+  // Build the full sequence of the context window
+  const origWindow = analysis.contextCodons.map(c => c.codon).join('');
   const siteCodons = analysis.contextCodons.filter(c => c.isSite);
   
-  for (const codonCtx of siteCodons) {
+  for (let i = 0; i < analysis.contextCodons.length; i++) {
+    const codonCtx = analysis.contextCodons[i];
+    if (!codonCtx.isSite) continue;
+
     const aa = codonCtx.aminoAcid;
     const usage = codonUsage.get(aa);
     if (usage && usage.length > 1) {
-      for (const altCodon of usage) {
+      // Sort alternatives by fewest nucleotide changes first, then highest frequency
+      const alternatives = [...usage].sort((a, b) => {
+        const distA = getHammingDistance(codonCtx.codon, a.codon);
+        const distB = getHammingDistance(codonCtx.codon, b.codon);
+        if (distA !== distB) return distA - distB;
+        return b.frequency - a.frequency;
+      });
+
+      for (const altCodon of alternatives) {
         if (altCodon.codon !== codonCtx.codon) {
-          return `${codonCtx.codon} -> ${altCodon.codon} (${aa})`;
+          // Test if it breaks the restriction site
+          const testWindowCodons = [...analysis.contextCodons];
+          testWindowCodons[i] = { ...codonCtx, codon: altCodon.codon };
+          const testWindow = testWindowCodons.map(c => c.codon).join('');
+          
+          let broken = false;
+          if (analysis.strand === '+') {
+            if (!testWindow.toUpperCase().includes(analysis.matchSequence.toUpperCase())) {
+              broken = true;
+            }
+          } else {
+            // For reverse strand, we need to check if the reverse complement of testWindow contains the motif
+            // Actually, matchSequence is ALWAYS the forward sequence the enzyme recognizes (e.g. GGTCTC). 
+            // If the site was on the minus strand, the genome contains GAGACC (the reverse complement).
+            // Our testWindow is built from the genome forward strand.
+            // So if strand is '-', we just check if testWindow contains the reverse complement of the matchSequence.
+            const rcMap: Record<string, string> = {A:'T', T:'A', C:'G', G:'C', a:'t', t:'a', c:'g', g:'c'};
+            const rc = analysis.matchSequence.split('').reverse().map(b => rcMap[b] || b).join('');
+            if (!testWindow.toUpperCase().includes(rc.toUpperCase())) {
+              broken = true;
+            }
+          }
+
+          if (broken) {
+            // Find where the restriction site was in origWindow
+            let siteIndexInWindow = -1;
+            if (analysis.strand === '+') {
+              siteIndexInWindow = origWindow.toUpperCase().indexOf(analysis.matchSequence.toUpperCase());
+            } else {
+              const rcMap: Record<string, string> = {A:'T', T:'A', C:'G', G:'C', a:'t', t:'a', c:'g', g:'c'};
+              const rc = analysis.matchSequence.split('').reverse().map(b => rcMap[b] || b).join('');
+              siteIndexInWindow = origWindow.toUpperCase().indexOf(rc.toUpperCase());
+            }
+            
+            if (siteIndexInWindow !== -1) {
+              const newSiteSequence = testWindow.substring(siteIndexInWindow, siteIndexInWindow + analysis.matchSequence.length);
+              return newSiteSequence;
+            }
+            return altCodon.codon; // fallback
+          }
         }
       }
     }
   }
 
-  return 'No silent mutation found';
+  return ''; // No silent mutation found
 }
 
 export function applyMutations(
@@ -213,9 +312,38 @@ export function applyMutations(
   const sortedMutations = [...mutations].sort((a, b) => b.position - a.position);
   
   for (const mut of sortedMutations) {
-    const pos = mut.position - 1;
-    if (mutatedSeq.substring(pos, pos + mut.original.length) === mut.original) {
-      mutatedSeq = mutatedSeq.substring(0, pos) + mut.mutated + mutatedSeq.substring(pos + mut.original.length);
+    const pos = mut.position - 1; // Convert 1-based to 0-based index
+    // Note: since the genome is circular, the site could theoretically wrap around the end.
+    // For simplicity, we handle non-wrapping patches or simple wraps:
+    let originalAtPos = '';
+    if (pos + mut.original.length <= mutatedSeq.length) {
+      originalAtPos = mutatedSeq.substring(pos, pos + mut.original.length);
+      
+      // We do a case-insensitive check because matchSequence might be upper and genome lower (or vice-versa)
+      if (originalAtPos.toUpperCase() === mut.original.toUpperCase()) {
+        mutatedSeq = mutatedSeq.substring(0, pos) + mut.mutated + mutatedSeq.substring(pos + mut.original.length);
+      } else {
+        // If it was on the reverse strand, the actual genome sequence there is the reverse complement of matchSequence
+        const rcMap: Record<string, string> = {A:'T', T:'A', C:'G', G:'C', a:'t', t:'a', c:'g', g:'c'};
+        const rc = mut.original.split('').reverse().map(b => rcMap[b] || b).join('');
+        if (originalAtPos.toUpperCase() === rc.toUpperCase()) {
+          mutatedSeq = mutatedSeq.substring(0, pos) + mut.mutated + mutatedSeq.substring(pos + mut.original.length);
+        }
+      }
+    } else {
+      // Handles wrapping around the 0-index origin
+      const overflow = (pos + mut.original.length) - mutatedSeq.length;
+      originalAtPos = mutatedSeq.substring(pos) + mutatedSeq.substring(0, overflow);
+      
+      if (originalAtPos.toUpperCase() === mut.original.toUpperCase()) {
+        mutatedSeq = mutatedSeq.substring(overflow, pos) + mut.mutated;
+      } else {
+        const rcMap: Record<string, string> = {A:'T', T:'A', C:'G', G:'C', a:'t', t:'a', c:'g', g:'c'};
+        const rc = mut.original.split('').reverse().map(b => rcMap[b] || b).join('');
+        if (originalAtPos.toUpperCase() === rc.toUpperCase()) {
+          mutatedSeq = mutatedSeq.substring(overflow, pos) + mut.mutated;
+        }
+      }
     }
   }
   
