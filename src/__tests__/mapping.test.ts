@@ -12,6 +12,7 @@ const baseProject: ExperimentProject = {
   experimentName: 'ExpA',
   globalDeadVolume: 2,
   useGlobalDeadVolume: true,
+  mixLossEnabled: true,
   protocolComponents: [
     {
       id: 'comp-buffer',
