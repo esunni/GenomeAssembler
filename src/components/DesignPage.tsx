@@ -1,6 +1,7 @@
 import { ChangeEvent, DragEvent, useMemo, useState } from 'react';
 
 import { CircularGenomeMap } from './CircularGenomeMap';
+import { SilentMutationAnalysis } from './SilentMutationAnalysis';
 import { ENZYMES, findCircularEnzymeSites, parseSingleCircularFasta, type ParsedCircularFasta } from '../utils/designTools';
 
 interface DesignPageProps {
@@ -193,6 +194,8 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
               )}
             </div>
           </div>
+
+          <SilentMutationAnalysis />
         </>
       )}
     </section>
