@@ -2,8 +2,6 @@ import {
   calculateWholeReactionCount,
   calculatePreparationVolume,
   calculatePremixTransferVolume,
-  calculateRemainderVolume,
-  calculateDnaMassPerReaction,
 } from '../utils/janusMath';
 
 describe('janus math', () => {
@@ -31,25 +29,5 @@ describe('janus math', () => {
 
   test('sums premix transfer volume from grouped components', () => {
     expect(calculatePremixTransferVolume([0.5, 1.25, 2])).toBe(3.75);
-  });
-
-  test('calculates remainder volume from total batch volume and manual batch volume', () => {
-    expect(
-      calculateRemainderVolume({
-        wholeReactionCount: 12,
-        targetReactionVolume: 10,
-        manualBatchVolume: 18,
-      }),
-    ).toBe(102);
-  });
-
-  test('calculates dna mass per reaction when concentration is provided', () => {
-    expect(
-      calculateDnaMassPerReaction({
-        concentrationNgPerUl: 50,
-        wholeBatchVolume: 18,
-        wholeReactionCount: 12,
-      }),
-    ).toBeCloseTo(75);
   });
 });

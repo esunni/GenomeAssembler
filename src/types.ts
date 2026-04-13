@@ -65,15 +65,6 @@ export interface DispensingPlate {
   wells: Record<string, DispensingWellAssignment>;
 }
 
-export interface RemainderConfig {
-  enabled: boolean;
-  fixedComponentId: string | null;
-  remainderComponentId: string | null;
-  targetReactionVolume: string;
-  manualBatchVolume: string;
-  dnaConcentration: string;
-}
-
 export interface MappingSplitGroup {
   id: string;
   plateIds: string[];
@@ -87,7 +78,6 @@ export interface ExperimentProject {
   protocolComponents: ProtocolComponent[];
   aspirationPlates: AspirationPlate[];
   dispensingPlate: DispensingPlate;
-  remainderConfig: RemainderConfig;
   mappingSplitGroups: MappingSplitGroup[];
 }
 

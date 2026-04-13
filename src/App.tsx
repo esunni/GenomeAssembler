@@ -9,7 +9,6 @@ import { exportProjectJson, generateMappingCsvFiles, importProjectJson, validate
 import {
   buildAvailableSources,
   buildPreparationSummaries,
-  buildRemainderCalculation,
   createDefaultProject,
   createProtocolComponent,
 } from './utils/janusState';
@@ -46,7 +45,6 @@ function App() {
 
   const availableSources = useMemo(() => buildAvailableSources(project), [project]);
   const preparationSummaries = useMemo(() => buildPreparationSummaries(project), [project]);
-  const remainderCalculation = useMemo(() => buildRemainderCalculation(project), [project]);
   const dispensingAssignments = useMemo(() => Object.values(project.dispensingPlate.wells), [project.dispensingPlate.wells]);
   const filledDispensingWellCount = useMemo(
     () => dispensingAssignments.filter((assignment) => assignment.items.length > 0).length,
