@@ -25,6 +25,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
 
   const [searchWindows, setSearchWindows] = useState<SearchWindow[] | null>(null);
   const [showWarning, setShowWarning] = useState(false);
+  const [warningMessage, setWarningMessage] = useState({ title: '', message: '', action: '' });
 
   const handlePromoterFile = async (file: File) => {
     const text = await file.text();
@@ -50,6 +51,31 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
 
   const handleFindWindows = () => {
     if (useMaxFragmentCount && maxFragmentLength * maxFragmentCount < sequenceLength) {
+      setWarningMessage({
+        title: 'Impossible Configuration',
+        message: `Cannot satisfy constraints: max length (${maxFragmentLength}bp) \u00D7 max count (${maxFragmentCount}) < total genome length (${sequenceLength}bp).`,
+        action: 'Please increase the max length or max count.'
+      });
+      setShowWarning(true);
+      return;
+    }
+
+    if (promoterFirst && promoters.length === 0) {
+      setWarningMessage({
+        title: 'Missing Promoters',
+        message: 'You have enabled the Promoter-first option, but no promoter information was uploaded.',
+        action: 'Please drop a promoter file or turn off the Promoter-first option.'
+      });
+      setShowWarning(true);
+      return;
+    }
+
+    if (orfConservation && cdsRegions.length === 0) {
+      setWarningMessage({
+        title: 'Missing CDS Data',
+        message: 'You have enabled the ORF-conservation option, but no PHASTEST results were provided in the Silent Mutation Analysis section.',
+        action: 'Please upload PHASTEST results or turn off the ORF-conservation option.'
+      });
       setShowWarning(true);
       return;
     }
@@ -385,9 +411,9 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
             maxWidth: '400px',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }}>
-            <h3 style={{ marginTop: 0, color: 'var(--accent-700)' }}>Impossible Configuration</h3>
-            <p>Cannot satisfy constraints: max length ({maxFragmentLength}bp) &times; max count ({maxFragmentCount}) &lt; total genome length ({sequenceLength}bp).</p>
-            <p>Please increase the max length or max count.</p>
+            <h3 style={{ marginTop: 0, color: 'var(--accent-700)' }}>{warningMessage.title}</h3>
+            <p>{warningMessage.message}</p>
+            <p>{warningMessage.action}</p>
             <button 
               onClick={() => setShowWarning(false)}
               className="primary-cta"

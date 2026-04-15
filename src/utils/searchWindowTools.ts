@@ -1,7 +1,9 @@
 import { CdsRegion } from './mutationTools';
 
 export interface Promoter {
+  name: string;
   position: number;
+  end: number;
 }
 
 export interface SearchWindow {
@@ -12,11 +14,26 @@ export interface SearchWindow {
 
 export function parsePromoters(content: string): Promoter[] {
   const promoters: Promoter[] = [];
-  const lines = content.split(/\r?\n/).map(line => line.trim());
+  const lines = content.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  
   for (const line of lines) {
+    // Try to parse 3 columns: name, start, end separated by commas or tabs
+    const cols = line.split(/,|\t/).map(c => c.trim());
+    if (cols.length >= 3) {
+      const name = cols[0];
+      const start = parseInt(cols[1], 10);
+      const end = parseInt(cols[2], 10);
+      if (!isNaN(start) && !isNaN(end)) {
+        promoters.push({ name, position: start, end });
+        continue;
+      }
+    }
+    
+    // Fallback for older format if someone still uses it
     const match = line.match(/Promoter Pos:\s*(\d+)/i) || line.match(/^(\d+)$/);
     if (match) {
-      promoters.push({ position: parseInt(match[1], 10) });
+      const pos = parseInt(match[1], 10);
+      promoters.push({ name: `Promoter ${promoters.length + 1}`, position: pos, end: pos });
     }
   }
   return promoters;

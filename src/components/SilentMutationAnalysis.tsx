@@ -148,7 +148,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
       <div className="section-header" style={{ marginBottom: '1.5rem' }}>
         <h2 style={{ margin: '0 0 0.5rem' }}>Silent Mutation Analysis</h2>
         <p className="page-copy">
-          Upload PHASTEST results and Codon usage data to analyze and resolve recognition sites via silent mutations.
+          Upload PHASTEST results (detail.txt) and Codon usage data to analyze and resolve recognition sites via silent mutations.
         </p>
       </div>
 
