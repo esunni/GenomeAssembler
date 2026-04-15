@@ -88,7 +88,7 @@ export function calculateSearchWindows(
   while (true) {
     if (loopCount++ > 10000) break; // safety
     
-    const remaining = sequenceLength - currentCut + firstCut;
+    const remaining = options.isLinear ? sequenceLength - currentCut + 1 : sequenceLength - currentCut + firstCut;
     if (remaining <= maxFragmentLength) {
       break; 
     }

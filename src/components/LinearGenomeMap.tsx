@@ -27,7 +27,17 @@ export function LinearGenomeMap({
     // Sort windows by start position
     const sortedWindows = [...searchWindows].sort((a, b) => a.start - b.start);
     const frags = [];
+    let fragIndex = 1;
     
+    if (isLinear && sortedWindows.length > 0 && sortedWindows[0].start > 1) {
+      frags.push({
+        id: `frag-${fragIndex++}`,
+        start: 1,
+        end: sortedWindows[0].start - 1,
+        wrapsAround: false
+      });
+    }
+
     for (let i = 0; i < sortedWindows.length; i++) {
       const current = sortedWindows[i];
       let end = sequenceLength;
@@ -44,7 +54,7 @@ export function LinearGenomeMap({
       }
       
       frags.push({
-        id: `frag-${i + 1}`,
+        id: `frag-${fragIndex++}`,
         start: current.start,
         end,
         wrapsAround
@@ -169,7 +179,7 @@ export function LinearGenomeMap({
         <div style={{ position: 'absolute', top: '35px', left: 0, right: 0, height: '24px' }}>
           <div style={{ position: 'absolute', left: '-120px', width: '110px', textAlign: 'right', fontSize: '0.8rem', color: 'var(--muted-foreground)', top: '4px' }}>CDS / ORFs</div>
           <div style={{ position: 'relative', width: '100%', height: '100%', background: 'var(--line-subtle)', borderRadius: '4px' }}>
-            {cdsRegions.map((cds, i) => renderTrackRegion(cds.start, cds.end, 'var(--accent-500)', '16px', '50%', 'translateY(-50%)', 0.8, `CDS ${cds.id}: ${cds.start}-${cds.end}`))}
+            {cdsRegions.map((cds, i) => renderTrackRegion(cds.start, cds.end, '#3b82f6', '16px', '50%', 'translateY(-50%)', 0.8, `CDS ${cds.id}: ${cds.start}-${cds.end}`))}
           </div>
         </div>
 
@@ -206,7 +216,7 @@ export function LinearGenomeMap({
       </div>
 
       <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', marginTop: '1.5rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: 'var(--accent-500)', borderRadius: '2px', opacity: 0.8 }}></div> CDS Region</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: '#3b82f6', borderRadius: '2px', opacity: 0.8 }}></div> CDS Region</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg> Promoter</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '10px', height: '10px', background: '#ef4444', borderRadius: '50%' }}></div> Silent Mutation</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: '#10b981', borderRadius: '2px' }}></div> Intergenic Window</div>
