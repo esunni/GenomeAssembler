@@ -1,13 +1,16 @@
 import { useState, ChangeEvent, DragEvent } from 'react';
-import { CdsRegion } from '../utils/mutationTools';
+import { CdsRegion, SiteAnalysis } from '../utils/mutationTools';
 import { Promoter, parsePromoters, calculateSearchWindows, SearchWindow } from '../utils/searchWindowTools';
+
+import { LinearGenomeMap } from './LinearGenomeMap';
 
 interface SearchWindowFinderProps {
   sequenceLength: number;
   cdsRegions: CdsRegion[];
+  siteAnalyses: SiteAnalysis[];
 }
 
-export function SearchWindowFinder({ sequenceLength, cdsRegions }: SearchWindowFinderProps) {
+export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses }: SearchWindowFinderProps) {
   const [promoterFileName, setPromoterFileName] = useState('');
   const [promoters, setPromoters] = useState<Promoter[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -15,6 +18,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions }: SearchWindowF
   const [maxFragmentLength, setMaxFragmentLength] = useState(1800);
   const [promoterFirst, setPromoterFirst] = useState(false);
   const [orfConservation, setOrfConservation] = useState(false);
+  const [cutAtSilentMutations, setCutAtSilentMutations] = useState(false);
 
   const [searchWindows, setSearchWindows] = useState<SearchWindow[] | null>(null);
 
@@ -41,9 +45,12 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions }: SearchWindowF
   };
 
   const handleFindWindows = () => {
+    const mutationSites = siteAnalyses.map(site => site.sitePosition);
     const windows = calculateSearchWindows(sequenceLength, maxFragmentLength, cdsRegions, promoters, {
       promoterFirst,
-      orfConservation
+      orfConservation,
+      cutAtSilentMutations,
+      mutationSites
     });
     setSearchWindows(windows);
   };
@@ -124,6 +131,19 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions }: SearchWindowF
             ORF-conservation option
           </label>
           <p className="muted" style={{ margin: '-0.5rem 0 0 2.5rem', fontSize: '0.8rem' }}>Cut fragments in intergenic region if possible.</p>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+            <div className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={cutAtSilentMutations}
+                onChange={(e) => setCutAtSilentMutations(e.target.checked)}
+              />
+              <span className="toggle-slider"></span>
+            </div>
+            Cut at silent mutation sites
+          </label>
+          <p className="muted" style={{ margin: '-0.5rem 0 0 2.5rem', fontSize: '0.8rem' }}>Set search window on silent mutation if fragment length &ge; 800bp.</p>
         </div>
       </div>
 
@@ -174,10 +194,12 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions }: SearchWindowF
                         <span className="chip" style={{ 
                           background: win.reason === 'promoter' ? 'var(--accent-600)' 
                                     : win.reason === 'intergenic' ? '#10b981' 
+                                    : win.reason === 'silent_mutation' ? '#8b5cf6'
                                     : 'var(--muted)' 
                         }}>
                           {win.reason === 'promoter' ? 'Promoter' 
                          : win.reason === 'intergenic' ? 'Intergenic' 
+                         : win.reason === 'silent_mutation' ? 'Silent Mutation'
                          : 'Max Length'}
                         </span>
                       </td>
@@ -196,7 +218,6 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions }: SearchWindowF
             </h4>
             <p style={{ margin: '0 0 1rem', lineHeight: '1.5' }}>
               Use these recommended 30bp windows to design your actual cut sites. 
-              Goto NEBridge SplitSet Tool?
             </p>
             <a 
               href="https://ligasefidelity.neb.com/splitset/run.cgi" 
@@ -208,6 +229,14 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions }: SearchWindowF
               Open NEBridge SplitSet
             </a>
           </div>
+          
+          <LinearGenomeMap 
+            sequenceLength={sequenceLength}
+            cdsRegions={cdsRegions}
+            promoters={promoters}
+            searchWindows={searchWindows}
+            siteAnalyses={siteAnalyses}
+          />
         </div>
       )}
     </section>

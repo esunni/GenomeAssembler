@@ -270,33 +270,13 @@ export function recommendSilentMutations(
           const testWindow = testWindowCodons.map(c => c.codon).join('');
           
           let broken = false;
-          if (analysis.strand === '+') {
-            if (!testWindow.toUpperCase().includes(analysis.matchSequence.toUpperCase())) {
-              broken = true;
-            }
-          } else {
-            // For reverse strand, we need to check if the reverse complement of testWindow contains the motif
-            // Actually, matchSequence is ALWAYS the forward sequence the enzyme recognizes (e.g. GGTCTC). 
-            // If the site was on the minus strand, the genome contains GAGACC (the reverse complement).
-            // Our testWindow is built from the genome forward strand.
-            // So if strand is '-', we just check if testWindow contains the reverse complement of the matchSequence.
-            const rcMap: Record<string, string> = {A:'T', T:'A', C:'G', G:'C', a:'t', t:'a', c:'g', g:'c'};
-            const rc = analysis.matchSequence.split('').reverse().map(b => rcMap[b] || b).join('');
-            if (!testWindow.toUpperCase().includes(rc.toUpperCase())) {
-              broken = true;
-            }
+          if (!testWindow.toUpperCase().includes(analysis.matchSequence.toUpperCase())) {
+            broken = true;
           }
 
           if (broken) {
             // Find where the restriction site was in origWindow
-            let siteIndexInWindow = -1;
-            if (analysis.strand === '+') {
-              siteIndexInWindow = origWindow.toUpperCase().indexOf(analysis.matchSequence.toUpperCase());
-            } else {
-              const rcMap: Record<string, string> = {A:'T', T:'A', C:'G', G:'C', a:'t', t:'a', c:'g', g:'c'};
-              const rc = analysis.matchSequence.split('').reverse().map(b => rcMap[b] || b).join('');
-              siteIndexInWindow = origWindow.toUpperCase().indexOf(rc.toUpperCase());
-            }
+            let siteIndexInWindow = origWindow.toUpperCase().indexOf(analysis.matchSequence.toUpperCase());
             
             if (siteIndexInWindow !== -1) {
               const newSiteSequence = testWindow.substring(siteIndexInWindow, siteIndexInWindow + analysis.matchSequence.length);
@@ -330,13 +310,6 @@ export function applyMutations(
       // We do a case-insensitive check because matchSequence might be upper and genome lower (or vice-versa)
       if (originalAtPos.toUpperCase() === mut.original.toUpperCase()) {
         mutatedSeq = mutatedSeq.substring(0, pos) + mut.mutated + mutatedSeq.substring(pos + mut.original.length);
-      } else {
-        // If it was on the reverse strand, the actual genome sequence there is the reverse complement of matchSequence
-        const rcMap: Record<string, string> = {A:'T', T:'A', C:'G', G:'C', a:'t', t:'a', c:'g', g:'c'};
-        const rc = mut.original.split('').reverse().map(b => rcMap[b] || b).join('');
-        if (originalAtPos.toUpperCase() === rc.toUpperCase()) {
-          mutatedSeq = mutatedSeq.substring(0, pos) + mut.mutated + mutatedSeq.substring(pos + mut.original.length);
-        }
       }
     } else {
       // Handles wrapping around the 0-index origin
@@ -345,12 +318,6 @@ export function applyMutations(
       
       if (originalAtPos.toUpperCase() === mut.original.toUpperCase()) {
         mutatedSeq = mutatedSeq.substring(overflow, pos) + mut.mutated;
-      } else {
-        const rcMap: Record<string, string> = {A:'T', T:'A', C:'G', G:'C', a:'t', t:'a', c:'g', g:'c'};
-        const rc = mut.original.split('').reverse().map(b => rcMap[b] || b).join('');
-        if (originalAtPos.toUpperCase() === rc.toUpperCase()) {
-          mutatedSeq = mutatedSeq.substring(overflow, pos) + mut.mutated;
-        }
       }
     }
   }

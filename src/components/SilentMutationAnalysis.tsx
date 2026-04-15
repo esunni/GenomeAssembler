@@ -16,9 +16,10 @@ interface SilentMutationAnalysisProps {
   uploadedGenome: ParsedCircularFasta;
   detectedSites: EnzymeSite[];
   onCdsRegionsChange?: (regions: CdsRegion[]) => void;
+  onSiteAnalysesChange?: (analyses: SiteAnalysis[]) => void;
 }
 
-export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsRegionsChange }: SilentMutationAnalysisProps) {
+export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsRegionsChange, onSiteAnalysesChange }: SilentMutationAnalysisProps) {
   const [phastestFileName, setPhastestFileName] = useState<string>('');
   const [codonFileName, setCodonFileName] = useState<string>('E.coli_codon_usage_table.csv (Default)');
   const [useCustomCodonTable, setUseCustomCodonTable] = useState(false);
@@ -41,8 +42,9 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
       }));
       
       setSiteAnalyses(analysesWithSuggestions);
+      if (onSiteAnalysesChange) onSiteAnalysesChange(analysesWithSuggestions);
     }
-  }, [cdsRegions, codonUsage, detectedSites, uploadedGenome.sequence]);
+  }, [cdsRegions, codonUsage, detectedSites, uploadedGenome.sequence, onSiteAnalysesChange]);
 
   const handlePhastestFile = async (file: File) => {
     const text = await file.text();
@@ -90,37 +92,36 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
   };
 
   const handleCustomMutationChange = (sitePosition: number, value: string) => {
-    setSiteAnalyses((prev) =>
-      prev.map((site) =>
-        site.sitePosition === sitePosition ? { ...site, userMutation: value } : site
-      )
+    const updated = siteAnalyses.map((site) =>
+      site.sitePosition === sitePosition ? { ...site, userMutation: value } : site
     );
+    setSiteAnalyses(updated);
+    if (onSiteAnalysesChange) onSiteAnalysesChange(updated);
   };
 
+  const [showWarning, setShowWarning] = useState(false);
+
   const handleDownloadFasta = () => {
+    // Check if there are any sites missing mutations
+    const missingMutation = siteAnalyses.some(
+      (site) => !site.userMutation && !site.suggestedMutation
+    );
+
+    if (missingMutation) {
+      setShowWarning(true);
+      return;
+    }
+
     const mutationsToApply = siteAnalyses.map(site => {
       // Priority: User's typed mutation, otherwise Suggested mutation, otherwise original sequence.
       const mutated = site.userMutation !== undefined ? site.userMutation : (site.suggestedMutation || site.matchSequence);
       
       // The mutated string must match the length of the original motif string to apply cleanly.
       if (mutated && mutated.length === site.matchSequence.length && mutated.toUpperCase() !== site.matchSequence.toUpperCase()) {
-        // If the site is on the reverse strand, the actual genome sequence contains the reverse complement
-        // But our user interface always asks them to mutate the *matchSequence* exactly as shown on the screen!
-        // To properly patch the FASTA, we must check the strand. If strand is '-', the genome contains the reverse complement.
-        // So the mutation to patch into the genome must ALSO be reverse complemented!
-        let genomeOriginal = site.matchSequence.toUpperCase();
-        let genomeMutated = mutated.toUpperCase();
-
-        if (site.strand === '-') {
-          const rcMap: Record<string, string> = {A:'T', T:'A', C:'G', G:'C', a:'t', t:'a', c:'g', g:'c'};
-          genomeOriginal = genomeOriginal.split('').reverse().map(b => rcMap[b] || b).join('');
-          genomeMutated = genomeMutated.split('').reverse().map(b => rcMap[b] || b).join('');
-        }
-
         return {
           position: site.sitePosition,
-          original: genomeOriginal,
-          mutated: genomeMutated
+          original: site.matchSequence.toUpperCase(),
+          mutated: mutated.toUpperCase()
         };
       }
       return null;
@@ -300,11 +301,6 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                         (() => {
                           const joinedCodons = site.contextCodons.map(c => c.codon).join('');
                           let matchIdx = joinedCodons.toUpperCase().indexOf(site.matchSequence.toUpperCase());
-                          if (matchIdx === -1) {
-                            const rcMap: Record<string, string> = {A:'T', T:'A', C:'G', G:'C', a:'t', t:'a', c:'g', g:'c'};
-                            const rc = site.matchSequence.split('').reverse().map(b => rcMap[b] || b).join('');
-                            matchIdx = joinedCodons.toUpperCase().indexOf(rc.toUpperCase());
-                          }
                           const matchLen = site.matchSequence.length;
 
                           let globalCharIdx = 0;
@@ -360,6 +356,37 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {showWarning && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'var(--surface)',
+            padding: '2rem',
+            borderRadius: '8px',
+            maxWidth: '400px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ marginTop: 0, color: 'var(--accent-700)' }}>Missing Custom Mutations</h3>
+            <p>Cannot download because some sites have no suggested mutation (e.g. they are in an intergenic region) and no custom mutation was provided.</p>
+            <p>Please enter a custom mutation for these sites to break the restriction enzyme sequence.</p>
+            <button 
+              onClick={() => setShowWarning(false)}
+              className="primary-cta"
+              style={{ width: '100%', marginTop: '1rem' }}
+            >
+              OK
+            </button>
           </div>
         </div>
       )}

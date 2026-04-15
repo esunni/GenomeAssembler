@@ -4,7 +4,7 @@ import { CircularGenomeMap } from './CircularGenomeMap';
 import { SilentMutationAnalysis } from './SilentMutationAnalysis';
 import { SearchWindowFinder } from './SearchWindowFinder';
 import { ENZYMES, findCircularEnzymeSites, parseSingleCircularFasta, type ParsedCircularFasta } from '../utils/designTools';
-import { CdsRegion } from '../utils/mutationTools';
+import { CdsRegion, SiteAnalysis } from '../utils/mutationTools';
 
 interface DesignPageProps {
   onOpenJanus: () => void;
@@ -17,6 +17,7 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [cdsRegions, setCdsRegions] = useState<CdsRegion[]>([]);
+  const [siteAnalyses, setSiteAnalyses] = useState<SiteAnalysis[]>([]);
 
   const selectedEnzyme = useMemo(
     () => ENZYMES.find((enzyme) => enzyme.id === selectedEnzymeId) ?? ENZYMES[0],
@@ -202,11 +203,13 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
             uploadedGenome={uploadedGenome} 
             detectedSites={detectedSites}
             onCdsRegionsChange={setCdsRegions}
+            onSiteAnalysesChange={setSiteAnalyses}
           />
           
           <SearchWindowFinder 
             sequenceLength={uploadedGenome.length} 
             cdsRegions={cdsRegions} 
+            siteAnalyses={siteAnalyses}
           />
         </>
       )}
