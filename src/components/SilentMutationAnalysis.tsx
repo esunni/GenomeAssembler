@@ -114,7 +114,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
 
     const mutationsToApply = siteAnalyses.map(site => {
       // Priority: User's typed mutation, otherwise Suggested mutation, otherwise original sequence.
-      const mutated = site.userMutation !== undefined ? site.userMutation : (site.suggestedMutation || site.matchSequence);
+      const mutated = site.userMutation ? site.userMutation : (site.suggestedMutation || site.matchSequence);
       
       // The mutated string must match the length of the original motif string to apply cleanly.
       if (mutated && mutated.length === site.matchSequence.length && mutated.toUpperCase() !== site.matchSequence.toUpperCase()) {
@@ -377,9 +377,9 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
             maxWidth: '400px',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }}>
-            <h3 style={{ marginTop: 0, color: 'var(--accent-700)' }}>Missing Custom Mutations</h3>
-            <p>Cannot download because some sites have no suggested mutation (e.g. they are in an intergenic region) and no custom mutation was provided.</p>
-            <p>Please enter a custom mutation for these sites to break the restriction enzyme sequence.</p>
+            <h3 style={{ marginTop: 0, color: 'var(--accent-700)' }}>Missing Mutations</h3>
+            <p>Cannot download FASTA: some intergenic sites lack an automated suggestion.</p>
+            <p>Please enter a custom mutation for these intergenic sites to break the restriction enzyme sequence.</p>
             <button 
               onClick={() => setShowWarning(false)}
               className="primary-cta"

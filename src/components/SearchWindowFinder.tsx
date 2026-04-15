@@ -171,6 +171,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses }:
                   <th>Window Size</th>
                   <th>Reason</th>
                   <th>Predicted Fragment Length</th>
+                  <th>Mutations in Fragment</th>
                 </tr>
               </thead>
               <tbody>
@@ -184,6 +185,19 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses }:
                   if (fragLen <= 0) {
                     fragLen += sequenceLength;
                   }
+
+                  // Find mutations inside the predicted fragment
+                  const fragStart = win.start;
+                  const fragEnd = nextWin.start - 1 < 0 ? sequenceLength - 1 : nextWin.start - 1;
+                  
+                  const fragMutations = siteAnalyses.filter(site => {
+                    const pos = site.sitePosition;
+                    if (fragStart <= fragEnd) {
+                      return pos >= fragStart && pos <= fragEnd;
+                    } else {
+                      return pos >= fragStart || pos <= fragEnd; // Wrap-around case
+                    }
+                  });
 
                   return (
                     <tr key={idx}>
@@ -204,6 +218,18 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses }:
                         </span>
                       </td>
                       <td style={{ fontWeight: 600 }}>~ {fragLen} bp</td>
+                      <td>
+                        {fragMutations.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontWeight: 600, color: '#ef4444' }}>{fragMutations.length} site(s)</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
+                              Pos: {fragMutations.map(m => m.sitePosition).join(', ')}
+                            </span>
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--muted-foreground)' }}>None</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
