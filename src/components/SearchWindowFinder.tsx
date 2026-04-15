@@ -17,11 +17,13 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
   const [isDragActive, setIsDragActive] = useState(false);
 
   const [maxFragmentLength, setMaxFragmentLength] = useState(1800);
+  const [maxFragmentCount, setMaxFragmentCount] = useState(12);
   const [promoterFirst, setPromoterFirst] = useState(false);
   const [orfConservation, setOrfConservation] = useState(false);
   const [cutAtSilentMutations, setCutAtSilentMutations] = useState(false);
 
   const [searchWindows, setSearchWindows] = useState<SearchWindow[] | null>(null);
+  const [showWarning, setShowWarning] = useState(false);
 
   const handlePromoterFile = async (file: File) => {
     const text = await file.text();
@@ -46,13 +48,19 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
   };
 
   const handleFindWindows = () => {
+    if (maxFragmentLength * maxFragmentCount < sequenceLength) {
+      setShowWarning(true);
+      return;
+    }
+
     const mutationSites = siteAnalyses.map(site => site.sitePosition);
     const windows = calculateSearchWindows(sequenceLength, maxFragmentLength, cdsRegions, promoters, {
       promoterFirst,
       orfConservation,
       cutAtSilentMutations,
       mutationSites,
-      isLinear
+      isLinear,
+      maxFragmentCount
     });
     setSearchWindows(windows);
   };
@@ -66,38 +74,41 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
         </p>
       </div>
 
-      <div className="design-controls" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-        <label
-          className={`design-upload-zone${isDragActive ? ' is-drag-active' : ''}`}
-          onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
-          onDragEnter={(e) => { e.preventDefault(); setIsDragActive(true); }}
-          onDragLeave={(e) => {
-            if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
-            setIsDragActive(false);
-          }}
-          onDrop={handleDrop}
-        >
-          <input
-            aria-label="Upload promoter info"
-            className="design-file-input"
-            type="file"
-            accept=".txt,.csv,text/plain"
-            onChange={handleUpload}
-          />
-          {promoterFileName ? (
-            <span className="design-upload-file">
-              <svg className="design-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"/><path d="M14 2V8H20"/></svg>
-              {promoterFileName} ({promoters.length} found)
-            </span>
-          ) : (
-            <span className="design-upload-placeholder">
-              <svg className="design-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 16V4M12 4L8 8M12 4L16 8"/><path d="M3 15V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V15"/></svg>
-              Drop Promoter info file here
-            </span>
-          )}
-        </label>
+      <div className="design-controls" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none', display: 'grid', gridTemplateColumns: 'minmax(250px, 1fr) minmax(200px, 1fr) minmax(280px, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <label
+            className={`design-upload-zone${isDragActive ? ' is-drag-active' : ''}`}
+            style={{ minHeight: '140px', margin: 0 }}
+            onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
+            onDragEnter={(e) => { e.preventDefault(); setIsDragActive(true); }}
+            onDragLeave={(e) => {
+              if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+              setIsDragActive(false);
+            }}
+            onDrop={handleDrop}
+          >
+            <input
+              aria-label="Upload promoter info"
+              className="design-file-input"
+              type="file"
+              accept=".txt,.csv,text/plain"
+              onChange={handleUpload}
+            />
+            {promoterFileName ? (
+              <span className="design-upload-file">
+                <svg className="design-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"/><path d="M14 2V8H20"/></svg>
+                {promoterFileName} ({promoters.length} found)
+              </span>
+            ) : (
+              <span className="design-upload-placeholder">
+                <svg className="design-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 16V4M12 4L8 8M12 4L16 8"/><path d="M3 15V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V15"/></svg>
+                Drop Promoter info file here
+              </span>
+            )}
+          </label>
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '300px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <label className="design-select-field">
             <span>Max fragment length (bp)</span>
             <input 
@@ -107,45 +118,63 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
               style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--line-strong)' }}
             />
           </label>
-          
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
-            <div className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={promoterFirst}
-                onChange={(e) => setPromoterFirst(e.target.checked)}
-              />
-              <span className="toggle-slider"></span>
-            </div>
-            Promoter-first option
-          </label>
-          <p className="muted" style={{ margin: '-0.5rem 0 0 2.5rem', fontSize: '0.8rem' }}>Find the range in the promoter region if possible.</p>
-          
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
-            <div className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={orfConservation}
-                onChange={(e) => setOrfConservation(e.target.checked)}
-              />
-              <span className="toggle-slider"></span>
-            </div>
-            ORF-conservation option
-          </label>
-          <p className="muted" style={{ margin: '-0.5rem 0 0 2.5rem', fontSize: '0.8rem' }}>Cut fragments in intergenic region if possible.</p>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
-            <div className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={cutAtSilentMutations}
-                onChange={(e) => setCutAtSilentMutations(e.target.checked)}
-              />
-              <span className="toggle-slider"></span>
-            </div>
-            Cut at silent mutation sites
+          <label className="design-select-field">
+            <span>Max fragment count</span>
+            <input 
+              type="number" 
+              value={maxFragmentCount} 
+              onChange={(e) => setMaxFragmentCount(Number(e.target.value))}
+              style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--line-strong)' }}
+            />
           </label>
-          <p className="muted" style={{ margin: '-0.5rem 0 0 2.5rem', fontSize: '0.8rem' }}>Set search window on silent mutation if fragment length &ge; 800bp.</p>
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+              <div className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={promoterFirst}
+                  onChange={(e) => setPromoterFirst(e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+              </div>
+              Promoter-first option
+            </label>
+            <p className="muted" style={{ margin: '0.25rem 0 0 2.5rem', fontSize: '0.8rem' }}>Find the range in the promoter region if possible.</p>
+          </div>
+          
+          <div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+              <div className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={orfConservation}
+                  onChange={(e) => setOrfConservation(e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+              </div>
+              ORF-conservation option
+            </label>
+            <p className="muted" style={{ margin: '0.25rem 0 0 2.5rem', fontSize: '0.8rem' }}>Cut fragments in intergenic region if possible.</p>
+          </div>
+
+          <div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+              <div className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={cutAtSilentMutations}
+                  onChange={(e) => setCutAtSilentMutations(e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+              </div>
+              Cut at silent mutation sites
+            </label>
+            <p className="muted" style={{ margin: '0.25rem 0 0 2.5rem', fontSize: '0.8rem' }}>Set search window on silent mutation if fragment length &ge; 800bp.</p>
+          </div>
         </div>
       </div>
 
@@ -293,6 +322,36 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
             siteAnalyses={siteAnalyses}
             isLinear={isLinear}
           />
+        </div>
+      )}
+      {showWarning && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'var(--surface)',
+            padding: '2rem',
+            borderRadius: '8px',
+            maxWidth: '400px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ marginTop: 0, color: 'var(--accent-700)' }}>Impossible Configuration</h3>
+            <p>Cannot find search windows: the product of Max Fragment Length ({maxFragmentLength}) and Max Fragment Count ({maxFragmentCount}) is smaller than the total genome length ({sequenceLength} bp).</p>
+            <p>Please increase the max length or max count to safely cover the entire sequence.</p>
+            <button 
+              onClick={() => setShowWarning(false)}
+              className="primary-cta"
+              style={{ width: '100%', marginTop: '1rem' }}
+            >
+              OK
+            </button>
+          </div>
         </div>
       )}
     </section>

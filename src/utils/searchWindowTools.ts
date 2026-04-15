@@ -27,7 +27,7 @@ export function calculateSearchWindows(
   maxFragmentLength: number,
   cdsRegions: CdsRegion[],
   promoters: Promoter[],
-  options: { promoterFirst: boolean; orfConservation: boolean; cutAtSilentMutations?: boolean; mutationSites?: number[], isLinear?: boolean }
+  options: { promoterFirst: boolean; orfConservation: boolean; cutAtSilentMutations?: boolean; mutationSites?: number[], isLinear?: boolean, maxFragmentCount?: number }
 ): SearchWindow[] {
   const windows: SearchWindow[] = [];
   const WINDOW_SIZE = 30;
@@ -92,14 +92,23 @@ export function calculateSearchWindows(
     if (remaining <= maxFragmentLength) {
       break; 
     }
+
+    const currentWindowCount = windows.length;
+    const allowedRemainingWindows = options.maxFragmentCount ? options.maxFragmentCount - currentWindowCount : Infinity;
     
     let nextCut = currentCut + maxFragmentLength;
     let found = false;
     let reason: SearchWindow['reason'] = 'max_length';
     
     // Condition: Fragment >= 800bp means new cut must be >= currentCut + 800
-    // We search backwards from nextCut to currentCut + 800
-    const minCut = currentCut + 800;
+    // Also, we must guarantee we can cover the remaining sequence with the allowed remaining windows.
+    // Minimum fragment size to reach the end in `allowedRemainingWindows` steps:
+    // nextCut >= currentCut + minRequiredStep
+    const minRequiredStep = allowedRemainingWindows > 0 ? Math.ceil(remaining / allowedRemainingWindows) : 800;
+    
+    // We enforce 800bp minimum safety limit. If minRequiredStep > maxFragmentLength, it means it's mathematically impossible
+    // to reach the end in allowedRemainingWindows with this maxFragmentLength. The component should prevent this state.
+    const minCut = Math.max(currentCut + 800, currentCut + minRequiredStep);
 
     if (options.cutAtSilentMutations) {
       for (let pos = nextCut; pos >= minCut; pos--) {
@@ -150,6 +159,15 @@ export function calculateSearchWindows(
           break;
         }
       }
+    }
+    
+    // If not found yet, and we HAVE to make a cut to satisfy maxFragmentCount constraint
+    // (i.e. nextCut was forced back to minCut, and minCut > currentCut + 800)
+    // we may need to override ORF conservation to ensure mathematically possible division
+    if (!found && minRequiredStep > 800) {
+      nextCut = minCut;
+      reason = 'max_length';
+      found = true;
     }
     
     const actualCutStart = nextCut > sequenceLength && !options.isLinear ? nextCut - sequenceLength : nextCut;
