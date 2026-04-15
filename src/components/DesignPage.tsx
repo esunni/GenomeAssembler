@@ -93,8 +93,8 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
         </div>
       </div>
 
-      <div className="design-controls">
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600, width: '100%', marginBottom: '1rem' }}>
+      <div style={{ marginBottom: '1rem' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
           <div className="toggle-switch">
             <input
               type="checkbox"
@@ -105,7 +105,9 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
           </div>
           Linear Genome
         </label>
-        
+      </div>
+
+      <div className="design-controls">
         <label
           className={`design-upload-zone${isDragActive ? ' is-drag-active' : ''}`}
           onDragOver={(event) => {
@@ -175,18 +177,12 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
 
           <div className="design-map-layout">
             <div className="design-map-panel">
-              {isLinear ? (
-                <div style={{ height: '360px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <p className="muted">Linear sequence uploaded. See Linear Map below.</p>
-                </div>
-              ) : (
-                <CircularGenomeMap
-                  sequenceName={uploadedGenome.name}
-                  sequenceLength={uploadedGenome.length}
-                  enzymeName={selectedEnzyme.name}
-                  sites={detectedSites}
-                />
-              )}
+              <CircularGenomeMap
+                sequenceName={uploadedGenome.name}
+                sequenceLength={uploadedGenome.length}
+                enzymeName={selectedEnzyme.name}
+                sites={detectedSites}
+              />
             </div>
 
             <div className="design-results-panel">

@@ -17,7 +17,8 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
   const [isDragActive, setIsDragActive] = useState(false);
 
   const [maxFragmentLength, setMaxFragmentLength] = useState(1800);
-  const [maxFragmentCount, setMaxFragmentCount] = useState(12);
+  const [useMaxFragmentCount, setUseMaxFragmentCount] = useState(false);
+  const [maxFragmentCount, setMaxFragmentCount] = useState(25);
   const [promoterFirst, setPromoterFirst] = useState(false);
   const [orfConservation, setOrfConservation] = useState(false);
   const [cutAtSilentMutations, setCutAtSilentMutations] = useState(false);
@@ -48,7 +49,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
   };
 
   const handleFindWindows = () => {
-    if (maxFragmentLength * maxFragmentCount < sequenceLength) {
+    if (useMaxFragmentCount && maxFragmentLength * maxFragmentCount < sequenceLength) {
       setShowWarning(true);
       return;
     }
@@ -60,7 +61,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
       cutAtSilentMutations,
       mutationSites,
       isLinear,
-      maxFragmentCount
+      maxFragmentCount: useMaxFragmentCount ? maxFragmentCount : undefined
     });
     setSearchWindows(windows);
   };
@@ -119,15 +120,32 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
             />
           </label>
 
-          <label className="design-select-field">
-            <span>Max fragment count</span>
+          <div className="design-select-field" style={{ gap: '0.5rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+              <div className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={useMaxFragmentCount}
+                  onChange={(e) => setUseMaxFragmentCount(e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+              </div>
+              Max fragment count
+            </label>
             <input 
               type="number" 
               value={maxFragmentCount} 
+              disabled={!useMaxFragmentCount}
               onChange={(e) => setMaxFragmentCount(Number(e.target.value))}
-              style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--line-strong)' }}
+              style={{ 
+                padding: '0.5rem', 
+                borderRadius: '4px', 
+                border: '1px solid var(--line-strong)',
+                opacity: useMaxFragmentCount ? 1 : 0.5,
+                pointerEvents: useMaxFragmentCount ? 'auto' : 'none'
+              }}
             />
-          </label>
+          </div>
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -143,7 +161,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
               </div>
               Promoter-first option
             </label>
-            <p className="muted" style={{ margin: '0.25rem 0 0 2.5rem', fontSize: '0.8rem' }}>Find the range in the promoter region if possible.</p>
+            <p className="muted" style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>Find the range in the promoter region if possible.</p>
           </div>
           
           <div>
@@ -158,7 +176,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
               </div>
               ORF-conservation option
             </label>
-            <p className="muted" style={{ margin: '0.25rem 0 0 2.5rem', fontSize: '0.8rem' }}>Cut fragments in intergenic region if possible.</p>
+            <p className="muted" style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>Cut fragments in intergenic region if possible.</p>
           </div>
 
           <div>
@@ -173,7 +191,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
               </div>
               Cut at silent mutation sites
             </label>
-            <p className="muted" style={{ margin: '0.25rem 0 0 2.5rem', fontSize: '0.8rem' }}>Set search window on silent mutation if fragment length &ge; 800bp.</p>
+            <p className="muted" style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>Set search window on silent mutation if fragment length &ge; 800bp.</p>
           </div>
         </div>
       </div>
@@ -342,8 +360,8 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }}>
             <h3 style={{ marginTop: 0, color: 'var(--accent-700)' }}>Impossible Configuration</h3>
-            <p>Cannot find search windows: the product of Max Fragment Length ({maxFragmentLength}) and Max Fragment Count ({maxFragmentCount}) is smaller than the total genome length ({sequenceLength} bp).</p>
-            <p>Please increase the max length or max count to safely cover the entire sequence.</p>
+            <p>Cannot satisfy constraints: max length ({maxFragmentLength}bp) &times; max count ({maxFragmentCount}) &lt; total genome length ({sequenceLength}bp).</p>
+            <p>Please increase the max length or max count.</p>
             <button 
               onClick={() => setShowWarning(false)}
               className="primary-cta"
