@@ -121,7 +121,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
           </label>
 
           <div className="design-select-field" style={{ gap: '0.5rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600, marginBottom: '0.5rem' }}>
               <div className="toggle-switch">
                 <input
                   type="checkbox"
@@ -149,8 +149,8 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '2px' }}>
               <div className="toggle-switch">
                 <input
                   type="checkbox"
@@ -159,13 +159,15 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                 />
                 <span className="toggle-slider"></span>
               </div>
-              Promoter-first option
             </label>
-            <p className="muted" style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>Find the range in the promoter region if possible.</p>
+            <div>
+              <span style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Promoter-first option</span>
+              <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>Find the range in the promoter region if possible.</p>
+            </div>
           </div>
           
-          <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '2px' }}>
               <div className="toggle-switch">
                 <input
                   type="checkbox"
@@ -174,13 +176,15 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                 />
                 <span className="toggle-slider"></span>
               </div>
-              ORF-conservation option
             </label>
-            <p className="muted" style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>Cut fragments in intergenic region if possible.</p>
+            <div>
+              <span style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>ORF-conservation option</span>
+              <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>Cut fragments in intergenic region if possible.</p>
+            </div>
           </div>
 
-          <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '2px' }}>
               <div className="toggle-switch">
                 <input
                   type="checkbox"
@@ -189,9 +193,11 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                 />
                 <span className="toggle-slider"></span>
               </div>
-              Cut at silent mutation sites
             </label>
-            <p className="muted" style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>Set search window on silent mutation if fragment length &ge; 800bp.</p>
+            <div>
+              <span style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Cut at silent mutation sites</span>
+              <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>Set search window on silent mutation if fragment length &ge; 800bp.</p>
+            </div>
           </div>
         </div>
       </div>

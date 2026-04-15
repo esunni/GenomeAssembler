@@ -93,21 +93,21 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
         </div>
       </div>
 
-      <div style={{ marginBottom: '1rem' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
-          <div className="toggle-switch">
-            <input
-              type="checkbox"
-              checked={isLinear}
-              onChange={(e) => setIsLinear(e.target.checked)}
-            />
-            <span className="toggle-slider"></span>
-          </div>
-          Linear Genome
-        </label>
-      </div>
-
       <div className="design-controls">
+        <div style={{ gridColumn: '1 / -1', marginBottom: '0.5rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+            <div className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={isLinear}
+                onChange={(e) => setIsLinear(e.target.checked)}
+              />
+              <span className="toggle-slider"></span>
+            </div>
+            Linear Genome
+          </label>
+        </div>
+
         <label
           className={`design-upload-zone${isDragActive ? ' is-drag-active' : ''}`}
           onDragOver={(event) => {

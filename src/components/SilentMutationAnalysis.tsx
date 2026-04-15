@@ -32,7 +32,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
   const [siteAnalyses, setSiteAnalyses] = useState<SiteAnalysis[]>([]);
 
   useEffect(() => {
-    if (cdsRegions.length > 0 && codonUsage.size > 0 && detectedSites.length > 0) {
+    if (codonUsage.size > 0 && detectedSites.length > 0) {
       const analyses = analyzeEnzymeSites(detectedSites, cdsRegions, uploadedGenome.sequence, isLinear);
       
       // Add suggested mutations
@@ -45,7 +45,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
       setSiteAnalyses(analysesWithSuggestions);
       if (onSiteAnalysesChange) onSiteAnalysesChange(analysesWithSuggestions);
     }
-  }, [cdsRegions, codonUsage, detectedSites, uploadedGenome.sequence, onSiteAnalysesChange]);
+  }, [cdsRegions, codonUsage, detectedSites, uploadedGenome.sequence, onSiteAnalysesChange, isLinear]);
 
   const handlePhastestFile = async (file: File) => {
     const text = await file.text();
