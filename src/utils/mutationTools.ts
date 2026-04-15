@@ -79,7 +79,7 @@ export function parsePhastestDetails(txtContent: string): CdsRegion[] {
     const match = line.match(/^(\d+)\.\.(\d+)\s+(.*?)\s+/);
     if (match) {
       cdsRegions.push({
-        id: idCounter++,
+        id: 0,
         start: parseInt(match[1], 10),
         end: parseInt(match[2], 10),
         strand: '+',
@@ -91,7 +91,7 @@ export function parsePhastestDetails(txtContent: string): CdsRegion[] {
     const compMatch = line.match(/^complement\((\d+)\.\.(\d+)\)\s+(.*?)\s+/);
     if (compMatch) {
       cdsRegions.push({
-        id: idCounter++,
+        id: 0,
         start: parseInt(compMatch[1], 10),
         end: parseInt(compMatch[2], 10),
         strand: '-',
@@ -99,6 +99,14 @@ export function parsePhastestDetails(txtContent: string): CdsRegion[] {
       });
     }
   }
+
+  // Sort by start position
+  cdsRegions.sort((a, b) => a.start - b.start);
+
+  // Reassign IDs to be sequential
+  cdsRegions.forEach((cds, index) => {
+    cds.id = index + 1;
+  });
 
   return cdsRegions;
 }
@@ -196,9 +204,9 @@ export function analyzeEnzymeSites(
       }
 
       if (beforeCds && afterCds) {
-        analysis.intergenicLabel = `Between CDS ${beforeCds.id} and CDS ${afterCds.id}`;
+        analysis.intergenicLabel = `CDS ${beforeCds.id} - CDS ${afterCds.id}`;
       } else {
-        analysis.intergenicLabel = 'Intergenic region';
+        analysis.intergenicLabel = '';
       }
 
       // Add context characters for intergenic (no translation)

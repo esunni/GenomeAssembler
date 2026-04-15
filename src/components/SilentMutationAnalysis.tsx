@@ -1,5 +1,6 @@
 import { ChangeEvent, DragEvent, useState, useEffect } from 'react';
 import { ParsedCircularFasta, EnzymeSite } from '../utils/designTools';
+import { defaultCodonUsageCsv } from '../utils/defaultCodonUsage';
 import { 
   parsePhastestDetails, 
   parseCodonUsage, 
@@ -10,12 +11,6 @@ import {
   CdsRegion,
   CodonUsage
 } from '../utils/mutationTools';
-
-const defaultCodonUsageCsv = `codon,aminoAcid,fraction,frequency,number
-GCG,A,0.34,33.70,147363
-GCA,A,0.21,20.30,88753
-GCT,A,0.15,15.30,66896
-GCC,A,0.27,26.10,114081`;
 
 interface SilentMutationAnalysisProps {
   uploadedGenome: ParsedCircularFasta;
@@ -283,9 +278,22 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                   <tr key={site.sitePosition}>
                     <td>{site.sitePosition}</td>
                     <td>
-                      <span className="chip" style={{ background: site.inCds ? 'var(--accent-600)' : 'var(--muted)' }}>
-                        {site.inCds ? `CDS ${site.cdsId}` : site.intergenicLabel || 'Intergenic'}
-                      </span>
+                      {site.inCds ? (
+                        <span className="chip" style={{ background: 'var(--accent-600)' }}>
+                          CDS {site.cdsId}
+                        </span>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                          <span className="chip" style={{ background: 'var(--muted)' }}>
+                            Intergenic
+                          </span>
+                          {site.intergenicLabel && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', whiteSpace: 'nowrap' }}>
+                              {site.intergenicLabel}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td style={{ letterSpacing: '0.05em' }}>
                       {site.contextCodons.length > 0 ? (
