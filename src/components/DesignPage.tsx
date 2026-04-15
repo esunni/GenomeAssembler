@@ -16,6 +16,7 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
   const [selectedFileName, setSelectedFileName] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [isLinear, setIsLinear] = useState(false);
   const [cdsRegions, setCdsRegions] = useState<CdsRegion[]>([]);
   const [siteAnalyses, setSiteAnalyses] = useState<SiteAnalysis[]>([]);
 
@@ -24,8 +25,8 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
     [selectedEnzymeId],
   );
   const detectedSites = useMemo(
-    () => (uploadedGenome && selectedEnzyme ? findCircularEnzymeSites(uploadedGenome.sequence, selectedEnzyme) : []),
-    [selectedEnzyme, uploadedGenome],
+    () => (uploadedGenome && selectedEnzyme ? findCircularEnzymeSites(uploadedGenome.sequence, selectedEnzyme, isLinear) : []),
+    [selectedEnzyme, uploadedGenome, isLinear],
   );
 
   const handleGenomeFile = async (file: File) => {
@@ -93,6 +94,18 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
       </div>
 
       <div className="design-controls">
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600, width: '100%', marginBottom: '1rem' }}>
+          <div className="toggle-switch">
+            <input
+              type="checkbox"
+              checked={isLinear}
+              onChange={(e) => setIsLinear(e.target.checked)}
+            />
+            <span className="toggle-slider"></span>
+          </div>
+          Linear Genome
+        </label>
+        
         <label
           className={`design-upload-zone${isDragActive ? ' is-drag-active' : ''}`}
           onDragOver={(event) => {
@@ -162,12 +175,18 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
 
           <div className="design-map-layout">
             <div className="design-map-panel">
-              <CircularGenomeMap
-                sequenceName={uploadedGenome.name}
-                sequenceLength={uploadedGenome.length}
-                enzymeName={selectedEnzyme.name}
-                sites={detectedSites}
-              />
+              {isLinear ? (
+                <div style={{ height: '360px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <p className="muted">Linear sequence uploaded. See Linear Map below.</p>
+                </div>
+              ) : (
+                <CircularGenomeMap
+                  sequenceName={uploadedGenome.name}
+                  sequenceLength={uploadedGenome.length}
+                  enzymeName={selectedEnzyme.name}
+                  sites={detectedSites}
+                />
+              )}
             </div>
 
             <div className="design-results-panel">
@@ -204,12 +223,14 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
             detectedSites={detectedSites}
             onCdsRegionsChange={setCdsRegions}
             onSiteAnalysesChange={setSiteAnalyses}
+            isLinear={isLinear}
           />
           
           <SearchWindowFinder 
             sequenceLength={uploadedGenome.length} 
             cdsRegions={cdsRegions} 
             siteAnalyses={siteAnalyses}
+            isLinear={isLinear}
           />
         </>
       )}

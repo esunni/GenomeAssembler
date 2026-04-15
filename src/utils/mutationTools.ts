@@ -137,7 +137,8 @@ function getAminoAcid(codon: string): string {
 export function analyzeEnzymeSites(
   sites: EnzymeSite[],
   cdsRegions: CdsRegion[],
-  genomeSequence: string
+  genomeSequence: string,
+  isLinear?: boolean
 ): SiteAnalysis[] {
   return sites.map(site => {
     const siteStart = site.position; // 1-based
@@ -294,7 +295,8 @@ export function recommendSilentMutations(
 
 export function applyMutations(
   genomeSequence: string,
-  mutations: { position: number; original: string; mutated: string }[]
+  mutations: { position: number; original: string; mutated: string }[],
+  isLinear?: boolean
 ): string {
   let mutatedSeq = genomeSequence;
   const sortedMutations = [...mutations].sort((a, b) => b.position - a.position);
@@ -312,6 +314,7 @@ export function applyMutations(
         mutatedSeq = mutatedSeq.substring(0, pos) + mut.mutated + mutatedSeq.substring(pos + mut.original.length);
       }
     } else {
+      if (isLinear) continue; // Out of bounds on linear
       // Handles wrapping around the 0-index origin
       const overflow = (pos + mut.original.length) - mutatedSeq.length;
       originalAtPos = mutatedSeq.substring(pos) + mutatedSeq.substring(0, overflow);

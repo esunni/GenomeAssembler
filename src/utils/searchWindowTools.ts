@@ -27,7 +27,7 @@ export function calculateSearchWindows(
   maxFragmentLength: number,
   cdsRegions: CdsRegion[],
   promoters: Promoter[],
-  options: { promoterFirst: boolean; orfConservation: boolean; cutAtSilentMutations?: boolean; mutationSites?: number[] }
+  options: { promoterFirst: boolean; orfConservation: boolean; cutAtSilentMutations?: boolean; mutationSites?: number[], isLinear?: boolean }
 ): SearchWindow[] {
   const windows: SearchWindow[] = [];
   const WINDOW_SIZE = 30;
@@ -38,48 +38,50 @@ export function calculateSearchWindows(
   let firstCut = 1;
   let firstReason: SearchWindow['reason'] = 'max_length';
   
-  // find first cut in [1, maxFragmentLength]
-  for (let pos = maxFragmentLength; pos >= 1; pos--) {
-    if (options.cutAtSilentMutations) {
-      if (mutations.some(m => {
-        // Place the mutation near the middle of the 30bp window
-        // Allow a small range (10-20 bp into the window) rather than EXACTLY 15.
-        // pos is the window start. Mutation is m.
-        // So we want: pos >= m - 20 && pos <= m - 10
-        if (pos >= m - 20 && pos <= m - 10) return true;
-        // Wrap around cases
-        if (m - 20 <= 0 && pos >= sequenceLength + (m - 20) && pos <= sequenceLength + (m - 10)) return true;
-        // The third wrap-around case: when pos is near the end and wraps around to cover a small m
-        if (pos + 10 > sequenceLength && (m >= (pos + 10) % sequenceLength && m <= (pos + 20) % sequenceLength)) return true;
-        return false;
-      })) {
-        firstCut = pos;
-        firstReason = 'silent_mutation';
-        break;
+  if (!options.isLinear && options.cutAtSilentMutations && mutations.length > 0) {
+    firstCut = Math.max(1, mutations[0] - 15);
+    firstReason = 'silent_mutation';
+  } else {
+    // find first cut in [1, maxFragmentLength]
+    for (let pos = maxFragmentLength; pos >= 1; pos--) {
+      if (options.cutAtSilentMutations) {
+        if (mutations.some(m => {
+          // Place the mutation near the middle of the 30bp window
+          if (pos >= m - 20 && pos <= m - 10) return true;
+          if (options.isLinear) return false;
+          // Wrap around cases
+          if (m - 20 <= 0 && pos >= sequenceLength + (m - 20) && pos <= sequenceLength + (m - 10)) return true;
+          if (pos + 10 > sequenceLength && (m >= (pos + 10) % sequenceLength && m <= (pos + 20) % sequenceLength)) return true;
+          return false;
+        })) {
+          firstCut = pos;
+          firstReason = 'silent_mutation';
+          break;
+        }
       }
     }
-  }
 
-  if (firstCut === 1 && options.promoterFirst) {
-    for (let pos = maxFragmentLength; pos >= 1; pos--) {
-      if (sortedPromoters.some(p => Math.abs(p.position - pos) <= 50)) {
-        firstCut = pos;
-        firstReason = 'promoter';
-        break;
+    if (firstCut === 1 && options.promoterFirst) {
+      for (let pos = maxFragmentLength; pos >= 1; pos--) {
+        if (sortedPromoters.some(p => Math.abs(p.position - pos) <= 50)) {
+          firstCut = pos;
+          firstReason = 'promoter';
+          break;
+        }
       }
     }
-  }
-  if (firstCut === 1 && options.orfConservation) {
-    for (let pos = maxFragmentLength; pos >= 1; pos--) {
-      if (!cdsRegions.some(cds => pos >= cds.start && pos <= cds.end)) {
-        firstCut = pos;
-        firstReason = 'intergenic';
-        break;
+    if (firstCut === 1 && options.orfConservation) {
+      for (let pos = maxFragmentLength; pos >= 1; pos--) {
+        if (!cdsRegions.some(cds => pos >= cds.start && pos <= cds.end)) {
+          firstCut = pos;
+          firstReason = 'intergenic';
+          break;
+        }
       }
     }
   }
   
-  windows.push({ start: firstCut, end: (firstCut + WINDOW_SIZE - 2) % sequenceLength + 1, reason: firstReason });
+  windows.push({ start: firstCut, end: (firstCut + WINDOW_SIZE - 1 > sequenceLength && !options.isLinear) ? (firstCut + WINDOW_SIZE - 2) % sequenceLength + 1 : Math.min(sequenceLength, firstCut + WINDOW_SIZE - 1), reason: firstReason });
   let currentCut = firstCut;
   
   let loopCount = 0;
@@ -101,10 +103,13 @@ export function calculateSearchWindows(
 
     if (options.cutAtSilentMutations) {
       for (let pos = nextCut; pos >= minCut; pos--) {
-        const actualPos = pos > sequenceLength ? pos - sequenceLength : pos;
+        const actualPos = pos > sequenceLength && !options.isLinear ? pos - sequenceLength : pos;
+        if (options.isLinear && pos > sequenceLength) continue;
+        
         if (mutations.some(m => {
           // Center the window around the mutation with some flexibility (10-20 bp into the window)
           if (actualPos >= m - 20 && actualPos <= m - 10) return true;
+          if (options.isLinear) return false;
           
           // Wrap-around cases
           if (m - 20 <= 0 && actualPos >= sequenceLength + (m - 20) && actualPos <= sequenceLength + (m - 10)) return true;
@@ -121,7 +126,9 @@ export function calculateSearchWindows(
     
     if (!found && options.promoterFirst) {
       for (let pos = nextCut; pos >= minCut; pos--) {
-        const actualPos = pos > sequenceLength ? pos - sequenceLength : pos;
+        const actualPos = pos > sequenceLength && !options.isLinear ? pos - sequenceLength : pos;
+        if (options.isLinear && pos > sequenceLength) continue;
+        
         if (sortedPromoters.some(p => Math.abs(p.position - actualPos) <= 50)) {
           nextCut = pos;
           reason = 'promoter';
@@ -133,7 +140,9 @@ export function calculateSearchWindows(
     
     if (!found && options.orfConservation) {
       for (let pos = nextCut; pos >= minCut; pos--) {
-        const actualPos = pos > sequenceLength ? pos - sequenceLength : pos;
+        const actualPos = pos > sequenceLength && !options.isLinear ? pos - sequenceLength : pos;
+        if (options.isLinear && pos > sequenceLength) continue;
+        
         if (!cdsRegions.some(cds => actualPos >= cds.start && actualPos <= cds.end)) {
           nextCut = pos;
           reason = 'intergenic';
@@ -143,10 +152,10 @@ export function calculateSearchWindows(
       }
     }
     
-    const actualCutStart = nextCut > sequenceLength ? nextCut - sequenceLength : nextCut;
+    const actualCutStart = nextCut > sequenceLength && !options.isLinear ? nextCut - sequenceLength : nextCut;
     windows.push({
       start: actualCutStart,
-      end: (actualCutStart + WINDOW_SIZE - 2) % sequenceLength + 1,
+      end: (actualCutStart + WINDOW_SIZE - 1 > sequenceLength && !options.isLinear) ? (actualCutStart + WINDOW_SIZE - 2) % sequenceLength + 1 : Math.min(sequenceLength, actualCutStart + WINDOW_SIZE - 1),
       reason
     });
     

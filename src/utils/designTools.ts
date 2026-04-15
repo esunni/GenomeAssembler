@@ -64,7 +64,10 @@ function reverseComplement(sequence: string): string {
     .join('');
 }
 
-function circularSlice(sequence: string, startIndex: number, length: number): string {
+function sliceSequence(sequence: string, startIndex: number, length: number, isLinear?: boolean): string {
+  if (isLinear) {
+    return sequence.substring(startIndex, startIndex + length);
+  }
   return Array.from({ length }, (_, offset) => sequence[(startIndex + offset) % sequence.length]).join('');
 }
 
@@ -103,15 +106,17 @@ export function parseSingleCircularFasta(content: string): ParsedCircularFasta {
   };
 }
 
-export function findCircularEnzymeSites(sequence: string, enzyme: TypeIisEnzyme): EnzymeSite[] {
+export function findCircularEnzymeSites(sequence: string, enzyme: TypeIisEnzyme, isLinear?: boolean): EnzymeSite[] {
   const normalizedSequence = sequence.toUpperCase();
   const forwardMotif = enzyme.recognitionSite.toUpperCase();
   const reverseMotif = reverseComplement(forwardMotif);
   const motifLength = forwardMotif.length;
   const sites: EnzymeSite[] = [];
 
-  for (let index = 0; index < normalizedSequence.length; index += 1) {
-    const window = circularSlice(normalizedSequence, index, motifLength);
+  const maxIndex = isLinear ? normalizedSequence.length - motifLength : normalizedSequence.length - 1;
+
+  for (let index = 0; index <= maxIndex; index += 1) {
+    const window = sliceSequence(normalizedSequence, index, motifLength, isLinear);
 
     if (window === forwardMotif) {
       sites.push({

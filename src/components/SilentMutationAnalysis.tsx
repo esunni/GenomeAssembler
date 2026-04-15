@@ -17,9 +17,10 @@ interface SilentMutationAnalysisProps {
   detectedSites: EnzymeSite[];
   onCdsRegionsChange?: (regions: CdsRegion[]) => void;
   onSiteAnalysesChange?: (analyses: SiteAnalysis[]) => void;
+  isLinear?: boolean;
 }
 
-export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsRegionsChange, onSiteAnalysesChange }: SilentMutationAnalysisProps) {
+export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsRegionsChange, onSiteAnalysesChange, isLinear }: SilentMutationAnalysisProps) {
   const [phastestFileName, setPhastestFileName] = useState<string>('');
   const [codonFileName, setCodonFileName] = useState<string>('E.coli_codon_usage_table.csv (Default)');
   const [useCustomCodonTable, setUseCustomCodonTable] = useState(false);
@@ -32,7 +33,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
 
   useEffect(() => {
     if (cdsRegions.length > 0 && codonUsage.size > 0 && detectedSites.length > 0) {
-      const analyses = analyzeEnzymeSites(detectedSites, cdsRegions, uploadedGenome.sequence);
+      const analyses = analyzeEnzymeSites(detectedSites, cdsRegions, uploadedGenome.sequence, isLinear);
       
       // Add suggested mutations
       const analysesWithSuggestions = analyses.map(analysis => ({
@@ -127,7 +128,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
       return null;
     }).filter(Boolean) as { position: number; original: string; mutated: string }[];
 
-    const newSequence = applyMutations(uploadedGenome.sequence, mutationsToApply);
+    const newSequence = applyMutations(uploadedGenome.sequence, mutationsToApply, isLinear);
     
     // Create and download FASTA
     const fastaContent = `>${uploadedGenome.name}_mutated\n${newSequence.match(/.{1,80}/g)?.join('\n') || newSequence}`;

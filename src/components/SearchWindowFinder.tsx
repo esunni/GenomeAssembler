@@ -8,9 +8,10 @@ interface SearchWindowFinderProps {
   sequenceLength: number;
   cdsRegions: CdsRegion[];
   siteAnalyses: SiteAnalysis[];
+  isLinear?: boolean;
 }
 
-export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses }: SearchWindowFinderProps) {
+export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, isLinear }: SearchWindowFinderProps) {
   const [promoterFileName, setPromoterFileName] = useState('');
   const [promoters, setPromoters] = useState<Promoter[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -50,7 +51,8 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses }:
       promoterFirst,
       orfConservation,
       cutAtSilentMutations,
-      mutationSites
+      mutationSites,
+      isLinear
     });
     setSearchWindows(windows);
   };
@@ -180,15 +182,29 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses }:
                     ? win.end - win.start + 1 
                     : (sequenceLength - win.start + 1) + win.end;
                     
-                  const nextWin = searchWindows[(idx + 1) % searchWindows.length];
-                  let fragLen = nextWin.start - win.start;
-                  if (fragLen <= 0) {
-                    fragLen += sequenceLength;
+                  let fragLen = 0;
+                  let fragStart = win.start;
+                  let fragEnd = win.end;
+                  
+                  if (idx < searchWindows.length - 1) {
+                    const nextWin = searchWindows[idx + 1];
+                    fragLen = nextWin.start - win.start;
+                    if (fragLen <= 0) fragLen += sequenceLength;
+                    fragEnd = nextWin.start - 1 < 0 ? sequenceLength - 1 : nextWin.start - 1;
+                  } else {
+                    // Last window
+                    if (isLinear) {
+                      fragLen = sequenceLength - win.start + 1;
+                      fragEnd = sequenceLength;
+                    } else {
+                      const firstWin = searchWindows[0];
+                      fragLen = firstWin.start - win.start;
+                      if (fragLen <= 0) fragLen += sequenceLength;
+                      fragEnd = firstWin.start - 1 < 0 ? sequenceLength - 1 : firstWin.start - 1;
+                    }
                   }
 
                   // Find mutations inside the predicted fragment
-                  const fragStart = win.start;
-                  const fragEnd = nextWin.start - 1 < 0 ? sequenceLength - 1 : nextWin.start - 1;
                   
                   const fragMutations = siteAnalyses.filter(site => {
                     const pos = site.sitePosition;
@@ -275,6 +291,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses }:
             promoters={promoters}
             searchWindows={searchWindows}
             siteAnalyses={siteAnalyses}
+            isLinear={isLinear}
           />
         </div>
       )}

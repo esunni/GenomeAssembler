@@ -8,6 +8,7 @@ interface LinearGenomeMapProps {
   promoters: Promoter[];
   searchWindows: SearchWindow[];
   siteAnalyses: SiteAnalysis[];
+  isLinear?: boolean;
 }
 
 export function LinearGenomeMap({ 
@@ -15,7 +16,8 @@ export function LinearGenomeMap({
   cdsRegions, 
   promoters, 
   searchWindows,
-  siteAnalyses
+  siteAnalyses,
+  isLinear
 }: LinearGenomeMapProps) {
   
   // Create calculated fragments based on search windows
@@ -28,17 +30,28 @@ export function LinearGenomeMap({
     
     for (let i = 0; i < sortedWindows.length; i++) {
       const current = sortedWindows[i];
-      const next = sortedWindows[(i + 1) % sortedWindows.length];
+      let end = sequenceLength;
+      let wrapsAround = false;
+
+      if (i < sortedWindows.length - 1) {
+        const next = sortedWindows[i + 1];
+        end = next.start - 1 < 0 ? sequenceLength - 1 : next.start - 1;
+        wrapsAround = next.start <= current.start;
+      } else if (!isLinear) {
+        const next = sortedWindows[0];
+        end = next.start - 1 < 0 ? sequenceLength - 1 : next.start - 1;
+        wrapsAround = next.start <= current.start;
+      }
       
       frags.push({
         id: `frag-${i + 1}`,
         start: current.start,
-        end: next.start - 1 < 0 ? sequenceLength - 1 : next.start - 1, // approximate boundary
-        wrapsAround: next.start <= current.start
+        end,
+        wrapsAround
       });
     }
     return frags;
-  }, [searchWindows, sequenceLength]);
+  }, [searchWindows, sequenceLength, isLinear]);
 
   const mapScale = (pos: number) => `${(pos / sequenceLength) * 100}%`;
   
