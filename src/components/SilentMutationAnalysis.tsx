@@ -268,7 +268,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
               <thead>
                 <tr>
                   <th>Position</th>
-                  <th>CDS / Intergenic</th>
+                  <th style={{ textAlign: 'center' }}>CDS / Intergenic</th>
                   <th>Context Window</th>
                   <th>Suggested Mutation</th>
                   <th>Custom Mutation</th>
@@ -278,13 +278,13 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                 {siteAnalyses.map((site) => (
                   <tr key={site.sitePosition}>
                     <td>{site.sitePosition}</td>
-                    <td>
+                    <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
                       {site.inCds ? (
                         <span className="chip" style={{ background: 'var(--accent-600)' }}>
                           CDS {site.cdsId}
                         </span>
                       ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
                           <span className="chip" style={{ background: 'var(--muted)' }}>
                             Intergenic
                           </span>
