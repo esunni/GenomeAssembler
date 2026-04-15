@@ -63,8 +63,8 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
     if (promoterFirst && promoters.length === 0) {
       setWarningMessage({
         title: 'Missing Promoters',
-        message: 'You have enabled the Promoter-first option, but no promoter information was uploaded.',
-        action: 'Please drop a promoter file or turn off the Promoter-first option.'
+        message: 'Promoter-first option requires a promoter file.',
+        action: 'Please upload a promoter file or disable the option.'
       });
       setShowWarning(true);
       return;
@@ -73,8 +73,8 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
     if (orfConservation && cdsRegions.length === 0) {
       setWarningMessage({
         title: 'Missing CDS Data',
-        message: 'You have enabled the ORF-conservation option, but no PHASTEST results were provided in the Silent Mutation Analysis section.',
-        action: 'Please upload PHASTEST results or turn off the ORF-conservation option.'
+        message: 'ORF-conservation option requires PHASTEST results.',
+        action: 'Please upload PHASTEST results (detail.txt) or disable the option.'
       });
       setShowWarning(true);
       return;
