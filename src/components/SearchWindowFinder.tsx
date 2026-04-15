@@ -148,8 +148,9 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions }: SearchWindowF
                 <tr>
                   <th>Window Start</th>
                   <th>Window End</th>
-                  <th>Length</th>
+                  <th>Window Size</th>
                   <th>Reason</th>
+                  <th>Predicted Fragment Length</th>
                 </tr>
               </thead>
               <tbody>
@@ -157,6 +158,13 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions }: SearchWindowF
                   const len = win.start <= win.end 
                     ? win.end - win.start + 1 
                     : (sequenceLength - win.start + 1) + win.end;
+                    
+                  const nextWin = searchWindows[(idx + 1) % searchWindows.length];
+                  let fragLen = nextWin.start - win.start;
+                  if (fragLen <= 0) {
+                    fragLen += sequenceLength;
+                  }
+
                   return (
                     <tr key={idx}>
                       <td>{win.start}</td>
@@ -173,6 +181,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions }: SearchWindowF
                          : 'Max Length'}
                         </span>
                       </td>
+                      <td style={{ fontWeight: 600 }}>~ {fragLen} bp</td>
                     </tr>
                   );
                 })}
