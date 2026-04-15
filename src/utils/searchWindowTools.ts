@@ -41,7 +41,10 @@ export function calculateSearchWindows(
   // find first cut in [1, maxFragmentLength]
   for (let pos = maxFragmentLength; pos >= 1; pos--) {
     if (options.cutAtSilentMutations) {
-      if (mutations.some(m => pos >= m - 20 && pos <= m - 5)) {
+      if (mutations.some(m => {
+        if (pos <= m && pos + WINDOW_SIZE - 1 >= m) return true;
+        return false;
+      })) {
         firstCut = pos;
         firstReason = 'silent_mutation';
         break;
@@ -91,7 +94,13 @@ export function calculateSearchWindows(
     if (options.cutAtSilentMutations) {
       for (let pos = nextCut; pos >= minCut; pos--) {
         const actualPos = pos > sequenceLength ? pos - sequenceLength : pos;
-        if (mutations.some(m => actualPos >= m - 20 && actualPos <= m - 5)) {
+        if (mutations.some(m => {
+          // Normal case: mutation is inside the 30bp window starting at actualPos
+          if (actualPos <= m && actualPos + WINDOW_SIZE - 1 >= m) return true;
+          // Wrap-around case: window starts near the end and wraps around to cover the mutation
+          if (actualPos + WINDOW_SIZE - 1 > sequenceLength && m <= (actualPos + WINDOW_SIZE - 1) % sequenceLength) return true;
+          return false;
+        })) {
           nextCut = pos;
           reason = 'silent_mutation';
           found = true;

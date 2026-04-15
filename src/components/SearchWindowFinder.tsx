@@ -199,6 +199,14 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses }:
                     }
                   });
 
+                  const isMutationInWindow = (pos: number) => {
+                    if (win.start <= win.end) {
+                      return pos >= win.start && pos <= win.end;
+                    } else {
+                      return pos >= win.start || pos <= win.end;
+                    }
+                  };
+
                   return (
                     <tr key={idx}>
                       <td>{win.start}</td>
@@ -221,7 +229,12 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses }:
                       <td>
                         {fragMutations.length > 0 ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <span style={{ fontWeight: 600, color: '#ef4444' }}>{fragMutations.length} site(s)</span>
+                            <span style={{ 
+                              fontWeight: 600, 
+                              color: fragMutations.some(m => isMutationInWindow(m.sitePosition)) ? '#8b5cf6' : '#ef4444' 
+                            }}>
+                              {fragMutations.length} site(s)
+                            </span>
                             <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
                               Pos: {fragMutations.map(m => m.sitePosition).join(', ')}
                             </span>
