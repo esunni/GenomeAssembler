@@ -42,7 +42,15 @@ export function calculateSearchWindows(
   for (let pos = maxFragmentLength; pos >= 1; pos--) {
     if (options.cutAtSilentMutations) {
       if (mutations.some(m => {
-        if (pos <= m && pos + WINDOW_SIZE - 1 >= m) return true;
+        // Place the mutation near the middle of the 30bp window
+        // Allow a small range (10-20 bp into the window) rather than EXACTLY 15.
+        // pos is the window start. Mutation is m.
+        // So we want: pos >= m - 20 && pos <= m - 10
+        if (pos >= m - 20 && pos <= m - 10) return true;
+        // Wrap around cases
+        if (m - 20 <= 0 && pos >= sequenceLength + (m - 20) && pos <= sequenceLength + (m - 10)) return true;
+        // The third wrap-around case: when pos is near the end and wraps around to cover a small m
+        if (pos + 10 > sequenceLength && (m >= (pos + 10) % sequenceLength && m <= (pos + 20) % sequenceLength)) return true;
         return false;
       })) {
         firstCut = pos;
@@ -95,10 +103,12 @@ export function calculateSearchWindows(
       for (let pos = nextCut; pos >= minCut; pos--) {
         const actualPos = pos > sequenceLength ? pos - sequenceLength : pos;
         if (mutations.some(m => {
-          // Normal case: mutation is inside the 30bp window starting at actualPos
-          if (actualPos <= m && actualPos + WINDOW_SIZE - 1 >= m) return true;
-          // Wrap-around case: window starts near the end and wraps around to cover the mutation
-          if (actualPos + WINDOW_SIZE - 1 > sequenceLength && m <= (actualPos + WINDOW_SIZE - 1) % sequenceLength) return true;
+          // Center the window around the mutation with some flexibility (10-20 bp into the window)
+          if (actualPos >= m - 20 && actualPos <= m - 10) return true;
+          
+          // Wrap-around cases
+          if (m - 20 <= 0 && actualPos >= sequenceLength + (m - 20) && actualPos <= sequenceLength + (m - 10)) return true;
+          if (actualPos + 10 > sequenceLength && (m >= (actualPos + 10) % sequenceLength && m <= (actualPos + 20) % sequenceLength)) return true;
           return false;
         })) {
           nextCut = pos;
