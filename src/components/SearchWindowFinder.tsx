@@ -250,7 +250,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses }:
               target="_blank" 
               rel="noreferrer"
               className="primary-cta"
-              style={{ display: 'inline-flex', textDecoration: 'none', background: '#0284c7' }}
+              style={{ display: 'inline-flex', textDecoration: 'none', background: '#0284c7', border: 'none', outline: 'none', boxShadow: 'none' }}
             >
               Open NEBridge SplitSet
             </a>

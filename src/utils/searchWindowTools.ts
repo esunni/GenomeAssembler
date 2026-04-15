@@ -41,7 +41,7 @@ export function calculateSearchWindows(
   // find first cut in [1, maxFragmentLength]
   for (let pos = maxFragmentLength; pos >= 1; pos--) {
     if (options.cutAtSilentMutations) {
-      if (mutations.some(m => Math.abs(m - pos) <= 15)) {
+      if (mutations.some(m => pos >= m - 20 && pos <= m - 5)) {
         firstCut = pos;
         firstReason = 'silent_mutation';
         break;
@@ -91,7 +91,7 @@ export function calculateSearchWindows(
     if (options.cutAtSilentMutations) {
       for (let pos = nextCut; pos >= minCut; pos--) {
         const actualPos = pos > sequenceLength ? pos - sequenceLength : pos;
-        if (mutations.some(m => Math.abs(m - actualPos) <= 15)) {
+        if (mutations.some(m => actualPos >= m - 20 && actualPos <= m - 5)) {
           nextCut = pos;
           reason = 'silent_mutation';
           found = true;

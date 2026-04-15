@@ -131,7 +131,7 @@ export function LinearGenomeMap({
 
   return (
     <div style={{ padding: '1rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--line-subtle)', marginTop: '2rem' }}>
-      <h3 style={{ margin: '0 0 1.5rem', fontSize: '1.1rem' }}>Comprehensive Linear Map</h3>
+      <h3 style={{ margin: '0 0 1.5rem', fontSize: '1.1rem' }}>Linear Genome Map</h3>
       
       <div style={{ position: 'relative', height: '140px', padding: '10px 0' }}>
         
