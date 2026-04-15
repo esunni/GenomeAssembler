@@ -230,6 +230,26 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                 </tr>
               </thead>
               <tbody>
+                {isLinear && searchWindows.length > 0 && searchWindows[0].start > 1 && (
+                  <tr>
+                    <td colSpan={4} style={{ textAlign: 'center', color: 'var(--muted-foreground)', fontStyle: 'italic' }}>Initial Segment (Start of sequence to first window)</td>
+                    <td style={{ fontWeight: 600 }}>~ {searchWindows[0].start - 1} bp</td>
+                    <td>
+                      {siteAnalyses.filter(site => site.sitePosition >= 1 && site.sitePosition < searchWindows[0].start).length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <span style={{ fontWeight: 600, color: '#ef4444' }}>
+                            {siteAnalyses.filter(site => site.sitePosition >= 1 && site.sitePosition < searchWindows[0].start).length} site(s)
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
+                            Pos: {siteAnalyses.filter(site => site.sitePosition >= 1 && site.sitePosition < searchWindows[0].start).map(m => m.sitePosition).join(', ')}
+                          </span>
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--muted-foreground)' }}>None</span>
+                      )}
+                    </td>
+                  </tr>
+                )}
                 {searchWindows.map((win, idx) => {
                   const len = win.start <= win.end 
                     ? win.end - win.start + 1 
@@ -268,8 +288,6 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                     }
                   });
 
-                  const firstFragMutations = (isLinear && idx === 0) ? siteAnalyses.filter(site => site.sitePosition >= 1 && site.sitePosition < win.start) : [];
-
                   const isMutationInWindow = (pos: number) => {
                     if (win.start <= win.end) {
                       return pos >= win.start && pos <= win.end;
@@ -296,22 +314,8 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                          : 'Max Length'}
                         </span>
                       </td>
-                      <td style={{ fontWeight: 600 }}>
-                        {isLinear && idx === 0 && win.start > 1 && (
-                          <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '4px', paddingBottom: '4px', borderBottom: '1px solid var(--line-subtle)' }}>
-                            ~ {win.start - 1} bp <span style={{ fontWeight: 'normal' }}>(Start &rarr; Window)</span>
-                          </div>
-                        )}
-                        <div>~ {fragLen} bp <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', fontWeight: 'normal' }}>{isLinear && idx === searchWindows.length - 1 ? '(Window \u2192 End)' : '(Window \u2192 Next)'}</span></div>
-                      </td>
+                      <td style={{ fontWeight: 600 }}>~ {fragLen} bp</td>
                       <td>
-                        {isLinear && idx === 0 && win.start > 1 && firstFragMutations.length > 0 && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '6px', paddingBottom: '6px', borderBottom: '1px solid var(--line-subtle)' }}>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--muted-foreground)' }}>Start &rarr; Window:</span>
-                            <span style={{ fontWeight: 600, color: '#ef4444', fontSize: '0.8rem' }}>{firstFragMutations.length} site(s)</span>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--muted-foreground)' }}>Pos: {firstFragMutations.map(m => m.sitePosition).join(', ')}</span>
-                          </div>
-                        )}
                         {fragMutations.length > 0 ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             <span style={{ 
