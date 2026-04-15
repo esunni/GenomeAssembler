@@ -11,12 +11,19 @@ import {
   CodonUsage
 } from '../utils/mutationTools';
 
+const defaultCodonUsageCsv = `codon,aminoAcid,fraction,frequency,number
+GCG,A,0.34,33.70,147363
+GCA,A,0.21,20.30,88753
+GCT,A,0.15,15.30,66896
+GCC,A,0.27,26.10,114081`;
+
 interface SilentMutationAnalysisProps {
   uploadedGenome: ParsedCircularFasta;
   detectedSites: EnzymeSite[];
+  onCdsRegionsChange?: (regions: CdsRegion[]) => void;
 }
 
-export function SilentMutationAnalysis({ uploadedGenome, detectedSites }: SilentMutationAnalysisProps) {
+export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsRegionsChange }: SilentMutationAnalysisProps) {
   const [phastestFileName, setPhastestFileName] = useState<string>('');
   const [codonFileName, setCodonFileName] = useState<string>('E.coli_codon_usage_table.csv (Default)');
   const [useCustomCodonTable, setUseCustomCodonTable] = useState(false);
@@ -24,7 +31,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites }: Silent
   const [isCodonDragActive, setIsCodonDragActive] = useState(false);
   
   const [cdsRegions, setCdsRegions] = useState<CdsRegion[]>([]);
-  const [codonUsage, setCodonUsage] = useState<Map<string, CodonUsage[]>>(() => parseCodonUsage(defaultCodonUsageCsv));
+  const [codonUsage, setCodonUsage] = useState<Map<string, CodonUsage[]>>(() => parseCodonUsage(defaultCodonUsageCsv || ''));
   const [siteAnalyses, setSiteAnalyses] = useState<SiteAnalysis[]>([]);
 
   useEffect(() => {
@@ -46,6 +53,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites }: Silent
     const text = await file.text();
     const regions = parsePhastestDetails(text);
     setCdsRegions(regions);
+    if (onCdsRegionsChange) onCdsRegionsChange(regions);
     setPhastestFileName(file.name);
   };
 
@@ -156,7 +164,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites }: Silent
               onChange={(e) => {
                 setUseCustomCodonTable(e.target.checked);
                 if (!e.target.checked) {
-                  setCodonUsage(parseCodonUsage(defaultCodonUsageCsv));
+                  setCodonUsage(parseCodonUsage(defaultCodonUsageCsv || ''));
                   setCodonFileName('E.coli_codon_usage_table.csv (Default)');
                 } else {
                   setCodonUsage(new Map());
