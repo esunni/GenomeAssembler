@@ -242,7 +242,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <h3 style={{ margin: 0 }}>Recommended Search Windows</h3>
-              <span className="chip" style={{ background: 'var(--accent-100)', color: 'var(--accent-800)', fontWeight: 600, fontSize: '0.85rem' }}>
+              <span className="chip" style={{ background: 'var(--line-strong)', color: 'var(--accent-800)', fontWeight: 600, fontSize: '0.85rem' }}>
                 {searchWindows.length + (isLinear && searchWindows.length > 0 && searchWindows[0].start > 1 ? 1 : 0)} fragments
               </span>
             </div>
@@ -252,23 +252,25 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
             <table>
               <thead>
                 <tr>
-                  <th>Window Start</th>
-                  <th>Window End</th>
-                  <th>Window Size</th>
-                  <th>Reason</th>
-                  <th>Predicted Fragment Length</th>
-                  <th>Mutations in Fragment</th>
-                  {promoters.length > 0 && <th>Promoters in Fragment</th>}
+                  <th style={{ textAlign: 'center' }}>Fragment Name</th>
+                  <th style={{ textAlign: 'center' }}>Window Start</th>
+                  <th style={{ textAlign: 'center' }}>Window End</th>
+                  <th style={{ textAlign: 'center' }}>Window Size</th>
+                  <th style={{ textAlign: 'center' }}>Reason</th>
+                  <th style={{ textAlign: 'center' }}>Predicted Fragment Length</th>
+                  <th style={{ textAlign: 'center' }}>Mutations in Fragment</th>
+                  {promoters.length > 0 && <th style={{ textAlign: 'center' }}>Promoters in Fragment</th>}
                 </tr>
               </thead>
               <tbody>
                 {isLinear && searchWindows.length > 0 && searchWindows[0].start > 1 && (
                   <tr>
+                    <td style={{ textAlign: 'center', fontWeight: 600 }}>Frag 1</td>
                     <td colSpan={4} style={{ textAlign: 'center', color: 'var(--muted-foreground)', fontStyle: 'italic' }}>Initial Segment (Start of sequence to first window)</td>
-                    <td style={{ fontWeight: 600 }}>~ {searchWindows[0].start - 1} bp</td>
-                    <td>
+                    <td style={{ textAlign: 'center', fontWeight: 600 }}>~ {searchWindows[0].start - 1} bp</td>
+                    <td style={{ textAlign: 'center' }}>
                       {siteAnalyses.filter(site => site.sitePosition >= 1 && site.sitePosition < searchWindows[0].start).length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                           <span style={{ fontWeight: 600, color: '#ef4444' }}>
                             {siteAnalyses.filter(site => site.sitePosition >= 1 && site.sitePosition < searchWindows[0].start).length} site(s)
                           </span>
@@ -281,14 +283,16 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                       )}
                     </td>
                     {promoters.length > 0 && (
-                      <td>
+                      <td style={{ textAlign: 'center' }}>
                         {promoters.filter(p => p.position >= 1 && p.position < searchWindows[0].start).length > 0 ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                             <span style={{ fontWeight: 600, color: '#f59e0b' }}>
                               {promoters.filter(p => p.position >= 1 && p.position < searchWindows[0].start).length} promoter(s)
                             </span>
                             <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
-                              Names: {promoters.filter(p => p.position >= 1 && p.position < searchWindows[0].start).map(p => p.name).join(', ')}
+                              {promoters.filter(p => p.position >= 1 && p.position < searchWindows[0].start)
+                                .map(p => `${p.name} (${p.originalStart ?? p.position}-${p.originalEnd ?? p.end})`)
+                                .join(', ')}
                             </span>
                           </div>
                         ) : (
@@ -355,10 +359,11 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
 
                   return (
                     <tr key={idx}>
-                      <td>{win.start}</td>
-                      <td>{win.end}</td>
-                      <td>{len} bp</td>
-                      <td>
+                      <td style={{ textAlign: 'center', fontWeight: 600 }}>Frag {isLinear && searchWindows[0].start > 1 ? idx + 2 : idx + 1}</td>
+                      <td style={{ textAlign: 'center' }}>{win.start}</td>
+                      <td style={{ textAlign: 'center' }}>{win.end}</td>
+                      <td style={{ textAlign: 'center' }}>{len} bp</td>
+                      <td style={{ textAlign: 'center' }}>
                         <span className="chip" style={{ 
                           background: win.reason === 'promoter' ? 'var(--accent-600)' 
                                     : win.reason === 'intergenic' ? '#10b981' 
@@ -371,10 +376,10 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                          : 'Max Length'}
                         </span>
                       </td>
-                      <td style={{ fontWeight: 600 }}>~ {fragLen} bp</td>
-                      <td>
+                      <td style={{ textAlign: 'center', fontWeight: 600 }}>~ {fragLen} bp</td>
+                      <td style={{ textAlign: 'center' }}>
                         {fragMutations.length > 0 ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                             <span style={{ 
                               fontWeight: 600, 
                               color: fragMutations.some(m => isMutationInWindow(m.sitePosition)) ? '#8b5cf6' : '#ef4444' 
@@ -390,14 +395,14 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                         )}
                       </td>
                       {promoters.length > 0 && (
-                        <td>
+                        <td style={{ textAlign: 'center' }}>
                           {fragPromoters.length > 0 ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                               <span style={{ fontWeight: 600, color: '#f59e0b' }}>
                                 {fragPromoters.length} promoter(s)
                               </span>
                               <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
-                                Names: {fragPromoters.map(p => p.name).join(', ')}
+                                {fragPromoters.map(p => `${p.name} (${p.originalStart ?? p.position}-${p.originalEnd ?? p.end})`).join(', ')}
                               </span>
                             </div>
                           ) : (
