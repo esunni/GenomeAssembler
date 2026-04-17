@@ -4,6 +4,9 @@ export interface Promoter {
   name: string;
   position: number;
   end: number;
+  direction?: 'forward' | 'reverse';
+  originalStart?: number;
+  originalEnd?: number;
 }
 
 export interface SearchWindow {
@@ -24,7 +27,25 @@ export function parsePromoters(content: string): Promoter[] {
       const start = parseInt(cols[1], 10);
       const end = parseInt(cols[2], 10);
       if (!isNaN(start) && !isNaN(end)) {
-        promoters.push({ name, position: start, end });
+        if (start > end) {
+          promoters.push({ 
+            name, 
+            position: end, 
+            end: start, 
+            direction: 'reverse',
+            originalStart: start,
+            originalEnd: end 
+          });
+        } else {
+          promoters.push({ 
+            name, 
+            position: start, 
+            end, 
+            direction: 'forward',
+            originalStart: start,
+            originalEnd: end 
+          });
+        }
         continue;
       }
     }
@@ -33,10 +54,29 @@ export function parsePromoters(content: string): Promoter[] {
     const match = line.match(/Promoter Pos:\s*(\d+)/i) || line.match(/^(\d+)$/);
     if (match) {
       const pos = parseInt(match[1], 10);
-      promoters.push({ name: `Promoter ${promoters.length + 1}`, position: pos, end: pos });
+      promoters.push({ name: `Promoter ${promoters.length + 1}`, position: pos, end: pos, direction: 'forward', originalStart: pos, originalEnd: pos });
     }
   }
   return promoters;
+}
+
+function isWindowValidForPromoter(wStart: number, pStart: number, pEnd: number, windowSize: number, sequenceLength: number, isLinear: boolean): boolean {
+  const wEnd = wStart + windowSize - 1;
+  const pLen = pEnd - pStart + 1;
+  
+  if (pLen > windowSize) {
+    if (wStart >= pStart && wEnd <= pEnd) return true;
+    return false;
+  } else {
+    if (pStart >= wStart && pEnd <= wEnd) return true;
+    
+    if (!isLinear && wEnd > sequenceLength) {
+      const wEndWrapped = wEnd - sequenceLength;
+      if (pStart >= wStart && pEnd <= sequenceLength) return true;
+      if (pStart >= 1 && pEnd <= wEndWrapped) return true;
+    }
+    return false;
+  }
 }
 
 export function calculateSearchWindows(
@@ -80,7 +120,7 @@ export function calculateSearchWindows(
 
     if (firstCut === 1 && options.promoterFirst) {
       for (let pos = maxFragmentLength; pos >= 1; pos--) {
-        if (sortedPromoters.some(p => Math.abs(p.position - pos) <= 50)) {
+        if (sortedPromoters.some(p => isWindowValidForPromoter(pos, p.position, p.end, WINDOW_SIZE, sequenceLength, options.isLinear || false))) {
           firstCut = pos;
           firstReason = 'promoter';
           break;
@@ -155,7 +195,7 @@ export function calculateSearchWindows(
         const actualPos = pos > sequenceLength && !options.isLinear ? pos - sequenceLength : pos;
         if (options.isLinear && pos > sequenceLength) continue;
         
-        if (sortedPromoters.some(p => Math.abs(p.position - actualPos) <= 50)) {
+        if (sortedPromoters.some(p => isWindowValidForPromoter(actualPos, p.position, p.end, WINDOW_SIZE, sequenceLength, options.isLinear || false))) {
           nextCut = pos;
           reason = 'promoter';
           found = true;

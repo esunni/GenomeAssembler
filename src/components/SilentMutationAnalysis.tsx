@@ -148,7 +148,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
       <div className="section-header" style={{ marginBottom: '1.5rem' }}>
         <h2 style={{ margin: '0 0 0.5rem' }}>Silent Mutation Analysis</h2>
         <p className="page-copy">
-          Upload PHASTEST results (detail.txt) and Codon usage data to analyze and resolve recognition sites via silent mutations (the default codon usage table is for <i>E. coli</i>).
+          Upload <a href="https://phastest.ca/submissions/new" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-600)', textDecoration: 'underline', textUnderlineOffset: '2px' }}>PHASTEST</a> results (detail.txt) and Codon usage data to analyze and resolve recognition sites via silent mutations (the default codon usage table is for <i>E. coli</i>).
         </p>
       </div>
 
@@ -207,7 +207,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                 <path d="M12 16V4M12 4L8 8M12 4L16 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M3 15V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Drop PHASTEST .txt file here
+              Drop PHASTEST detail.txt file here
             </span>
           )}
         </label>

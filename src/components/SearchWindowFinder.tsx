@@ -240,7 +240,12 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
       {searchWindows && (
         <div className="design-results-panel" style={{ marginTop: '2rem', borderTop: 'none', paddingTop: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ margin: 0 }}>Recommended Search Windows</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <h3 style={{ margin: 0 }}>Recommended Search Windows</h3>
+              <span className="chip" style={{ background: 'var(--accent-600)', fontSize: '0.85rem' }}>
+                {searchWindows.length + (isLinear && searchWindows.length > 0 && searchWindows[0].start > 1 ? 1 : 0)} fragments
+              </span>
+            </div>
           </div>
           
           <div className="table-wrap" style={{ marginBottom: '1.5rem' }}>
@@ -365,7 +370,16 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
             </table>
           </div>
 
-          <div style={{ padding: '1.5rem', background: 'var(--surface)', border: '1px solid var(--line-subtle)', borderRadius: '8px' }}>
+          <LinearGenomeMap 
+            sequenceLength={sequenceLength}
+            cdsRegions={cdsRegions}
+            promoters={promoters}
+            searchWindows={searchWindows}
+            siteAnalyses={siteAnalyses}
+            isLinear={isLinear}
+          />
+
+          <div style={{ padding: '1.5rem', background: 'var(--surface)', border: '1px solid var(--line-subtle)', borderRadius: '8px', marginTop: '2rem' }}>
             <h4 style={{ margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
               Next Step: Design Overhangs
@@ -383,15 +397,6 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
               Open NEBridge SplitSet
             </a>
           </div>
-          
-          <LinearGenomeMap 
-            sequenceLength={sequenceLength}
-            cdsRegions={cdsRegions}
-            promoters={promoters}
-            searchWindows={searchWindows}
-            siteAnalyses={siteAnalyses}
-            isLinear={isLinear}
-          />
         </div>
       )}
       {showWarning && (

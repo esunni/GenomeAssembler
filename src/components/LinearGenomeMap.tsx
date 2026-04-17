@@ -163,8 +163,29 @@ export function LinearGenomeMap({
           <div style={{ position: 'absolute', left: '-120px', width: '110px', textAlign: 'right', fontSize: '0.8rem', color: 'var(--muted-foreground)' }}>Mutations / Promoters</div>
           <div style={{ position: 'relative', width: '100%', height: '100%' }}>
             {promoters.map((p, i) => (
-              <div key={`p-${i}`} style={{ position: 'absolute', left: mapScale(p.position), top: '50%', transform: 'translate(-50%, -50%)', zIndex: 5 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <div 
+                key={`p-${i}`} 
+                title={`${p.name}(${p.originalStart ?? p.position}-${p.originalEnd ?? p.end})`}
+                style={{ 
+                  position: 'absolute', 
+                  left: mapScale(p.position), 
+                  width: mapScale(p.end - p.position + 1),
+                  height: '16px',
+                  top: '50%', 
+                  transform: 'translateY(-50%)', 
+                  zIndex: 5,
+                  backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                  border: '1px solid #f59e0b',
+                  borderRadius: '2px',
+                  cursor: 'help',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="3" style={{ transform: p.direction === 'reverse' ? 'rotate(180deg)' : 'none', flexShrink: 0 }}>
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
               </div>
             ))}
             {siteAnalyses.map((site, i) => (
@@ -190,7 +211,10 @@ export function LinearGenomeMap({
             {/* Fragments alternating colors */}
             {fragments.map((frag, i) => {
               const color = i % 2 === 0 ? '#3b82f6' : '#8b5cf6';
-              return renderTrackRegion(frag.start, frag.end, color, '8px', '50%', 'translateY(-50%)', 0.3, `Fragment ${frag.id}`);
+              let length = frag.end - frag.start + 1;
+              if (length <= 0) length += sequenceLength;
+              const fragNum = frag.id.replace('frag-', '');
+              return renderTrackRegion(frag.start, frag.end, color, '8px', '50%', 'translateY(-50%)', 0.3, `Frag ${fragNum}: ${length}bp`);
             })}
             
             {/* Search Windows */}
