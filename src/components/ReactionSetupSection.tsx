@@ -23,6 +23,7 @@ export function ReactionSetupSection({
   const [selectedForPremix, setSelectedForPremix] = useState<string[]>([]);
   const [premixModal, setPremixModal] = useState<{ isOpen: boolean; comp1Id: string; comp2Id: string; name: string; vol: number } | null>(null);
   const [draggedSubitem, setDraggedSubitem] = useState<{ componentId: string; index: number } | null>(null);
+  const [volumeWarning, setVolumeWarning] = useState<{ isOpen: boolean; message: string } | null>(null);
 
   const updateProtocolComponent = (componentId: string, updater: (component: ProtocolComponent) => ProtocolComponent) => {
     onProjectChange((current) => {
@@ -253,20 +254,30 @@ export function ReactionSetupSection({
                           : `${project.protocolComponents.find(c => c.id === component.premixParentId)?.transferVolume ?? 0} - X`}
                       </span>
                     ) : (
-                      <input
-                        className="table-inline-input"
-                        style={{ textAlign: 'center', backgroundColor: 'transparent' }}
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={component.transferVolume}
-                        onChange={(event) =>
-                          updateProtocolComponent(component.id, (current) => ({
-                            ...current,
-                            transferVolume: (event.target.value === '' ? '' : Number(event.target.value)) as unknown as number,
-                          }))
-                        }
-                      />
+                        <input
+                          className="table-inline-input"
+                          style={{ textAlign: 'center', backgroundColor: 'transparent' }}
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={component.transferVolume}
+                          onChange={(event) => {
+                            const val = event.target.value;
+                            const numVal = val === '' ? '' : Number(val);
+                            
+                            if (typeof numVal === 'number' && numVal > 0 && numVal < 2) {
+                              setVolumeWarning({
+                                isOpen: true,
+                                message: `Janus machine's minimum transfer volume is 2 μL. Setting volume lower than 2 μL might cause inaccurate pipetting.`
+                              });
+                            }
+                            
+                            updateProtocolComponent(component.id, (current) => ({
+                              ...current,
+                              transferVolume: numVal as unknown as number,
+                            }));
+                          }}
+                        />
                     )}
                   </td>
                   <td style={{ textAlign: 'center' }}>
@@ -713,6 +724,27 @@ export function ReactionSetupSection({
             <div className="button-row" style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
               <button type="button" className="secondary" onClick={() => setPremixModal(null)}>Cancel</button>
               <button type="button" className="primary-cta" onClick={handleCreatePremix}>Create</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {volumeWarning && volumeWarning.isOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', width: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ margin: 0, color: '#ef4444' }}>Warning</h3>
+            <p style={{ margin: 0 }}>{volumeWarning.message}</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+              <button
+                type="button"
+                className="primary-cta"
+                onClick={() => setVolumeWarning(null)}
+              >
+                I Understand
+              </button>
             </div>
           </div>
         </div>

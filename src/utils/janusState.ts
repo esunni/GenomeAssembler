@@ -51,7 +51,7 @@ export function createProtocolComponent(existingComponents?: ProtocolComponent[]
   return {
     id: createId('component'),
     name: '',
-    transferVolume: 1,
+    transferVolume: 2,
     color: color,
     deadVolumeMode: 'global',
     customDeadVolume: null,

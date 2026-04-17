@@ -257,9 +257,9 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                   <th style={{ textAlign: 'center' }}>Window End</th>
                   <th style={{ textAlign: 'center' }}>Window Size</th>
                   <th style={{ textAlign: 'center' }}>Reason</th>
-                  <th style={{ textAlign: 'center', width: '8.4%' }}>Predicted Fragment Length</th>
-                  <th style={{ textAlign: 'center' }}>Mutations in Fragment</th>
-                  {promoters.length > 0 && <th style={{ textAlign: 'center' }}>Promoters in Fragment</th>}
+                  <th style={{ textAlign: 'center', width: '13%' }}>Predicted Fragment Length</th>
+                  <th style={{ textAlign: 'center', width: '15%' }}>Mutations in Fragment</th>
+                  {promoters.length > 0 && <th style={{ textAlign: 'center', width: '15%' }}>Promoters in Fragment</th>}
                 </tr>
               </thead>
               <tbody>
