@@ -268,7 +268,7 @@ export function ReactionSetupSection({
                             if (typeof numVal === 'number' && numVal > 0 && numVal < 2) {
                               setVolumeWarning({
                                 isOpen: true,
-                                message: `Janus minimum transfer volume is 2 μL. Lower volumes may cause inaccurate pipetting.`
+                                message: `Janus minimum transfer volume is 2 μL.\nLower volumes may cause inaccurate pipetting.`
                               });
                             }
                             
@@ -736,7 +736,7 @@ export function ReactionSetupSection({
         }}>
           <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', width: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h3 style={{ margin: 0, color: '#ef4444' }}>Warning</h3>
-            <p style={{ margin: 0 }}>{volumeWarning.message}</p>
+            <p style={{ margin: 0, whiteSpace: 'pre-line' }}>{volumeWarning.message}</p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
               <button
                 type="button"
