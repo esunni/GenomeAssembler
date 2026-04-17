@@ -242,7 +242,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <h3 style={{ margin: 0 }}>Recommended Search Windows</h3>
-              <span className="chip" style={{ background: 'var(--accent-600)', fontSize: '0.85rem' }}>
+              <span className="chip" style={{ background: 'var(--accent-100)', color: 'var(--accent-800)', fontWeight: 600, fontSize: '0.85rem' }}>
                 {searchWindows.length + (isLinear && searchWindows.length > 0 && searchWindows[0].start > 1 ? 1 : 0)} fragments
               </span>
             </div>
@@ -258,6 +258,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                   <th>Reason</th>
                   <th>Predicted Fragment Length</th>
                   <th>Mutations in Fragment</th>
+                  {promoters.length > 0 && <th>Promoters in Fragment</th>}
                 </tr>
               </thead>
               <tbody>
@@ -279,6 +280,22 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                         <span style={{ color: 'var(--muted-foreground)' }}>None</span>
                       )}
                     </td>
+                    {promoters.length > 0 && (
+                      <td>
+                        {promoters.filter(p => p.position >= 1 && p.position < searchWindows[0].start).length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontWeight: 600, color: '#f59e0b' }}>
+                              {promoters.filter(p => p.position >= 1 && p.position < searchWindows[0].start).length} promoter(s)
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
+                              Names: {promoters.filter(p => p.position >= 1 && p.position < searchWindows[0].start).map(p => p.name).join(', ')}
+                            </span>
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--muted-foreground)' }}>None</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 )}
                 {searchWindows.map((win, idx) => {
@@ -312,6 +329,15 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                   
                   const fragMutations = siteAnalyses.filter(site => {
                     const pos = site.sitePosition;
+                    if (fragStart <= fragEnd) {
+                      return pos >= fragStart && pos <= fragEnd;
+                    } else {
+                      return pos >= fragStart || pos <= fragEnd; // Wrap-around case
+                    }
+                  });
+
+                  const fragPromoters = promoters.filter(p => {
+                    const pos = p.position;
                     if (fragStart <= fragEnd) {
                       return pos >= fragStart && pos <= fragEnd;
                     } else {
@@ -363,6 +389,22 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                           <span style={{ color: 'var(--muted-foreground)' }}>None</span>
                         )}
                       </td>
+                      {promoters.length > 0 && (
+                        <td>
+                          {fragPromoters.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ fontWeight: 600, color: '#f59e0b' }}>
+                                {fragPromoters.length} promoter(s)
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
+                                Names: {fragPromoters.map(p => p.name).join(', ')}
+                              </span>
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--muted-foreground)' }}>None</span>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}

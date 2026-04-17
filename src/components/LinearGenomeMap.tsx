@@ -165,7 +165,7 @@ export function LinearGenomeMap({
             {promoters.map((p, i) => (
               <div 
                 key={`p-${i}`} 
-                title={`${p.name}(${p.originalStart ?? p.position}-${p.originalEnd ?? p.end})`}
+                title={`${p.name} (${p.originalStart ?? p.position}-${p.originalEnd ?? p.end})`}
                 style={{ 
                   position: 'absolute', 
                   left: mapScale(p.position), 
@@ -174,9 +174,6 @@ export function LinearGenomeMap({
                   top: '50%', 
                   transform: 'translateY(-50%)', 
                   zIndex: 5,
-                  backgroundColor: 'rgba(245, 158, 11, 0.2)',
-                  border: '1px solid #f59e0b',
-                  borderRadius: '2px',
                   cursor: 'help',
                   display: 'flex',
                   alignItems: 'center',
