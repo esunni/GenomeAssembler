@@ -268,7 +268,7 @@ export function ReactionSetupSection({
                             if (typeof numVal === 'number' && numVal > 0 && numVal < 2) {
                               setVolumeWarning({
                                 isOpen: true,
-                                message: `Janus machine's minimum transfer volume is 2 μL. Setting volume lower than 2 μL might cause inaccurate pipetting.`
+                                message: `Janus minimum transfer volume is 2 μL. Lower volumes may cause inaccurate pipetting.`
                               });
                             }
                             

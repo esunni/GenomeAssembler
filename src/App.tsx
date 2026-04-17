@@ -174,7 +174,18 @@ function App() {
     <div className="app-shell">
       <header className="portal-header">
         <div className="portal-header-inner">
-          <div className="brand-lockup">
+          <button 
+            type="button"
+            className="brand-lockup" 
+            onClick={openDesign}
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              padding: 0, 
+              cursor: 'pointer',
+              textAlign: 'left' 
+            }}
+          >
             <p className="brand-mark" aria-hidden="true">
               <span />
               <span />
@@ -186,7 +197,7 @@ function App() {
               <p className="brand-overline">Genome assembly portal</p>
               <h1 className="brand-title">GenomeAssembler</h1>
             </div>
-          </div>
+          </button>
 
           <nav className="portal-nav" aria-label="Primary">
             <button
