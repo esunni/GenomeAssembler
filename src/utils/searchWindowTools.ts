@@ -12,7 +12,7 @@ export interface Promoter {
 export interface SearchWindow {
   start: number;
   end: number;
-  reason: 'promoter' | 'intergenic' | 'max_length' | 'silent_mutation';
+  reason: 'promoter' | 'intergenic' | 'unannotated' | 'max_length' | 'silent_mutation';
 }
 
 export function parsePromoters(content: string): Promoter[] {
@@ -131,7 +131,7 @@ export function calculateSearchWindows(
       for (let pos = maxFragmentLength; pos >= 1; pos--) {
         if (!cdsRegions.some(cds => pos >= cds.start && pos <= cds.end)) {
           firstCut = pos;
-          firstReason = 'intergenic';
+          firstReason = cdsRegions.length === 0 ? 'unannotated' : 'intergenic';
           break;
         }
       }
@@ -211,7 +211,7 @@ export function calculateSearchWindows(
         
         if (!cdsRegions.some(cds => actualPos >= cds.start && actualPos <= cds.end)) {
           nextCut = pos;
-          reason = 'intergenic';
+          reason = cdsRegions.length === 0 ? 'unannotated' : 'intergenic';
           found = true;
           break;
         }

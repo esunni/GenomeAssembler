@@ -205,7 +205,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
             </label>
             <div>
               <span style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>ORF-conservation option</span>
-              <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>Cut fragments in intergenic region if possible.</p>
+              <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>Cut fragments in intergenic/unannotated region if possible.</p>
             </div>
           </div>
 
@@ -371,11 +371,13 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                               <span className="chip" style={{ 
                                 background: win.reason === 'promoter' ? 'var(--accent-600)' 
                                           : win.reason === 'intergenic' ? '#10b981' 
+                                          : win.reason === 'unannotated' ? 'var(--muted-foreground)' 
                                           : win.reason === 'silent_mutation' ? '#8b5cf6'
                                           : 'var(--muted)' 
                               }}>
                                 {win.reason === 'promoter' ? 'Promoter' 
                                : win.reason === 'intergenic' ? 'Intergenic' 
+                               : win.reason === 'unannotated' ? 'Unannotated' 
                                : win.reason === 'silent_mutation' ? 'Silent Mutation'
                                : 'Max Length'}
                               </span>

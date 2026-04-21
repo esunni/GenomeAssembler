@@ -269,7 +269,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
               <thead>
                 <tr>
                   <th>Position</th>
-                  <th style={{ textAlign: 'center' }}>CDS / Intergenic</th>
+                  <th style={{ textAlign: 'center' }}>Annotation</th>
                   <th>Context Window</th>
                   <th>Suggested Mutation</th>
                   <th>Custom Mutation</th>
@@ -284,6 +284,12 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                         <span className="chip" style={{ background: 'var(--accent-600)' }}>
                           CDS {site.cdsId}
                         </span>
+                      ) : cdsRegions.length === 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+                          <span className="chip" style={{ background: 'var(--muted)', opacity: 0.8 }}>
+                            Unannotated
+                          </span>
+                        </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
                           <span className="chip" style={{ background: 'var(--muted)' }}>
@@ -379,8 +385,8 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }}>
             <h3 style={{ marginTop: 0, color: 'var(--accent-700)' }}>Missing Mutations</h3>
-            <p>Cannot download FASTA: some intergenic sites lack an automated suggestion.</p>
-            <p>Please enter a custom mutation for these intergenic sites to break the restriction enzyme sequence.</p>
+            <p>Cannot download FASTA: some unannotated or intergenic sites lack an automated suggestion.</p>
+            <p>Please enter a custom mutation for these sites to break the restriction enzyme sequence.</p>
             <button 
               onClick={() => setShowWarning(false)}
               className="primary-cta"

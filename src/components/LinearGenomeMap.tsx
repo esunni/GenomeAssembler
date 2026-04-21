@@ -216,7 +216,7 @@ export function LinearGenomeMap({
             
             {/* Search Windows */}
             {searchWindows.map((win, i) => {
-              const color = win.reason === 'promoter' ? '#f59e0b' : win.reason === 'intergenic' ? '#10b981' : win.reason === 'silent_mutation' ? '#ef4444' : '#64748b';
+              const color = win.reason === 'promoter' ? '#f59e0b' : win.reason === 'intergenic' ? '#10b981' : win.reason === 'unannotated' ? 'var(--muted-foreground)' : win.reason === 'silent_mutation' ? '#ef4444' : '#64748b';
               return renderTrackRegion(win.start, win.end, color, '24px', '50%', 'translateY(-50%)', 1, `Window ${i+1}: ${win.start}-${win.end} (${win.reason})`);
             })}
           </div>
@@ -241,6 +241,7 @@ export function LinearGenomeMap({
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg> Promoter</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '10px', height: '10px', background: '#ef4444', borderRadius: '50%' }}></div> Silent Mutation</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: '#10b981', borderRadius: '2px' }}></div> Intergenic Window</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: 'var(--muted-foreground)', borderRadius: '2px' }}></div> Unannotated Window</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: '#f59e0b', borderRadius: '2px' }}></div> Promoter Window</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: '#ef4444', borderRadius: '2px' }}></div> Mutation Window</div>
       </div>
