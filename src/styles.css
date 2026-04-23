@@ -1205,6 +1205,10 @@ input:disabled {
   grid-template-columns: repeat(12, minmax(52px, 1fr));
 }
 
+.plate-grid[data-labware='plate-384'] {
+  grid-template-columns: repeat(24, minmax(36px, 1fr));
+}
+
 .plate-grid[data-labware='rack-4x6'] {
   grid-template-columns: repeat(6, minmax(58px, 1fr));
 }
@@ -1322,5 +1326,9 @@ input:disabled {
 
   .plate-grid[data-labware='plate-96'] {
     grid-template-columns: repeat(6, minmax(52px, 1fr));
+  }
+  
+  .plate-grid[data-labware='plate-384'] {
+    grid-template-columns: repeat(12, minmax(36px, 1fr));
   }
 }

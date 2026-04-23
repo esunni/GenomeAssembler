@@ -351,10 +351,13 @@ export function ReactionSetupSection({
           type="button"
           className="icon-button icon-add"
           onClick={() =>
-            onProjectChange((current) => ({
-              ...current,
-              protocolComponents: [...current.protocolComponents, createProtocolComponent(current.protocolComponents)],
-            }))
+            onProjectChange((current) => {
+              const newComponent = createProtocolComponent(current.protocolComponents, isEcho);
+              return {
+                ...current,
+                protocolComponents: [...current.protocolComponents, newComponent],
+              };
+            })
           }
           title="Add row"
         >

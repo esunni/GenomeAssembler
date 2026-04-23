@@ -35,7 +35,7 @@ export function createId(prefix: string): string {
   return `${prefix}-${idCounter}`;
 }
 
-export function createProtocolComponent(existingComponents?: ProtocolComponent[]): ProtocolComponent {
+export function createProtocolComponent(existingComponents?: ProtocolComponent[], isEcho?: boolean): ProtocolComponent {
   const existingColors = existingComponents 
     ? existingComponents.map(c => c.color.toUpperCase()) 
     : [];
@@ -52,7 +52,7 @@ export function createProtocolComponent(existingComponents?: ProtocolComponent[]
   return {
     id: createId('component'),
     name: '',
-    transferVolume: 2,
+    transferVolume: isEcho ? 25 : 2,
     color: color,
     deadVolumeMode: 'global',
     customDeadVolume: null,

@@ -226,7 +226,7 @@ export function DispensingPlateSection({ project, onProjectChange, isEcho }: Dis
             <label style={{ flex: 1 }}>
               Labware
               <select
-                value={project.dispensingPlate.labware}
+                value={isEcho && project.dispensingPlate.labware === 'rack-4x6' ? 'plate-96' : project.dispensingPlate.labware}
                 onChange={(event) =>
                   onProjectChange((current) => ({
                     ...current,
@@ -238,8 +238,17 @@ export function DispensingPlateSection({ project, onProjectChange, isEcho }: Dis
                   }))
                 }
               >
-                <option value="plate-96">96-well plate</option>
-                <option value="rack-4x6">4x6 rack</option>
+                {isEcho ? (
+                  <>
+                    <option value="plate-96">96-well plate</option>
+                    <option value="plate-384">384-well plate</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="plate-96">96-well plate</option>
+                    <option value="rack-4x6">4x6 rack</option>
+                  </>
+                )}
               </select>
             </label>
             <button
