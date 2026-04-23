@@ -1,5 +1,5 @@
 export type DeadVolumeMode = 'global' | 'custom';
-export type LabwareId = 'rack-4x6' | 'plate-96';
+export type LabwareId = 'rack-4x6' | 'plate-96' | 'plate-384';
 export type SourceType = 'component' | 'item' | 'premix';
 export type FillDirection = 'horizontal' | 'vertical';
 

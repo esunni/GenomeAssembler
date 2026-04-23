@@ -9,6 +9,7 @@ interface ReactionSetupSectionProps {
   onBulkProtocolTextChange: (value: string) => void;
   onImportProtocolPaste: () => void;
   onProjectChange: (updater: (current: ExperimentProject) => ExperimentProject) => void;
+  isEcho?: boolean;
 }
 
 export function ReactionSetupSection({
@@ -17,6 +18,7 @@ export function ReactionSetupSection({
   onBulkProtocolTextChange,
   onImportProtocolPaste,
   onProjectChange,
+  isEcho,
 }: ReactionSetupSectionProps) {
   const [patternConfig, setPatternConfig] = useState<Record<string, { prefix: string; start: number | string; end: number | string; suffix: string }>>({});
   const [expandedSubitems, setExpandedSubitems] = useState<Record<string, boolean>>({});
@@ -207,7 +209,7 @@ export function ReactionSetupSection({
               <tr>
                 <th style={{ width: '40px' }}></th>
                 <th>Component</th>
-                <th style={{ width: '200px', textAlign: 'center' }}>Volume (uL)</th>
+                <th style={{ width: '200px', textAlign: 'center' }}>Volume ({isEcho ? 'nL' : 'uL'})</th>
                 <th style={{ width: '40px' }}></th>
               </tr>
             </thead>
@@ -265,11 +267,27 @@ export function ReactionSetupSection({
                             const val = event.target.value;
                             const numVal = val === '' ? '' : Number(val);
                             
-                            if (typeof numVal === 'number' && numVal > 0 && numVal < 2) {
-                              setVolumeWarning({
-                                isOpen: true,
-                                message: `Janus minimum transfer volume is 2 μL.\nLower volumes may cause inaccurate pipetting.`
-                              });
+                            if (typeof numVal === 'number' && numVal > 0) {
+                              if (isEcho) {
+                                if (numVal < 25) {
+                                  setVolumeWarning({
+                                    isOpen: true,
+                                    message: `Echo minimum transfer volume is 25 nL.\nLower volumes cannot be accurately transferred.`
+                                  });
+                                } else if (numVal > 500) {
+                                  setVolumeWarning({
+                                    isOpen: true,
+                                    message: `Echo maximum single transfer volume is 500 nL.\nVolumes above 500 nL will be automatically divided in the mapping file.`
+                                  });
+                                }
+                              } else {
+                                if (numVal < 2) {
+                                  setVolumeWarning({
+                                    isOpen: true,
+                                    message: `Janus minimum transfer volume is 2 μL.\nLower volumes may cause inaccurate pipetting.`
+                                  });
+                                }
+                              }
                             }
                             
                             updateProtocolComponent(component.id, (current) => ({
@@ -349,7 +367,7 @@ export function ReactionSetupSection({
       <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Transfer Settings</h3>
       <div className="transfer-settings-row">
         <label className="transfer-settings-label">
-          Global dead volume (uL)
+          Global dead volume ({isEcho ? 'nL' : 'uL'})
           <input
             className="transfer-settings-input"
             type="number"
@@ -387,10 +405,10 @@ export function ReactionSetupSection({
           <thead>
             <tr>
               <th style={{ width: '187px' }}>Component</th>
-              <th style={{ width: '75px', textAlign: 'center' }}>Vol (ul)</th>
+              <th style={{ width: '75px', textAlign: 'center' }}>Vol ({isEcho ? 'nl' : 'ul'})</th>
               <th style={{ width: '40px', textAlign: 'center' }}>Color</th>
               {project.useGlobalDeadVolume ? null : (
-                <th style={{ width: '96px', textAlign: 'center' }}>Dead vol (ul)</th>
+                <th style={{ width: '96px', textAlign: 'center' }}>Dead vol ({isEcho ? 'nl' : 'ul'})</th>
               )}
               <th>Subitems</th>
               <th style={{ width: '40px' }}></th>

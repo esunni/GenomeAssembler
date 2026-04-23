@@ -97,7 +97,7 @@ export function getMappingExportFilename(
   return `${baseName}${fromPart}_Janus_mapping_file.csv`;
 }
 
-export function generateMappingCsvFiles(project: ExperimentProject): GeneratedMappingFile[] {
+export function generateMappingCsvFiles(project: ExperimentProject, isEcho: boolean = false): GeneratedMappingFile[] {
   const groups = getEffectiveSplitGroups(project);
   const hasComponentColumn = Object.values(project.dispensingPlate.wells).some((well) => well.wellName.trim() !== '');
 
@@ -112,6 +112,29 @@ export function generateMappingCsvFiles(project: ExperimentProject): GeneratedMa
         }
 
         const volume = getSourceTransferVolume(project, item);
+        
+        if (isEcho) {
+          const generatedRows: string[] = [];
+          let remainingVolume = volume;
+          
+          if (remainingVolume <= 0) return [];
+          
+          while (remainingVolume > 0) {
+            const transferVol = remainingVolume > 500 ? 500 : remainingVolume;
+            generatedRows.push(createCsvLine([
+              location.plate.name,
+              location.assignment.wellLabel || location.assignment.displayName || '',
+              location.wellId,
+              project.dispensingPlate.name,
+              dispensingWell.wellName || '',
+              dispensingWellId,
+              transferVol
+            ]));
+            remainingVolume -= transferVol;
+          }
+          return generatedRows;
+        }
+
         const leadingValues = hasComponentColumn ? [dispensingWell.wellName || dispensingWellId] : [];
 
         return [
@@ -126,16 +149,26 @@ export function generateMappingCsvFiles(project: ExperimentProject): GeneratedMa
         ];
       }),
     );
-    const header = hasComponentColumn
-      ? 'Component,Asp. Rack,Asp. Posi,Dsp. Rack,Dsp. Posi,vol'
-      : 'Asp. Rack,Asp. Posi,Dsp. Rack,Dsp. Posi,vol';
+    
+    let header;
+    if (isEcho) {
+      header = 'Source Plate Name,Source Well Name,Source Well,Dest Plate Name,Dest Well Name,Dest Well,Transfer Vol (nl)';
+    } else {
+      header = hasComponentColumn
+        ? 'Component,Asp. Rack,Asp. Posi,Dsp. Rack,Dsp. Posi,vol'
+        : 'Asp. Rack,Asp. Posi,Dsp. Rack,Dsp. Posi,vol';
+    }
+    
     const aspirationNames =
       groups.length > 1
         ? group.plateIds.map((plateId) => project.aspirationPlates.find((plate) => plate.id === plateId)?.name ?? '')
         : [];
 
+    const baseFilename = getMappingExportFilename(project.experimentName, project.dispensingPlate.name, aspirationNames);
+    const filename = isEcho ? baseFilename.replace('Janus', 'Echo') : baseFilename;
+
     return {
-      filename: getMappingExportFilename(project.experimentName, project.dispensingPlate.name, aspirationNames),
+      filename,
       content: [header, ...rows].join('\n'),
     };
   });

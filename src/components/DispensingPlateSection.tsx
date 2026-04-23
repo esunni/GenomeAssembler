@@ -7,6 +7,7 @@ import type { DispensingWellAssignment, DispensingWellItem, ExperimentProject, F
 interface DispensingPlateSectionProps {
   project: ExperimentProject;
   onProjectChange: (updater: (current: ExperimentProject) => ExperimentProject) => void;
+  isEcho?: boolean;
 }
 
 interface DispenseAutofillState {
@@ -23,7 +24,7 @@ function createDispensingAssignment(existing?: DispensingWellAssignment): Dispen
   return existing ?? { wellName: '', items: [] };
 }
 
-export function DispensingPlateSection({ project, onProjectChange }: DispensingPlateSectionProps) {
+export function DispensingPlateSection({ project, onProjectChange, isEcho }: DispensingPlateSectionProps) {
   const [selectedWell, setSelectedWell] = useState('A1');
   const [autofillState, setAutofillState] = useState<DispenseAutofillState>({
     componentId: '',
@@ -198,15 +199,15 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
 
   return (
     <section className="section-card">
-      <h2>Dispensing Plate</h2>
+      <h2>{isEcho ? 'Destination Plate' : 'Dispensing Plate'}</h2>
       <p className="section-lead">
-        Allow multiple source items per well, and autofill target wells from aspiration sources.
+        Allow multiple source items per well, and autofill target wells from {isEcho ? 'source plates' : 'aspiration sources'}.
       </p>
 
       <div className="plate-box" style={{ position: 'relative', marginTop: '1.5rem' }}>
         <div className="inline-grid" style={{ paddingRight: '4rem' }}>
           <label>
-            Dispensing plate name
+            {isEcho ? 'Destination plate name' : 'Dispensing plate name'}
             <input
               value={project.dispensingPlate.name}
               onChange={(event) =>
@@ -218,7 +219,7 @@ export function DispensingPlateSection({ project, onProjectChange }: DispensingP
                   },
                 }))
               }
-              placeholder="Dispensing plate name"
+              placeholder={isEcho ? 'Destination plate name' : 'Dispensing plate name'}
             />
           </label>
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-end' }}>

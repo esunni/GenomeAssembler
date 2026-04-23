@@ -10,6 +10,7 @@ interface AspirationPlatesSectionProps {
   availableSources: AvailableSource[];
   onProjectChange: (updater: (current: ExperimentProject) => ExperimentProject) => void;
   onDownloadTextFile: (filename: string, content: string) => void;
+  isEcho?: boolean;
 }
 
 interface PlateAutofillState {
@@ -23,6 +24,7 @@ export function AspirationPlatesSection({
   availableSources,
   onProjectChange,
   onDownloadTextFile,
+  isEcho,
 }: AspirationPlatesSectionProps) {
   const [selectedWells, setSelectedWells] = useState<Record<string, string>>({});
   const [autofillState, setAutofillState] = useState<Record<string, PlateAutofillState>>({});
@@ -200,7 +202,7 @@ export function AspirationPlatesSection({
     <section className="section-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h2>Aspiration Plates</h2>
+          <h2>{isEcho ? 'Source Plates' : 'Aspiration Plates'}</h2>
           <p className="section-lead">
             Place one source per well by drag-and-drop, template import, or family autofill. Each plate needs a name for export.
           </p>
@@ -218,7 +220,7 @@ export function AspirationPlatesSection({
             onClick={() =>
               onProjectChange((current) => ({
                 ...current,
-                aspirationPlates: [...current.aspirationPlates, createAspirationPlate()],
+                aspirationPlates: [...current.aspirationPlates, createAspirationPlate(isEcho ? 'plate-384' : 'plate-96')],
               }))
             }
           >
@@ -229,7 +231,7 @@ export function AspirationPlatesSection({
 
       <div className="content-grid" style={{ padding: '1rem 0 0' }}>
         {project.aspirationPlates.map((plate) => {
-          const wellOptions = getWellIds(plate.labware);
+          const wellOptions = getWellIds(isEcho ? 'plate-384' : plate.labware);
           const selectedWell = selectedWells[plate.id] ?? wellOptions[0] ?? 'A1';
           const selectedAssignment = plate.wells[selectedWell];
           const currentAutofill = autofillState[plate.id] ?? {
@@ -267,7 +269,7 @@ export function AspirationPlatesSection({
 
               <div className="inline-grid" style={{ paddingRight: '4rem' }}>
                 <label>
-                  Plate name
+                  {isEcho ? 'Source plate name' : 'Plate name'}
                   <input
                     value={plate.name}
                     onChange={(event) =>
@@ -276,14 +278,15 @@ export function AspirationPlatesSection({
                         name: event.target.value,
                       }))
                     }
-                    placeholder="Aspiration plate name"
+                    placeholder={isEcho ? 'Source plate name' : 'Aspiration plate name'}
                   />
                 </label>
                 <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-end' }}>
                   <label style={{ flex: 1 }}>
                     Labware
                     <select
-                      value={plate.labware}
+                      value={isEcho ? 'plate-384' : plate.labware}
+                      disabled={isEcho}
                       onChange={(event) =>
                         updateAspirationPlate(plate.id, (current) => ({
                           ...current,
@@ -292,8 +295,14 @@ export function AspirationPlatesSection({
                         }))
                       }
                     >
-                      <option value="plate-96">96-well plate</option>
-                      <option value="rack-4x6">4x6 rack</option>
+                      {isEcho ? (
+                        <option value="plate-384">384-well plate</option>
+                      ) : (
+                        <>
+                          <option value="plate-96">96-well plate</option>
+                          <option value="rack-4x6">4x6 rack</option>
+                        </>
+                      )}
                     </select>
                   </label>
                   <button

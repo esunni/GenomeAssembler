@@ -19,7 +19,7 @@ const numberFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 4,
 });
 
-type PortalView = 'design' | 'janus';
+type PortalView = 'design' | 'janus' | 'echo';
 
 function downloadTextFile(filename: string, content: string) {
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -157,7 +157,7 @@ function App() {
       return;
     }
 
-    setGeneratedFiles(generateMappingCsvFiles(project));
+    setGeneratedFiles(generateMappingCsvFiles(project, activeView === 'echo'));
   };
 
   const openDesign = () => {
@@ -167,6 +167,11 @@ function App() {
 
   const openJanus = () => {
     setActiveView('janus');
+    closeBuildMenu();
+  };
+
+  const openEcho = () => {
+    setActiveView('echo');
     closeBuildMenu();
   };
 
@@ -247,6 +252,9 @@ function App() {
                   <button type="button" className="menu-item" role="menuitem" onClick={openJanus}>
                     JANUS
                   </button>
+                  <button type="button" className="menu-item" role="menuitem" onClick={openEcho}>
+                    ECHO
+                  </button>
                 </div>
               ) : null}
             </div>
@@ -263,16 +271,16 @@ function App() {
                 <section className="portal-surface janus-hero">
                 <div className="page-header">
                   <div>
-                    <p className="page-eyebrow">Build / JANUS</p>
-                    <h2>JANUS Mapping File Generator</h2>
+                    <p className="page-eyebrow">Build / {activeView === 'echo' ? 'ECHO' : 'JANUS'}</p>
+                    <h2>{activeView === 'echo' ? 'ECHO Mapping File Generator' : 'JANUS Mapping File Generator'}</h2>
                     <p className="page-copy">
-                      Generate mapping files for the JANUS liquid handler. Define reaction components, assign wells, and export ready-to-use mapping files for your experiment.
+                      Generate mapping files for the {activeView === 'echo' ? 'ECHO' : 'JANUS'} liquid handler. Define reaction components, assign wells, and export ready-to-use mapping files for your experiment.
                     </p>
                   </div>
 
                   <div className="page-stat-grid" style={{ display: 'flex', justifyContent: 'flex-end', gap: '2.5rem' }}>
                     <article className="stat-card">
-                      <span>Aspiration plates</span>
+                      <span>{activeView === 'echo' ? 'Source plates' : 'Aspiration plates'}</span>
                       <strong>{project.aspirationPlates.length}</strong>
                     </article>
                     <article className="stat-card">
@@ -319,8 +327,8 @@ function App() {
                 <div style={{ position: 'sticky', top: 'calc(82px + 2rem)', height: 'fit-content' }}>
                   <nav className="quick-menu" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '150px' }}>
                     <a href="#reaction-setup" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Reaction Setup</a>
-                    <a href="#aspiration-plates" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Aspiration Plates</a>
-                    <a href="#dispensing-plate" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Dispensing Plate</a>
+                    <a href="#aspiration-plates" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>{activeView === 'echo' ? 'Source Plates' : 'Aspiration Plates'}</a>
+                    <a href="#dispensing-plate" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>{activeView === 'echo' ? 'Destination Plate' : 'Dispensing Plate'}</a>
                     <a href="#preparation" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>REAGENT PREP</a>
                     <a href="#mapping-files" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Mapping Files</a>
                   </nav>
@@ -336,6 +344,7 @@ function App() {
                       onBulkProtocolTextChange={setBulkProtocolText}
                       onImportProtocolPaste={handleProtocolPasteImport}
                       onProjectChange={updateProject}
+                      isEcho={activeView === 'echo'}
                     />
                   </div>
 
@@ -345,11 +354,16 @@ function App() {
                       availableSources={availableSources}
                       onProjectChange={updateProject}
                       onDownloadTextFile={downloadTextFile}
+                      isEcho={activeView === 'echo'}
                     />
                   </div>
 
                   <div id="dispensing-plate" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
-                    <DispensingPlateSection project={project} onProjectChange={updateProject} />
+                    <DispensingPlateSection 
+                      project={project} 
+                      onProjectChange={updateProject} 
+                      isEcho={activeView === 'echo'}
+                    />
                   </div>
 
                   <div id="preparation" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
@@ -383,11 +397,11 @@ function App() {
                       <thead>
                         <tr>
                           <th>Source</th>
-                          <th style={{ textAlign: 'center' }}>Vol for 1 rxn (ul)</th>
+                          <th style={{ textAlign: 'center' }}>Vol for 1 rxn ({activeView === 'echo' ? 'nl' : 'ul'})</th>
                           <th style={{ textAlign: 'center' }}>Dispensing count</th>
                           <th style={{ textAlign: 'center' }}>Mix loss (Rxns)</th>
                           <th style={{ textAlign: 'center' }}>Whole required rxn</th>
-                          <th style={{ textAlign: 'center' }}>Dead vol (ul)</th>
+                          <th style={{ textAlign: 'center' }}>Dead vol ({activeView === 'echo' ? 'nl' : 'ul'})</th>
                           <th style={{ textAlign: 'center' }}>Total prep volume</th>
                         </tr>
                       </thead>
@@ -417,7 +431,7 @@ function App() {
                   <p className="section-lead">Generate one combined CSV or partition aspiration plates into custom groupings.</p>
 
                   <div className="helper-box">
-                    <h3 style={{ marginBottom: '1rem' }}>Aspiration Plate Groupings</h3>
+                    <h3 style={{ marginBottom: '1rem' }}>{activeView === 'echo' ? 'Source Plate Groupings' : 'Aspiration Plate Groupings'}</h3>
                     <div className="chip-row">
                       {project.aspirationPlates.map((plate) => (
                         <button
@@ -434,7 +448,7 @@ function App() {
                             )
                           }
                         >
-                          {plate.name || 'Unnamed aspiration plate'}
+                          {plate.name || (activeView === 'echo' ? 'Unnamed source plate' : 'Unnamed aspiration plate')}
                         </button>
                       ))}
                     </div>

@@ -12,6 +12,7 @@ import type {
   PreparationSummary,
   ProtocolComponent,
   SourceType,
+  LabwareId,
 } from '../types';
 
 const DEFAULT_COLORS = ['#F3000E', '#F25016', '#6596F3', '#83B366', '#D3A4EA', '#EAD094', '#B2DCE2', '#D7EAAC'];
@@ -59,12 +60,12 @@ export function createProtocolComponent(existingComponents?: ProtocolComponent[]
   };
 }
 
-export function createAspirationPlate(): AspirationPlate {
+export function createAspirationPlate(labware: LabwareId = 'plate-96'): AspirationPlate {
   return {
     id: createId('aspiration'),
     name: '',
     kind: 'aspiration',
-    labware: 'plate-96',
+    labware,
     wells: {},
   };
 }
