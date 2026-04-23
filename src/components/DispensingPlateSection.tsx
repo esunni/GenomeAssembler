@@ -405,7 +405,7 @@ export function DispensingPlateSection({ project, onProjectChange, isEcho }: Dis
                     </small>
                   ) : null}
                   {assignment?.items?.length ? (
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '2px' }}>
+                    <div className="dot-container" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '2px' }}>
                       {assignment.items.map((item, idx) => (
                         <div key={idx} style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.parentColor }} title={item.displayName} />
                       ))}

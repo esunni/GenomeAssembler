@@ -1206,7 +1206,37 @@ input:disabled {
 }
 
 .plate-grid[data-labware='plate-384'] {
-  grid-template-columns: repeat(24, minmax(36px, 1fr));
+  grid-template-columns: repeat(24, minmax(20px, 1fr));
+  gap: 0.15rem;
+}
+
+.plate-grid[data-labware='plate-384'] .well-button {
+  min-height: 28px;
+  padding: 0.15rem;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.plate-grid[data-labware='plate-384'] .well-button strong {
+  font-size: 0.55rem;
+}
+
+.plate-grid[data-labware='plate-384'] .well-button small {
+  display: none;
+}
+
+.plate-grid[data-labware='plate-384'] .well-button .dot-container {
+  gap: 2px !important;
+  margin-top: 2px !important;
+  justify-content: center;
+}
+
+.plate-grid[data-labware='plate-384'] .well-button .dot-container > div {
+  width: 5px !important;
+  height: 5px !important;
 }
 
 .plate-grid[data-labware='rack-4x6'] {
@@ -1329,6 +1359,6 @@ input:disabled {
   }
   
   .plate-grid[data-labware='plate-384'] {
-    grid-template-columns: repeat(12, minmax(36px, 1fr));
+    grid-template-columns: repeat(12, minmax(20px, 1fr));
   }
 }

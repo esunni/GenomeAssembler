@@ -167,11 +167,23 @@ function App() {
 
   const openJanus = () => {
     setActiveView('janus');
+    updateProject(p => {
+      if (p.protocolComponents.length === 1 && p.protocolComponents[0].name === '' && p.protocolComponents[0].transferVolume === 25) {
+        return { ...p, protocolComponents: [{ ...p.protocolComponents[0], transferVolume: 2 }] };
+      }
+      return p;
+    });
     closeBuildMenu();
   };
 
   const openEcho = () => {
     setActiveView('echo');
+    updateProject(p => {
+      if (p.protocolComponents.length === 1 && p.protocolComponents[0].name === '' && p.protocolComponents[0].transferVolume === 2) {
+        return { ...p, protocolComponents: [{ ...p.protocolComponents[0], transferVolume: 25 }] };
+      }
+      return p;
+    });
     closeBuildMenu();
   };
 
