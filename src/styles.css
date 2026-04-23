@@ -1211,8 +1211,8 @@ input:disabled {
 }
 
 .plate-grid[data-labware='plate-384'] .well-button {
-  min-height: 28px;
-  padding: 0.15rem;
+  min-height: 26px;
+  padding: 0.1rem;
   border-radius: 3px;
   display: flex;
   flex-direction: column;
@@ -1222,6 +1222,7 @@ input:disabled {
 
 .plate-grid[data-labware='plate-384'] .well-button strong {
   font-size: 0.55rem;
+  line-height: 1;
 }
 
 .plate-grid[data-labware='plate-384'] .well-button small {
@@ -1230,7 +1231,7 @@ input:disabled {
 
 .plate-grid[data-labware='plate-384'] .well-button .dot-container {
   gap: 2px !important;
-  margin-top: 2px !important;
+  margin-top: -1px !important;
   justify-content: center;
 }
 

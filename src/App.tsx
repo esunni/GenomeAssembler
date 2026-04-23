@@ -32,8 +32,17 @@ function downloadTextFile(filename: string, content: string) {
 }
 
 function App() {
-  const [project, setProject] = useState<ExperimentProject>(() => createDefaultProject());
+  const [janusProject, setJanusProject] = useState<ExperimentProject>(() => createDefaultProject());
+  const [echoProject, setEchoProject] = useState<ExperimentProject>(() => {
+    const p = createDefaultProject();
+    if (p.protocolComponents.length > 0) {
+      p.protocolComponents[0].transferVolume = 25;
+    }
+    p.dispensingPlate.labware = 'plate-384';
+    return p;
+  });
   const [activeView, setActiveView] = useState<PortalView>('design');
+  const project = activeView === 'echo' ? echoProject : janusProject;
   const [buildMenuOpen, setBuildMenuOpen] = useState(false);
   const [buildMenuPinned, setBuildMenuPinned] = useState(false);
   const [bulkProtocolText, setBulkProtocolText] = useState(defaultProtocolPaste);
@@ -104,7 +113,11 @@ function App() {
   }, [buildMenuOpen]);
 
   const updateProject = (updater: (current: ExperimentProject) => ExperimentProject) => {
-    setProject((current) => updater(current));
+    if (activeView === 'echo') {
+      setEchoProject((current) => updater(current));
+    } else {
+      setJanusProject((current) => updater(current));
+    }
     setExportErrors([]);
   };
 
@@ -115,7 +128,12 @@ function App() {
     }
 
     const content = await file.text();
-    setProject(importProjectJson(content));
+    const loadedProject = importProjectJson(content);
+    if (activeView === 'echo') {
+      setEchoProject(loadedProject);
+    } else {
+      setJanusProject(loadedProject);
+    }
     setGeneratedFiles([]);
     setExportErrors([]);
     event.target.value = '';
@@ -167,23 +185,11 @@ function App() {
 
   const openJanus = () => {
     setActiveView('janus');
-    updateProject(p => {
-      if (p.protocolComponents.length === 1 && p.protocolComponents[0].name === '' && p.protocolComponents[0].transferVolume === 25) {
-        return { ...p, protocolComponents: [{ ...p.protocolComponents[0], transferVolume: 2 }] };
-      }
-      return p;
-    });
     closeBuildMenu();
   };
 
   const openEcho = () => {
     setActiveView('echo');
-    updateProject(p => {
-      if (p.protocolComponents.length === 1 && p.protocolComponents[0].name === '' && p.protocolComponents[0].transferVolume === 2) {
-        return { ...p, protocolComponents: [{ ...p.protocolComponents[0], transferVolume: 25 }] };
-      }
-      return p;
-    });
     closeBuildMenu();
   };
 
