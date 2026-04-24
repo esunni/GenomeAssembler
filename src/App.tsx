@@ -11,6 +11,7 @@ import {
   buildPreparationSummaries,
   createDefaultProject,
   createProtocolComponent,
+  cleanupOrphanedSources,
 } from './utils/janusState';
 
 const defaultProtocolPaste = 'component,transfer_volume\nBuffer,2\nPrimer,1';
@@ -116,9 +117,9 @@ function App() {
 
   const updateProject = (updater: (current: ExperimentProject) => ExperimentProject) => {
     if (activeView === 'echo') {
-      setEchoProject((current) => updater(current));
+      setEchoProject((current) => cleanupOrphanedSources(updater(current)));
     } else {
-      setJanusProject((current) => updater(current));
+      setJanusProject((current) => cleanupOrphanedSources(updater(current)));
     }
     setExportErrors([]);
   };

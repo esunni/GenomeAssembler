@@ -91,6 +91,55 @@ export function createDefaultProject(): ExperimentProject {
   };
 }
 
+export function cleanupOrphanedSources(project: ExperimentProject): ExperimentProject {
+  const validComponentIds = new Set<string>();
+  const validItemIds = new Set<string>();
+  
+  project.protocolComponents.forEach(c => {
+    validComponentIds.add(c.id);
+    c.subItems.forEach(si => validItemIds.add(si.id));
+  });
+
+  const isValidSource = (sourceId: string, sourceType: SourceType) => {
+    if (sourceType === 'component' || sourceType === 'premix') {
+      return validComponentIds.has(sourceId);
+    }
+    if (sourceType === 'item') {
+      return validItemIds.has(sourceId);
+    }
+    return false;
+  };
+
+  const newAspirationPlates = project.aspirationPlates.map(plate => {
+    const newWells: Record<string, any> = {};
+    for (const [wellId, assignment] of Object.entries(plate.wells)) {
+      if (isValidSource(assignment.sourceId, assignment.sourceType)) {
+        newWells[wellId] = assignment;
+      }
+    }
+    return { ...plate, wells: newWells };
+  });
+
+  const newDispensingPlate = {
+    ...project.dispensingPlate,
+    wells: Object.fromEntries(
+      Object.entries(project.dispensingPlate.wells).map(([wellId, assignment]) => [
+        wellId,
+        {
+          ...assignment,
+          items: assignment.items.filter(item => isValidSource(item.sourceId, item.sourceType))
+        }
+      ])
+    )
+  };
+
+  return {
+    ...project,
+    aspirationPlates: newAspirationPlates,
+    dispensingPlate: newDispensingPlate,
+  };
+}
+
 export function buildAvailableSources(project: ExperimentProject, isEcho: boolean = false): AvailableSource[] {
   const itemSources: AvailableSource[] = [];
 
@@ -427,8 +476,8 @@ export function buildPreparationSummaries(project: ExperimentProject, isEcho: bo
     const avgVolume = totalVol / usageCount;
 
     const deadVolume = getSourceDeadVolume(project, assignedSource);
-    const mixLoss = calculateMixLoss(usageCount, project.mixLossEnabled);
-    const mixLossVolume = mixLoss * avgVolume;
+    const mixLoss = 0;
+    const mixLossVolume = 0;
     
     const wholeReactionCount = usageCount + mixLoss;
 

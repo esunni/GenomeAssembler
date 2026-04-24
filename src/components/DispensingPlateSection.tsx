@@ -185,12 +185,12 @@ export function DispensingPlateSection({ project, onProjectChange, isEcho }: Dis
         ...current.dispensingPlate,
         wells: targetWells.reduce<Record<string, DispensingWellAssignment>>((wells, wellId, index) => {
           const existing = createDispensingAssignment(current.dispensingPlate.wells[wellId]);
-          wells[wellId] = {
-            ...existing,
-            wellName: autofillState.wellNamePrefix.trim() === ''
-                ? existing.wellName
-                : `${autofillState.wellNamePrefix}_${autofillState.startNumber + index}`
-          };
+            wells[wellId] = {
+              ...existing,
+              wellName: autofillState.wellNamePrefix.trim() === ''
+                  ? existing.wellName
+                  : `${autofillState.wellNamePrefix}${autofillState.startNumber + index}`
+            };
           return wells;
         }, { ...current.dispensingPlate.wells }),
       },
