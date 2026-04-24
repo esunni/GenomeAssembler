@@ -190,7 +190,7 @@ export function findAssignedSource(
   return buildAvailableSources(project).find((source) => source.sourceId === sourceId && source.sourceType === sourceType) ?? null;
 }
 
-export function buildPreparationSummaries(project: ExperimentProject): PreparationSummary[] {
+export function buildPreparationSummaries(project: ExperimentProject, isEcho: boolean = false): PreparationSummary[] {
   const usage = getDispensingUsage(Object.values(project.dispensingPlate.wells).flatMap((well) => well.items));
   
   const summaries: PreparationSummary[] = [];
@@ -220,8 +220,9 @@ export function buildPreparationSummaries(project: ExperimentProject): Preparati
       requiredReactionCount: usageCount, mixLoss, componentVolume, deadVolume
     });
 
+    const effectiveComponentVolume = isEcho ? componentVolume / 1000 : componentVolume;
     const totalPreparationVolume = calculatePreparationVolume({
-      requiredReactionCount: usageCount, mixLoss, componentVolume, deadVolume
+      requiredReactionCount: usageCount, mixLoss, componentVolume: effectiveComponentVolume, deadVolume
     });
 
     summaries.push({
@@ -239,7 +240,8 @@ export function buildPreparationSummaries(project: ExperimentProject): Preparati
     });
 
     const addChild = (childComp: ProtocolComponent) => {
-      const childPrepVol = Number((wholeReactionCount * childComp.transferVolume).toFixed(4));
+      const childEffectiveVol = isEcho ? childComp.transferVolume / 1000 : childComp.transferVolume;
+      const childPrepVol = Number((wholeReactionCount * childEffectiveVol).toFixed(4));
 
       summaries.push({
         sourceId: childComp.id,
@@ -283,10 +285,11 @@ export function buildPreparationSummaries(project: ExperimentProject): Preparati
       deadVolume,
     });
 
+    const effectiveComponentVolume = isEcho ? baseComponentVolume / 1000 : baseComponentVolume;
     const totalPreparationVolume = calculatePreparationVolume({
       requiredReactionCount: usageCount,
       mixLoss,
-      componentVolume: baseComponentVolume,
+      componentVolume: effectiveComponentVolume,
       deadVolume,
     });
 

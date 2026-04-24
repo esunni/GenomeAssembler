@@ -53,7 +53,7 @@ function App() {
   const loadInputRef = useRef<HTMLInputElement | null>(null);
 
   const availableSources = useMemo(() => buildAvailableSources(project), [project]);
-  const preparationSummaries = useMemo(() => buildPreparationSummaries(project), [project]);
+  const preparationSummaries = useMemo(() => buildPreparationSummaries(project, activeView === 'echo'), [project, activeView]);
   const dispensingAssignments = useMemo(() => Object.values(project.dispensingPlate.wells), [project.dispensingPlate.wells]);
   const filledDispensingWellCount = useMemo(
     () => dispensingAssignments.filter((assignment) => assignment.items.length > 0).length,
@@ -283,7 +283,7 @@ function App() {
       <main className="portal-body">
         <div className="page-canvas">
           {activeView === 'design' ? (
-            <DesignPage onOpenJanus={openJanus} />
+            <DesignPage />
           ) : (
             <>
                 <section className="portal-surface janus-hero">
@@ -334,8 +334,30 @@ function App() {
                       Load project JSON
                     </button>
                     <input ref={loadInputRef} type="file" accept=".json,application/json" hidden onChange={handleProjectLoad} />
-                    <button type="button" className="ghost" onClick={openDesign} style={{ marginLeft: 'auto' }}>
-                      Back to Design
+                    <button 
+                      type="button" 
+                      className="ghost" 
+                      style={{ marginLeft: 'auto', color: '#dc3545' }}
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to clear all data?')) {
+                          if (activeView === 'echo') {
+                            setEchoProject(() => {
+                              const p = createDefaultProject();
+                              if (p.protocolComponents.length > 0) {
+                                p.protocolComponents[0].transferVolume = 25;
+                              }
+                              p.dispensingPlate.labware = 'plate-384';
+                              return p;
+                            });
+                          } else {
+                            setJanusProject(createDefaultProject());
+                          }
+                          setGeneratedFiles([]);
+                          setExportErrors([]);
+                        }
+                      }}
+                    >
+                      Clear
                     </button>
                   </div>
                 </div>
@@ -419,8 +441,8 @@ function App() {
                           <th style={{ textAlign: 'center' }}>Dispensing count</th>
                           <th style={{ textAlign: 'center' }}>Mix loss (Rxns)</th>
                           <th style={{ textAlign: 'center' }}>Whole required rxn</th>
-                          <th style={{ textAlign: 'center' }}>Dead vol ({activeView === 'echo' ? 'nl' : 'ul'})</th>
-                          <th style={{ textAlign: 'center' }}>Total prep volume</th>
+                          <th style={{ textAlign: 'center' }}>Dead vol (ul)</th>
+                          <th style={{ textAlign: 'center' }}>Total prep volume (ul)</th>
                         </tr>
                       </thead>
                       <tbody>

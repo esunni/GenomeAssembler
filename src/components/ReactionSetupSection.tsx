@@ -370,7 +370,7 @@ export function ReactionSetupSection({
       <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Transfer Settings</h3>
       <div className="transfer-settings-row">
         <label className="transfer-settings-label">
-          Global dead volume ({isEcho ? 'nL' : 'uL'})
+          Global dead volume (uL)
           <input
             className="transfer-settings-input"
             type="number"
@@ -411,7 +411,7 @@ export function ReactionSetupSection({
               <th style={{ width: '75px', textAlign: 'center' }}>Vol ({isEcho ? 'nl' : 'ul'})</th>
               <th style={{ width: '40px', textAlign: 'center' }}>Color</th>
               {project.useGlobalDeadVolume ? null : (
-                <th style={{ width: '96px', textAlign: 'center' }}>Dead vol ({isEcho ? 'nl' : 'ul'})</th>
+                <th style={{ width: '96px', textAlign: 'center' }}>Dead vol (ul)</th>
               )}
               <th>Subitems</th>
               <th style={{ width: '40px' }}></th>

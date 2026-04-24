@@ -6,11 +6,7 @@ import { SearchWindowFinder } from './SearchWindowFinder';
 import { ENZYMES, findCircularEnzymeSites, parseSingleCircularFasta, type ParsedCircularFasta } from '../utils/designTools';
 import { CdsRegion, SiteAnalysis } from '../utils/mutationTools';
 
-interface DesignPageProps {
-  onOpenJanus: () => void;
-}
-
-export function DesignPage({ onOpenJanus }: DesignPageProps) {
+export function DesignPage() {
   const [selectedEnzymeId, setSelectedEnzymeId] = useState(ENZYMES[0]?.id ?? '');
   const [uploadedGenome, setUploadedGenome] = useState<ParsedCircularFasta | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string>('');
@@ -83,13 +79,6 @@ export function DesignPage({ onOpenJanus }: DesignPageProps) {
             Upload a circular genome sequence and design optimal fragmentation strategies. Plan Type IIS recognition site placements to create
             assembly-ready fragments that can be experimentally validated and assembled into a complete genome.
           </p>
-        </div>
-
-        <div className="design-header-actions">
-          <p className="cta-label">Move into the build workflow when the fragments are ready.</p>
-          <button type="button" className="primary-cta" onClick={onOpenJanus}>
-            Mapping File Generator
-          </button>
         </div>
       </div>
 
