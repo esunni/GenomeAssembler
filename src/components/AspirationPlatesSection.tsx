@@ -17,6 +17,8 @@ interface PlateAutofillState {
   familyId: string;
   direction: FillDirection;
   interval: number;
+  startNumber: number;
+  count: number | '';
 }
 
 export function AspirationPlatesSection({
@@ -158,24 +160,36 @@ export function AspirationPlatesSection({
       return;
     }
 
-    const wellOptions = getWellIds(plate.labware);
+    const wellOptions = getWellIds(isEcho ? 'plate-384' : plate.labware);
     const startWell = selectedWells[plate.id] ?? wellOptions[0] ?? 'A1';
 
     const interval = config.interval || 0;
-    const neededWellsCount = group.items.length + Math.max(0, group.items.length - 1) * interval;
-    const wells = getSequentialWellIds(plate.labware, startWell, config.direction, neededWellsCount);
+    
+    // Apply start number
+    const startIdx = Math.max(0, (config.startNumber || 1) - 1);
+    let itemsToFill = group.items.slice(startIdx);
+    
+    // Apply count if valid
+    if (typeof config.count === 'number' && config.count > 0) {
+      itemsToFill = itemsToFill.slice(0, config.count);
+    }
+
+    if (itemsToFill.length === 0) return;
+
+    const neededWellsCount = itemsToFill.length + Math.max(0, itemsToFill.length - 1) * interval;
+    const wells = getSequentialWellIds(isEcho ? 'plate-384' : plate.labware, startWell, config.direction, neededWellsCount);
 
     updateAspirationPlate(plate.id, (currentPlate) => {
       const nextWells = { ...currentPlate.wells };
 
-      const familySourceKeys = new Set(group.items.map(s => `${s.sourceType}:${s.sourceId}`));
+      const familySourceKeys = new Set(itemsToFill.map(s => `${s.sourceType}:${s.sourceId}`));
       for (const [id, assignment] of Object.entries(nextWells)) {
         if (familySourceKeys.has(`${assignment.sourceType}:${assignment.sourceId}`)) {
           delete nextWells[id];
         }
       }
 
-      group.items.forEach((source, index) => {
+      itemsToFill.forEach((source, index) => {
         const wellId = wells[index * (1 + interval)];
         if (!wellId) {
           return;
@@ -238,6 +252,8 @@ export function AspirationPlatesSection({
             familyId: Array.from(groupedSources.keys())[0] ?? '',
             direction: 'horizontal' as FillDirection,
             interval: 0,
+            startNumber: 1,
+            count: '',
           };
 
           return (
@@ -355,20 +371,55 @@ export function AspirationPlatesSection({
                     <option value="vertical">Vertical</option>
                   </select>
                 </label>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
+                  <label style={{ fontSize: '0.85rem' }}>
+                    Start #
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem', width: '3.5rem', boxSizing: 'border-box' }}
+                      value={currentAutofill.startNumber}
+                      onChange={(event) => {
+                        const val = parseInt(event.target.value, 10);
+                        setAutofillState((current) => ({
+                          ...current,
+                          [plate.id]: { ...currentAutofill, startNumber: isNaN(val) ? 1 : Math.max(1, val) },
+                        }));
+                      }}
+                    />
+                  </label>
                   <label style={{ fontSize: '0.85rem' }}>
                     Interval
                     <input
                       type="number"
                       min="0"
                       step="1"
-                      style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', width: '4rem', boxSizing: 'border-box' }}
+                      style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem', width: '3.5rem', boxSizing: 'border-box' }}
                       value={currentAutofill.interval}
                       onChange={(event) => {
                         const val = parseInt(event.target.value, 10);
                         setAutofillState((current) => ({
                           ...current,
                           [plate.id]: { ...currentAutofill, interval: isNaN(val) ? 0 : Math.max(0, val) },
+                        }));
+                      }}
+                    />
+                  </label>
+                  <label style={{ fontSize: '0.85rem' }}>
+                    Count
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      placeholder="All"
+                      style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem', width: '3.5rem', boxSizing: 'border-box' }}
+                      value={currentAutofill.count}
+                      onChange={(event) => {
+                        const val = event.target.value;
+                        setAutofillState((current) => ({
+                          ...current,
+                          [plate.id]: { ...currentAutofill, count: val === '' ? '' : Math.max(1, parseInt(val, 10)) },
                         }));
                       }}
                     />

@@ -327,10 +327,9 @@ export function ReactionSetupSection({
                       style={{
                         background: 'transparent',
                         border: 'none',
-                        borderBottom: '1px solid #6c757d',
                         color: 'inherit',
                         fontSize: 'inherit',
-                        padding: '0 2px',
+                        padding: '0',
                         cursor: 'pointer',
                         outline: 'none',
                         textAlign: 'center',
