@@ -3,6 +3,7 @@ import { ChangeEvent, DragEvent, useMemo, useState } from 'react';
 import { CircularGenomeMap } from './CircularGenomeMap';
 import { SilentMutationAnalysis } from './SilentMutationAnalysis';
 import { SearchWindowFinder } from './SearchWindowFinder';
+import { PrimerDesignSection } from './PrimerDesignSection';
 import { ENZYMES, findCircularEnzymeSites, parseSingleCircularFasta, type ParsedCircularFasta } from '../utils/designTools';
 import { CdsRegion, SiteAnalysis } from '../utils/mutationTools';
 
@@ -215,6 +216,11 @@ export function DesignPage() {
             sequenceLength={uploadedGenome.length} 
             cdsRegions={cdsRegions} 
             siteAnalyses={siteAnalyses}
+            isLinear={isLinear}
+          />
+          
+          <PrimerDesignSection 
+            uploadedGenome={uploadedGenome}
             isLinear={isLinear}
           />
         </>
