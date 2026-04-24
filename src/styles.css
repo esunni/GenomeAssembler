@@ -514,13 +514,13 @@ button:disabled {
 .button-row .clear-btn {
   background: #ffffff;
   color: #dc3545;
-  border-color: #000000;
+  border-color: #dc3545;
 }
 
 .button-row .clear-btn:hover {
   background: #dc3545;
   color: #ffffff;
-  border-color: #000000;
+  border-color: #dc3545;
 }
 
 .coming-soon-grid {

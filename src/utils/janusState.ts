@@ -53,6 +53,7 @@ export function createProtocolComponent(existingComponents?: ProtocolComponent[]
     id: createId('component'),
     name: '',
     transferVolume: isEcho ? 25 : 2,
+    echoVolumes: isEcho ? { 'protocol-1': 25 } : undefined,
     color: color,
     deadVolumeMode: 'global',
     customDeadVolume: null,
@@ -86,6 +87,7 @@ export function createDefaultProject(): ExperimentProject {
       wells: {},
     },
     mappingSplitGroups: [],
+    echoProtocols: [],
   };
 }
 
@@ -132,6 +134,7 @@ export function getComponentForSource(
 export function getSourceTransferVolume(
   project: ExperimentProject,
   item: { sourceId: string; sourceType: SourceType; componentId: string | null },
+  protocolId?: string
 ): number {
   if (item.sourceType === 'premix') {
     const premix = project.protocolComponents.find((c) => c.id === item.sourceId);
@@ -140,10 +143,17 @@ export function getSourceTransferVolume(
       return 0;
     }
 
+    if (protocolId && premix.echoVolumes && protocolId in premix.echoVolumes) {
+      return premix.echoVolumes[protocolId];
+    }
     return premix.transferVolume;
   }
 
-  return getComponentForSource(project, item)?.transferVolume ?? 0;
+  const component = getComponentForSource(project, item);
+  if (protocolId && component?.echoVolumes && protocolId in component.echoVolumes) {
+    return component.echoVolumes[protocolId];
+  }
+  return component?.transferVolume ?? 0;
 }
 
 export function getSourceDeadVolume(
@@ -163,12 +173,37 @@ export function getSourceDeadVolume(
   return project.useGlobalDeadVolume ? project.globalDeadVolume : 0;
 }
 
-function getDispensingUsage(items: DispensingWellItem[]): Map<string, number> {
-  return items.reduce((usage, item) => {
-    const key = `${item.sourceType}:${item.sourceId}`;
-    usage.set(key, (usage.get(key) ?? 0) + 1);
-    return usage;
-  }, new Map<string, number>());
+export function getDispensingItemProtocolId(project: ExperimentProject, wellName: string): string {
+  if (!project.echoProtocols || project.echoProtocols.length === 0) return '';
+  const matchingProtocol = project.echoProtocols.find(p => p.name === wellName);
+  return matchingProtocol ? matchingProtocol.id : project.echoProtocols[0].id;
+}
+
+function getDispensingUsageAndVolume(project: ExperimentProject): {
+  usage: Map<string, number>,
+  totalVolume: Map<string, number>,
+  distinctVolumes: Map<string, Set<number>>
+} {
+  const usage = new Map<string, number>();
+  const totalVolume = new Map<string, number>();
+  const distinctVolumes = new Map<string, Set<number>>();
+
+  Object.entries(project.dispensingPlate.wells).forEach(([wellId, well]) => {
+    const protocolId = getDispensingItemProtocolId(project, well.wellName);
+    
+    well.items.forEach(item => {
+      const key = `${item.sourceType}:${item.sourceId}`;
+      usage.set(key, (usage.get(key) ?? 0) + 1);
+      
+      const vol = getSourceTransferVolume(project, item, protocolId);
+      totalVolume.set(key, (totalVolume.get(key) ?? 0) + vol);
+      
+      if (!distinctVolumes.has(key)) distinctVolumes.set(key, new Set());
+      distinctVolumes.get(key)!.add(vol);
+    });
+  });
+
+  return { usage, totalVolume, distinctVolumes };
 }
 
 export function findAssignedSource(
@@ -191,11 +226,13 @@ export function findAssignedSource(
 }
 
 export function buildPreparationSummaries(project: ExperimentProject, isEcho: boolean = false): PreparationSummary[] {
-  const usage = getDispensingUsage(Object.values(project.dispensingPlate.wells).flatMap((well) => well.items));
+  const { usage, totalVolume, distinctVolumes } = getDispensingUsageAndVolume(project);
   
   const summaries: PreparationSummary[] = [];
   const processedSourceKeys = new Set<string>();
-  const allDispensingItems = Object.values(project.dispensingPlate.wells).flatMap(w => w.items);
+  const allDispensingItemsWithWell = Object.values(project.dispensingPlate.wells).flatMap(w => 
+    w.items.map(item => ({ ...item, wellName: w.wellName }))
+  );
 
   // 1. Process Premixes
   for (const component of project.protocolComponents) {
@@ -205,25 +242,38 @@ export function buildPreparationSummaries(project: ExperimentProject, isEcho: bo
     const comp2 = project.protocolComponents.find(c => c.id === component.premixInfo!.comp2Id);
     if (!comp1 || !comp2) continue;
 
-    const usageCount = allDispensingItems.filter(item => 
+    const relevantItems = allDispensingItemsWithWell.filter(item => 
       item.componentId === comp1.id || item.sourceId === comp1.id ||
       item.componentId === comp2.id || item.sourceId === comp2.id
-    ).length;
+    );
+    const usageCount = relevantItems.length;
 
     if (usageCount === 0) continue;
 
-    const componentVolume = comp1.transferVolume + comp2.transferVolume;
+    let premixVolSet = new Set<number>();
+    let totalPremixVol = 0;
+    
+    relevantItems.forEach(item => {
+      const protocolId = getDispensingItemProtocolId(project, item.wellName);
+      const v1 = getSourceTransferVolume(project, { sourceId: comp1.id, sourceType: 'component', componentId: comp1.id }, protocolId);
+      const v2 = getSourceTransferVolume(project, { sourceId: comp2.id, sourceType: 'component', componentId: comp2.id }, protocolId);
+      const sum = v1 + v2;
+      premixVolSet.add(sum);
+      totalPremixVol += sum;
+    });
+
+    const isVariable = premixVolSet.size > 1;
+    const representativeVolume = isVariable ? 0 : [...premixVolSet][0];
+    const avgVolume = totalPremixVol / usageCount;
+    
     const deadVolume = getSourceDeadVolume(project, { sourceId: component.id, sourceType: 'component', componentId: component.id });
     const mixLoss = calculateMixLoss(usageCount, project.mixLossEnabled);
     
-    const wholeReactionCount = calculateWholeReactionCount({
-      requiredReactionCount: usageCount, mixLoss, componentVolume, deadVolume
-    });
-
-    const effectiveComponentVolume = isEcho ? componentVolume / 1000 : componentVolume;
-    const totalPreparationVolume = calculatePreparationVolume({
-      requiredReactionCount: usageCount, mixLoss, componentVolume: effectiveComponentVolume, deadVolume
-    });
+    const mixLossVolume = mixLoss * avgVolume;
+    
+    const effectiveTotalVol = isEcho ? (totalPremixVol + mixLossVolume) / 1000 : (totalPremixVol + mixLossVolume);
+    const totalPreparationVolume = Number((effectiveTotalVol + deadVolume).toFixed(4));
+    const wholeReactionCount = usageCount + mixLoss;
 
     summaries.push({
       sourceId: component.id,
@@ -232,7 +282,7 @@ export function buildPreparationSummaries(project: ExperimentProject, isEcho: bo
       isPremixRow: true,
       parentColor: component.color,
       usageCount,
-      componentVolume,
+      componentVolume: isVariable ? ('-' as any) : representativeVolume,
       deadVolume,
       mixLoss,
       wholeReactionCount,
@@ -240,8 +290,22 @@ export function buildPreparationSummaries(project: ExperimentProject, isEcho: bo
     });
 
     const addChild = (childComp: ProtocolComponent) => {
-      const childEffectiveVol = isEcho ? childComp.transferVolume / 1000 : childComp.transferVolume;
-      const childPrepVol = Number((wholeReactionCount * childEffectiveVol).toFixed(4));
+      let childTotalVol = 0;
+      let childVolSet = new Set<number>();
+      relevantItems.forEach(item => {
+        const protocolId = getDispensingItemProtocolId(project, item.wellName);
+        const v = getSourceTransferVolume(project, { sourceId: childComp.id, sourceType: 'component', componentId: childComp.id }, protocolId);
+        childTotalVol += v;
+        childVolSet.add(v);
+      });
+      
+      const isChildVar = childVolSet.size > 1;
+      const childRepVol = isChildVar ? 0 : [...childVolSet][0];
+      const childAvgVol = childTotalVol / usageCount;
+      const childMixLossVol = mixLoss * childAvgVol;
+      
+      const childEffectiveTotal = isEcho ? (childTotalVol + childMixLossVol) / 1000 : (childTotalVol + childMixLossVol);
+      const childPrepVol = Number(childEffectiveTotal.toFixed(4));
 
       summaries.push({
         sourceId: childComp.id,
@@ -249,7 +313,7 @@ export function buildPreparationSummaries(project: ExperimentProject, isEcho: bo
         displayName: `↳ ${childComp.name}`,
         isPremixRow: false,
         usageCount,
-        componentVolume: childComp.transferVolume,
+        componentVolume: isChildVar ? ('-' as any) : childRepVol,
         deadVolume: 0,
         mixLoss: 0,
         wholeReactionCount,
@@ -273,25 +337,20 @@ export function buildPreparationSummaries(project: ExperimentProject, isEcho: bo
 
     if (!assignedSource) continue;
 
-    const baseComponentVolume = getSourceTransferVolume(project, assignedSource);
+    const vols = distinctVolumes.get(usageKey)!;
+    const isVariable = vols.size > 1;
+    const representativeVolume = isVariable ? 0 : [...vols][0];
+    const totalVol = totalVolume.get(usageKey)!;
+    const avgVolume = totalVol / usageCount;
+
     const deadVolume = getSourceDeadVolume(project, assignedSource);
-      
     const mixLoss = calculateMixLoss(usageCount, project.mixLossEnabled);
+    const mixLossVolume = mixLoss * avgVolume;
+    
+    const wholeReactionCount = usageCount + mixLoss;
 
-    const wholeReactionCount = calculateWholeReactionCount({
-      requiredReactionCount: usageCount,
-      mixLoss,
-      componentVolume: baseComponentVolume,
-      deadVolume,
-    });
-
-    const effectiveComponentVolume = isEcho ? baseComponentVolume / 1000 : baseComponentVolume;
-    const totalPreparationVolume = calculatePreparationVolume({
-      requiredReactionCount: usageCount,
-      mixLoss,
-      componentVolume: effectiveComponentVolume,
-      deadVolume,
-    });
+    const effectiveTotalVol = isEcho ? (totalVol + mixLossVolume) / 1000 : (totalVol + mixLossVolume);
+    const totalPreparationVolume = Number((effectiveTotalVol + deadVolume).toFixed(4));
 
     summaries.push({
       sourceId,
@@ -299,7 +358,7 @@ export function buildPreparationSummaries(project: ExperimentProject, isEcho: bo
       displayName: assignedSource.displayName,
       isPremixRow: false,
       usageCount,
-      componentVolume: baseComponentVolume,
+      componentVolume: isVariable ? ('-' as any) : representativeVolume,
       deadVolume,
       mixLoss,
       wholeReactionCount,

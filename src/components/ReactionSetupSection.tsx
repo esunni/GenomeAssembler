@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import * as XLSX from 'xlsx';
 
 import { createId, createProtocolComponent } from '../utils/janusState';
-import type { ExperimentProject, ProtocolComponent } from '../types';
+import type { ExperimentProject, ProtocolComponent, EchoProtocol } from '../types';
 
 interface ReactionSetupSectionProps {
   project: ExperimentProject;
@@ -26,6 +27,72 @@ export function ReactionSetupSection({
   const [premixModal, setPremixModal] = useState<{ isOpen: boolean; comp1Id: string; comp2Id: string; name: string; vol: number } | null>(null);
   const [draggedSubitem, setDraggedSubitem] = useState<{ componentId: string; index: number } | null>(null);
   const [volumeWarning, setVolumeWarning] = useState<{ isOpen: boolean; message: string } | null>(null);
+  const [activeProtocolIndex, setActiveProtocolIndex] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const activeProtocol = project.echoProtocols?.[activeProtocolIndex] ?? { id: 'default', name: 'Default Protocol' };
+
+  const handleProtocolUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, any>>(firstSheet, { header: 1 });
+
+      if (rows.length < 2) return;
+
+      const headers = rows[0] as string[];
+      const protocolNames = headers.slice(1).map(h => String(h).trim()).filter(Boolean);
+      
+      if (protocolNames.length === 0) return;
+
+      const newProtocols = protocolNames.map(name => ({ id: createId('protocol'), name }));
+      const newComponents: ProtocolComponent[] = [];
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i] as any[];
+        if (!row || row.length === 0) continue;
+        
+        const compName = String(row[0] || '').trim();
+        if (!compName) continue;
+
+        const echoVolumes: Record<string, number> = {};
+        let defaultVol = 25;
+
+        newProtocols.forEach((proto, idx) => {
+          const vol = Number(row[idx + 1]);
+          if (!isNaN(vol) && vol > 0) {
+            echoVolumes[proto.id] = vol;
+            defaultVol = vol;
+          } else {
+            echoVolumes[proto.id] = 25;
+          }
+        });
+
+        newComponents.push({
+          ...createProtocolComponent(newComponents, true),
+          name: compName,
+          transferVolume: defaultVol,
+          echoVolumes
+        });
+      }
+
+      onProjectChange((current) => ({
+        ...current,
+        echoProtocols: newProtocols,
+        protocolComponents: newComponents
+      }));
+      setActiveProtocolIndex(0);
+
+    } catch (err) {
+      console.error("Error parsing protocol file", err);
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const updateProtocolComponent = (componentId: string, updater: (component: ProtocolComponent) => ProtocolComponent) => {
     onProjectChange((current) => {
@@ -179,29 +246,107 @@ export function ReactionSetupSection({
 
       <div className="protocol-box">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <h3 style={{ margin: 0 }}>Protocol</h3>
-          <button
-            type="button"
-            className="primary-cta"
-            disabled={selectedForPremix.length !== 2}
-            onClick={() => {
-              if (selectedForPremix.length === 2) {
-                const comp1 = project.protocolComponents.find(c => c.id === selectedForPremix[0]);
-                const comp2 = project.protocolComponents.find(c => c.id === selectedForPremix[1]);
-                if (comp1 && comp2) {
-                  setPremixModal({
-                    isOpen: true,
-                    comp1Id: comp1.id,
-                    comp2Id: comp2.id,
-                    name: `${comp1.name || 'comp1'}+${comp2.name || 'comp2'}`,
-                    vol: comp1.transferVolume + comp2.transferVolume
-                  });
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <h3 style={{ margin: 0 }}>Protocol</h3>
+            {isEcho && project.echoProtocols && project.echoProtocols.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8f9fa', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+                <button 
+                  type="button" 
+                  className="icon-button" 
+                  style={{ width: '24px', height: '24px', padding: 0 }}
+                  disabled={activeProtocolIndex === 0}
+                  onClick={() => setActiveProtocolIndex(i => i - 1)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    style={{ fontWeight: 600, border: 'none', background: 'transparent', width: '120px', textAlign: 'center' }}
+                    value={activeProtocol.name}
+                    onChange={(e) => {
+                      onProjectChange(curr => ({
+                        ...curr,
+                        echoProtocols: curr.echoProtocols!.map((p, i) => i === activeProtocolIndex ? { ...p, name: e.target.value } : p)
+                      }));
+                    }}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: '#6c757d' }}>
+                    ({activeProtocolIndex + 1}/{project.echoProtocols.length})
+                  </span>
+                  <button
+                    type="button"
+                    className="icon-button icon-add"
+                    style={{ width: '20px', height: '20px', padding: 2, marginLeft: '0.25rem' }}
+                    onClick={() => {
+                      onProjectChange(curr => {
+                        const newId = createId('protocol');
+                        const newProtocols = [...curr.echoProtocols!, { id: newId, name: `Protocol ${curr.echoProtocols!.length + 1}` }];
+                        const newComps = curr.protocolComponents.map(c => ({
+                          ...c,
+                          echoVolumes: { ...c.echoVolumes, [newId]: 25 }
+                        }));
+                        return { ...curr, echoProtocols: newProtocols, protocolComponents: newComps };
+                      });
+                      setActiveProtocolIndex((project.echoProtocols?.length || 1));
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
+                  </button>
+                </div>
+                <button 
+                  type="button" 
+                  className="icon-button" 
+                  style={{ width: '24px', height: '24px', padding: 0 }}
+                  disabled={activeProtocolIndex === (project.echoProtocols.length - 1)}
+                  onClick={() => setActiveProtocolIndex(i => i + 1)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+                </button>
+              </div>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            {isEcho && (
+              <>
+                <input
+                  type="file"
+                  accept=".csv, .tsv, .xlsx"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleProtocolUpload}
+                />
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Upload protocols
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              className="primary-cta"
+              disabled={selectedForPremix.length !== 2}
+              onClick={() => {
+                if (selectedForPremix.length === 2) {
+                  const comp1 = project.protocolComponents.find(c => c.id === selectedForPremix[0]);
+                  const comp2 = project.protocolComponents.find(c => c.id === selectedForPremix[1]);
+                  if (comp1 && comp2) {
+                    setPremixModal({
+                      isOpen: true,
+                      comp1Id: comp1.id,
+                      comp2Id: comp2.id,
+                      name: `${comp1.name || 'comp1'}+${comp2.name || 'comp2'}`,
+                      vol: comp1.transferVolume + comp2.transferVolume
+                    });
+                  }
                 }
-              }
-            }}
-          >
-            Premix
-          </button>
+              }}
+            >
+              Premix
+            </button>
+          </div>
         </div>
         <div className="table-wrap">
           <table>
@@ -262,7 +407,7 @@ export function ReactionSetupSection({
                           type="number"
                           min="0"
                           step="0.1"
-                          value={component.transferVolume}
+                          value={isEcho ? (component.echoVolumes?.[activeProtocol.id] ?? component.transferVolume) : component.transferVolume}
                           onChange={(event) => {
                             const val = event.target.value;
                             const numVal = val === '' ? '' : Number(val);
@@ -290,10 +435,21 @@ export function ReactionSetupSection({
                               }
                             }
                             
-                            updateProtocolComponent(component.id, (current) => ({
-                              ...current,
-                              transferVolume: numVal as unknown as number,
-                            }));
+                            updateProtocolComponent(component.id, (current) => {
+                              if (isEcho) {
+                                return {
+                                  ...current,
+                                  echoVolumes: {
+                                    ...(current.echoVolumes || {}),
+                                    [activeProtocol.id]: numVal as number
+                                  }
+                                };
+                              }
+                              return {
+                                ...current,
+                                transferVolume: numVal as number,
+                              };
+                            });
                           }}
                         />
                     )}
@@ -434,7 +590,15 @@ export function ReactionSetupSection({
                       ? (component.id === project.protocolComponents.find(c => c.id === component.premixParentId)?.premixInfo?.comp1Id
                         ? "X"
                         : `${project.protocolComponents.find(c => c.id === component.premixParentId)?.transferVolume ?? 0} - X`)
-                      : component.transferVolume}
+                      : (() => {
+                          if (isEcho && component.echoVolumes && project.echoProtocols && project.echoProtocols.length > 0) {
+                            const protocolIds = project.echoProtocols.map(p => p.id);
+                            const vols = new Set(protocolIds.map(id => component.echoVolumes![id] ?? 25));
+                            if (vols.size > 1) return '-';
+                            return [...vols][0];
+                          }
+                          return component.transferVolume;
+                        })()}
                   </span>
                 </td>
                 <td style={{ textAlign: 'center' }}>

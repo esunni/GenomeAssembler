@@ -35,8 +35,10 @@ function App() {
   const [janusProject, setJanusProject] = useState<ExperimentProject>(() => createDefaultProject());
   const [echoProject, setEchoProject] = useState<ExperimentProject>(() => {
     const p = createDefaultProject();
+    p.echoProtocols = [{ id: 'protocol-1', name: 'Protocol 1' }];
     if (p.protocolComponents.length > 0) {
       p.protocolComponents[0].transferVolume = 25;
+      p.protocolComponents[0].echoVolumes = { 'protocol-1': 25 };
     }
     p.dispensingPlate.labware = 'plate-384';
     return p;
@@ -343,8 +345,10 @@ function App() {
                           if (activeView === 'echo') {
                             setEchoProject(() => {
                               const p = createDefaultProject();
+                              p.echoProtocols = [{ id: 'protocol-1', name: 'Protocol 1' }];
                               if (p.protocolComponents.length > 0) {
                                 p.protocolComponents[0].transferVolume = 25;
+                                p.protocolComponents[0].echoVolumes = { 'protocol-1': 25 };
                               }
                               p.dispensingPlate.labware = 'plate-384';
                               return p;

@@ -13,10 +13,16 @@ export interface PremixInfo {
   comp2Id: string;
 }
 
+export interface EchoProtocol {
+  id: string;
+  name: string;
+}
+
 export interface ProtocolComponent {
   id: string;
   name: string;
   transferVolume: number;
+  echoVolumes?: Record<string, number>;
   color: string;
   deadVolumeMode: DeadVolumeMode;
   customDeadVolume: number | null;
@@ -79,6 +85,7 @@ export interface ExperimentProject {
   aspirationPlates: AspirationPlate[];
   dispensingPlate: DispensingPlate;
   mappingSplitGroups: MappingSplitGroup[];
+  echoProtocols?: EchoProtocol[];
 }
 
 export interface ParsedAspirationRow {
