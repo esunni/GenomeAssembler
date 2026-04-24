@@ -420,9 +420,8 @@ export function DispensingPlateSection({ project, onProjectChange, isEcho }: Dis
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               {selectedWell}
               {isEcho && project.echoProtocols && project.echoProtocols.length > 0 && 
-               project.dispensingPlate.wells[selectedWell]?.wellName &&
-               !project.echoProtocols.find(p => p.name === project.dispensingPlate.wells[selectedWell].wellName) && (
-                <span style={{ fontSize: '0.7rem', backgroundColor: '#fff3cd', color: '#856404', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
+               !project.echoProtocols.find(p => p.name === project.dispensingPlate.wells[selectedWell]?.wellName) && (
+                <span style={{ fontSize: '0.8rem', backgroundColor: '#fff3cd', color: '#856404', padding: '0.25rem 0.6rem', borderRadius: '4px', fontWeight: 600 }}>
                   Unmatched protocol
                 </span>
               )}

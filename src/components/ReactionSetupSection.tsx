@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 
 import { createId, createProtocolComponent } from '../utils/janusState';
-import type { ExperimentProject, ProtocolComponent, EchoProtocol } from '../types';
+import type { ExperimentProject, ProtocolComponent, EchoProtocol, ComponentSubItem } from '../types';
 
 interface ReactionSetupSectionProps {
   project: ExperimentProject;
@@ -138,6 +138,48 @@ export function ReactionSetupSection({
     });
   };
 
+  const visibleProtocolComponents = isEcho
+    ? project.protocolComponents.filter(c => c.echoVolumes && c.echoVolumes[activeProtocol.id] !== undefined)
+    : project.protocolComponents;
+
+  const groupedComponents = useMemo(() => {
+    if (!isEcho) return project.protocolComponents;
+    const map = new Map<string, ProtocolComponent[]>();
+    project.protocolComponents.forEach(c => {
+      const name = c.name.trim() || c.id;
+      if (!map.has(name)) map.set(name, []);
+      map.get(name)!.push(c);
+    });
+    return Array.from(map.values()).map(group => {
+      const base = group[0];
+      if (group.length === 1) return base;
+      
+      const allVols = new Set<number>();
+      group.forEach(c => {
+        if (c.echoVolumes) {
+          Object.values(c.echoVolumes).forEach(v => allVols.add(v));
+        }
+      });
+      
+      return {
+        ...base,
+        _isMergedGroup: true,
+        _mergedVolumeDisplay: allVols.size > 1 ? '-' : [...allVols][0]
+      } as ProtocolComponent & { _isMergedGroup?: boolean, _mergedVolumeDisplay?: string | number };
+    });
+  }, [project.protocolComponents, isEcho]);
+
+  const updateGroupedComponent = (component: ProtocolComponent, updater: (c: ProtocolComponent) => ProtocolComponent) => {
+    const nameKey = component.name.trim() || component.id;
+    onProjectChange(current => ({
+      ...current,
+      protocolComponents: current.protocolComponents.map(c => 
+        (isEcho && (c.name.trim() || c.id) === nameKey) ? updater(c) : 
+        (!isEcho && c.id === component.id) ? updater(c) : c
+      )
+    }));
+  };
+
   const handlePatternGenerate = (componentId: string) => {
     const config = patternConfig[componentId];
     if (!config) {
@@ -246,10 +288,13 @@ export function ReactionSetupSection({
 
       <div className="protocol-box">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <h3 style={{ margin: 0 }}>Protocol</h3>
+          <h3 style={{ margin: 0 }}>Protocol</h3>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             {isEcho && project.echoProtocols && project.echoProtocols.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8f9fa', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+              <div style={{ 
+                display: 'flex', alignItems: 'center', gap: '0.25rem', 
+                background: '#ffffff', border: '1px solid #e0d4f5', padding: '0.25rem', borderRadius: '6px' 
+              }}>
                 <button 
                   type="button" 
                   className="icon-button" 
@@ -259,9 +304,9 @@ export function ReactionSetupSection({
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
                 </button>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                   <input
-                    style={{ fontWeight: 600, border: 'none', background: 'transparent', width: '120px', textAlign: 'center' }}
+                    style={{ fontWeight: 600, border: 'none', background: 'transparent', width: '90px', textAlign: 'center', padding: 0 }}
                     value={activeProtocol.name}
                     onChange={(e) => {
                       onProjectChange(curr => ({
@@ -277,15 +322,12 @@ export function ReactionSetupSection({
                     type="button"
                     className="icon-button icon-add"
                     style={{ width: '20px', height: '20px', padding: 2, marginLeft: '0.25rem' }}
+                    title="Add Protocol"
                     onClick={() => {
                       onProjectChange(curr => {
                         const newId = createId('protocol');
                         const newProtocols = [...curr.echoProtocols!, { id: newId, name: `Protocol ${curr.echoProtocols!.length + 1}` }];
-                        const newComps = curr.protocolComponents.map(c => ({
-                          ...c,
-                          echoVolumes: { ...c.echoVolumes, [newId]: 25 }
-                        }));
-                        return { ...curr, echoProtocols: newProtocols, protocolComponents: newComps };
+                        return { ...curr, echoProtocols: newProtocols };
                       });
                       setActiveProtocolIndex((project.echoProtocols?.length || 1));
                     }}
@@ -302,12 +344,7 @@ export function ReactionSetupSection({
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
                 </button>
-              </div>
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            {isEcho && (
-              <>
+                <div style={{ width: '1px', height: '16px', background: '#e0d4f5', margin: '0 0.25rem' }} />
                 <input
                   type="file"
                   accept=".csv, .tsv, .xlsx"
@@ -317,12 +354,18 @@ export function ReactionSetupSection({
                 />
                 <button
                   type="button"
-                  className="secondary"
+                  className="icon-button"
+                  style={{ width: '24px', height: '24px', padding: 2 }}
+                  title="Upload Protocols"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  Upload protocols
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
                 </button>
-              </>
+              </div>
             )}
             <button
               type="button"
@@ -359,7 +402,7 @@ export function ReactionSetupSection({
               </tr>
             </thead>
             <tbody>
-              {project.protocolComponents.map((component) => {
+              {visibleProtocolComponents.map((component) => {
                 const isSelected = selectedForPremix.includes(component.id);
                 const isPremix = component.isPremix;
                 const isPremixComponent = component.isPremixComponent;
@@ -455,11 +498,21 @@ export function ReactionSetupSection({
                     )}
                   </td>
                   <td style={{ textAlign: 'center' }}>
-                    <button
-                      type="button"
-                      className="icon-button icon-remove"
-                      onClick={() => {
-                        if (isPremix) {
+                      <button
+                        type="button"
+                        className="icon-button icon-remove"
+                        onClick={() => {
+                          if (isEcho && component.echoVolumes && Object.keys(component.echoVolumes).length > 1) {
+                            const newVols = { ...component.echoVolumes };
+                            delete newVols[activeProtocol.id];
+                            onProjectChange((current) => ({
+                              ...current,
+                              protocolComponents: current.protocolComponents.map(c => c.id === component.id ? { ...c, echoVolumes: newVols } : c)
+                            }));
+                            return;
+                          }
+                          
+                          if (isPremix) {
                           onProjectChange((current) => {
                             const comp1Id = component.premixInfo?.comp1Id;
                             const comp2Id = component.premixInfo?.comp2Id;
@@ -509,6 +562,9 @@ export function ReactionSetupSection({
           onClick={() =>
             onProjectChange((current) => {
               const newComponent = createProtocolComponent(current.protocolComponents, isEcho);
+              if (isEcho && current.echoProtocols) {
+                newComponent.echoVolumes = { [activeProtocol.id]: 25 };
+              }
               return {
                 ...current,
                 protocolComponents: [...current.protocolComponents, newComponent],
@@ -574,7 +630,7 @@ export function ReactionSetupSection({
             </tr>
           </thead>
           <tbody>
-            {project.protocolComponents.map((component) => {
+            {groupedComponents.map((component: ProtocolComponent & { _isMergedGroup?: boolean, _mergedVolumeDisplay?: string | number }) => {
               const isPremix = component.isPremix;
               const isPremixComponent = component.isPremixComponent;
               const rowColor = isPremix ? '#e0d4f5' : isPremixComponent ? '#f5edfc' : 'transparent';
@@ -590,22 +646,14 @@ export function ReactionSetupSection({
                       ? (component.id === project.protocolComponents.find(c => c.id === component.premixParentId)?.premixInfo?.comp1Id
                         ? "X"
                         : `${project.protocolComponents.find(c => c.id === component.premixParentId)?.transferVolume ?? 0} - X`)
-                      : (() => {
-                          if (isEcho && component.echoVolumes && project.echoProtocols && project.echoProtocols.length > 0) {
-                            const protocolIds = project.echoProtocols.map(p => p.id);
-                            const vols = new Set(protocolIds.map(id => component.echoVolumes![id] ?? 25));
-                            if (vols.size > 1) return '-';
-                            return [...vols][0];
-                          }
-                          return component.transferVolume;
-                        })()}
+                      : component._isMergedGroup ? component._mergedVolumeDisplay : component.transferVolume}
                   </span>
                 </td>
                 <td style={{ textAlign: 'center' }}>
                   <input
                     type="color"
                     value={component.color}
-                    onChange={(event) => updateProtocolComponent(component.id, (current) => ({ ...current, color: event.target.value }))}
+                    onChange={(event) => updateGroupedComponent(component, (current) => ({ ...current, color: event.target.value }))}
                     className="color-circle-input"
                     title="Pick color"
                   />
@@ -618,7 +666,7 @@ export function ReactionSetupSection({
                       step="0.1"
                       value={component.customDeadVolume ?? ''}
                       onChange={(event) =>
-                        updateProtocolComponent(component.id, (current) => ({
+                        updateGroupedComponent(component, (current) => ({
                           ...current,
                           customDeadVolume: event.target.value === '' ? null : Number(event.target.value),
                           deadVolumeMode: 'custom',
@@ -650,14 +698,14 @@ export function ReactionSetupSection({
                         </svg>
                       </button>
                       <div className="chip-row">
-                        {component.subItems.map((item, index) => (
+                        {component.subItems.map((item: ComponentSubItem, index: number) => (
                           <span
                             key={item.id}
                             className="chip"
                             style={{
                               background: component.color,
                               cursor: 'grab',
-                              opacity: draggedSubitem?.componentId === component.id && draggedSubitem.index === index ? 0.5 : 1
+                              opacity: (draggedSubitem && draggedSubitem.componentId === component.id && draggedSubitem.index === index) ? 0.5 : 1
                             }}
                             draggable={true}
                             onDragStart={() => setDraggedSubitem({ componentId: component.id, index })}
@@ -668,7 +716,7 @@ export function ReactionSetupSection({
                                 const fromIndex = draggedSubitem.index;
                                 const toIndex = index;
                                 if (fromIndex !== toIndex) {
-                                  updateProtocolComponent(component.id, (current) => {
+                                  updateGroupedComponent(component, (current) => {
                                     const newSubItems = [...current.subItems];
                                     const [movedItem] = newSubItems.splice(fromIndex, 1);
                                     newSubItems.splice(toIndex, 0, movedItem);
@@ -684,7 +732,7 @@ export function ReactionSetupSection({
                             <button
                               type="button"
                               onClick={() =>
-                                updateProtocolComponent(component.id, (current) => ({
+                                updateGroupedComponent(component, (current) => ({
                                   ...current,
                                   subItems: current.subItems.filter((candidate) => candidate.id !== item.id),
                                 }))
@@ -708,7 +756,7 @@ export function ReactionSetupSection({
                               if (event.key === 'Enter') {
                                 const input = event.target as HTMLInputElement;
                                 const name = input.value.trim();
-                                updateProtocolComponent(component.id, (current) => ({
+                                updateGroupedComponent(component, (current) => ({
                                   ...current,
                                   subItems: [
                                     ...current.subItems,
@@ -725,7 +773,7 @@ export function ReactionSetupSection({
                             onClick={(event) => {
                               const input = (event.target as HTMLElement).parentElement?.querySelector('input') as HTMLInputElement;
                               const name = input?.value.trim();
-                              updateProtocolComponent(component.id, (current) => ({
+                              updateGroupedComponent(component, (current) => ({
                                 ...current,
                                 subItems: [
                                   ...current.subItems,
@@ -814,7 +862,22 @@ export function ReactionSetupSection({
                           <button
                             type="button"
                             className="btn-generate"
-                            onClick={() => handlePatternGenerate(component.id)}
+                            onClick={() => {
+                              const config = patternConfig[component.id];
+                              if (!config) return;
+                              const start = Number(config.start) || 1;
+                              const end = Number(config.end) || 3;
+                              updateGroupedComponent(component, (curr) => {
+                                const newSubItems = Array.from({ length: Math.max(end - start + 1, 0) }, (_, index) => ({
+                                  id: createId('item'),
+                                  name: `${config.prefix}${start + index}${config.suffix}`,
+                                }));
+                                return {
+                                  ...curr,
+                                  subItems: [...(curr.subItems || []), ...newSubItems],
+                                };
+                              });
+                            }}
                           >
                             Generate
                           </button>
@@ -822,7 +885,7 @@ export function ReactionSetupSection({
                               type="button"
                               className="btn-generate"
                               style={{ backgroundColor: '#dc3545', color: 'white', border: '1px solid white', marginLeft: '0.6rem' }}
-                              onClick={() => handleClearSubitems(component.id)}
+                              onClick={() => updateGroupedComponent(component, (curr) => ({ ...curr, subItems: [] }))}
                             >
                               Clear
                             </button>
@@ -843,7 +906,7 @@ export function ReactionSetupSection({
                           return {
                             ...current,
                             protocolComponents: current.protocolComponents
-                              .filter((candidate) => candidate.id !== component.id)
+                              .filter((candidate) => candidate.name.trim() !== component.name.trim() && candidate.id !== component.id)
                               .map(c => (c.id === comp1Id || c.id === comp2Id) ? { ...c, isPremixComponent: false, premixParentId: undefined } : c)
                           };
                         });
@@ -855,19 +918,18 @@ export function ReactionSetupSection({
                           return {
                             ...current,
                             protocolComponents: current.protocolComponents
-                              .filter((candidate) => candidate.id !== component.id && candidate.id !== premixId)
+                              .filter((candidate) => candidate.name.trim() !== component.name.trim() && candidate.id !== component.id && candidate.id !== premixId)
                               .map(c => c.id === otherCompId ? { ...c, isPremixComponent: false, premixParentId: undefined } : c)
                           };
                         });
                       } else {
                         onProjectChange((current) => ({
                           ...current,
-                          protocolComponents: current.protocolComponents.filter((candidate) => candidate.id !== component.id),
+                          protocolComponents: current.protocolComponents.filter((candidate) => candidate.name.trim() !== component.name.trim() && candidate.id !== component.id),
                         }));
                       }
                     }}
-                    disabled={project.protocolComponents.length === 1}
-                    title="Remove"
+                    title="Remove everywhere"
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
