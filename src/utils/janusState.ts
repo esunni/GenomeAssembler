@@ -91,10 +91,18 @@ export function createDefaultProject(): ExperimentProject {
   };
 }
 
-export function buildAvailableSources(project: ExperimentProject): AvailableSource[] {
+export function buildAvailableSources(project: ExperimentProject, isEcho: boolean = false): AvailableSource[] {
   const itemSources: AvailableSource[] = [];
+  const seenComponentNames = new Set<string>();
+  const seenItemNames = new Set<string>();
 
   project.protocolComponents.forEach((component) => {
+    const compName = component.name.trim();
+    if (isEcho && compName) {
+      if (seenComponentNames.has(compName)) return;
+      seenComponentNames.add(compName);
+    }
+
     if (component.subItems.length === 0) {
       itemSources.push({
         sourceId: component.id,
@@ -109,6 +117,12 @@ export function buildAvailableSources(project: ExperimentProject): AvailableSour
     }
 
     component.subItems.forEach((item) => {
+      const itemName = item.name.trim();
+      if (isEcho && itemName) {
+        if (seenItemNames.has(itemName)) return;
+        seenItemNames.add(itemName);
+      }
+
       itemSources.push({
         sourceId: item.id,
         sourceType: 'item',
@@ -143,15 +157,54 @@ export function getSourceTransferVolume(
       return 0;
     }
 
-    if (protocolId && premix.echoVolumes && protocolId in premix.echoVolumes) {
-      return premix.echoVolumes[protocolId];
+    if (protocolId) {
+      if (premix.echoVolumes && protocolId in premix.echoVolumes) {
+        return premix.echoVolumes[protocolId];
+      }
+      if (premix.name) {
+        const sameNameComp = project.protocolComponents.find(c => 
+          c.isPremix && c.name.trim() === premix.name.trim() && 
+          c.echoVolumes && protocolId in c.echoVolumes
+        );
+        if (sameNameComp) {
+          return sameNameComp.echoVolumes![protocolId];
+        }
+      }
     }
     return premix.transferVolume;
   }
 
-  const component = getComponentForSource(project, item);
-  if (protocolId && component?.echoVolumes && protocolId in component.echoVolumes) {
-    return component.echoVolumes[protocolId];
+  let component = getComponentForSource(project, item);
+  
+  if (item.sourceType === 'item' && !component) {
+    // Attempt to find component by looking up item in all components
+    component = project.protocolComponents.find(c => c.subItems.some(si => si.id === item.sourceId)) ?? null;
+  }
+
+  if (protocolId) {
+    if (component?.echoVolumes && protocolId in component.echoVolumes) {
+      return component.echoVolumes[protocolId];
+    }
+    if (component && component.name) {
+      const sameNameComp = project.protocolComponents.find(c => 
+        c.name.trim() === component.name.trim() && 
+        c.echoVolumes && protocolId in c.echoVolumes
+      );
+      if (sameNameComp) {
+        return sameNameComp.echoVolumes![protocolId];
+      }
+    }
+    // If it's a subitem, try finding another component that has a subitem with the SAME NAME
+    if (item.sourceType === 'item') {
+      const subItemName = component?.subItems.find(si => si.id === item.sourceId)?.name.trim();
+      if (subItemName) {
+        for (const c of project.protocolComponents) {
+          if (c.echoVolumes && protocolId in c.echoVolumes && c.subItems.some(si => si.name.trim() === subItemName)) {
+            return c.echoVolumes[protocolId];
+          }
+        }
+      }
+    }
   }
   return component?.transferVolume ?? 0;
 }
@@ -210,6 +263,7 @@ export function findAssignedSource(
   project: ExperimentProject,
   sourceId: string,
   sourceType: SourceType,
+  isEcho: boolean = false
 ): { sourceId: string; sourceType: SourceType; displayName: string; componentId: string | null; parentColor: string } | null {
   const aspirationMatch = project.aspirationPlates
     .flatMap((plate) => Object.values(plate.wells))
@@ -222,7 +276,7 @@ export function findAssignedSource(
     };
   }
 
-  return buildAvailableSources(project).find((source) => source.sourceId === sourceId && source.sourceType === sourceType) ?? null;
+  return buildAvailableSources(project, isEcho).find((source) => source.sourceId === sourceId && source.sourceType === sourceType) ?? null;
 }
 
 export function buildPreparationSummaries(project: ExperimentProject, isEcho: boolean = false): PreparationSummary[] {
@@ -333,7 +387,7 @@ export function buildPreparationSummaries(project: ExperimentProject, isEcho: bo
     if (processedSourceKeys.has(usageKey)) continue;
 
     const [sourceType, sourceId] = usageKey.split(':') as [SourceType, string];
-    const assignedSource = findAssignedSource(project, sourceId, sourceType);
+    const assignedSource = findAssignedSource(project, sourceId, sourceType, isEcho);
 
     if (!assignedSource) continue;
 

@@ -49,7 +49,7 @@ export function DispensingPlateSection({ project, onProjectChange, isEcho }: Dis
       ),
     [project.aspirationPlates],
   );
-  const availableSources = useMemo(() => buildAvailableSources(project), [project]);
+  const availableSources = useMemo(() => buildAvailableSources(project, isEcho), [project, isEcho]);
   const wellOptions = useMemo(() => getWellIds(project.dispensingPlate.labware), [project.dispensingPlate.labware]);
 
   const setDispensingWellItems = (wellId: string, items: DispensingWellItem[]) => {

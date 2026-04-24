@@ -5,7 +5,7 @@ import type {
   ParsedAspirationRow,
   SourceType,
 } from '../types';
-import { getSourceTransferVolume } from './janusState';
+import { getSourceTransferVolume, getDispensingItemProtocolId } from './janusState';
 import { isValidWellId, normalizeWellId } from './plateUtils';
 
 function sanitizeName(name: string): string {
@@ -111,7 +111,8 @@ export function generateMappingCsvFiles(project: ExperimentProject, isEcho: bool
           return [];
         }
 
-        const volume = getSourceTransferVolume(project, item);
+        const protocolId = isEcho ? getDispensingItemProtocolId(project, dispensingWell.wellName) : undefined;
+        const volume = getSourceTransferVolume(project, item, protocolId);
         
         if (isEcho) {
           const generatedRows: string[] = [];
