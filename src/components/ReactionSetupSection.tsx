@@ -52,33 +52,36 @@ export function ReactionSetupSection({
       const newProtocols = protocolNames.map(name => ({ id: createId('protocol'), name }));
       const newComponents: ProtocolComponent[] = [];
 
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i] as any[];
-        if (!row || row.length === 0) continue;
-        
-        const compName = String(row[0] || '').trim();
-        if (!compName) continue;
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i] as any[];
+          if (!row || row.length === 0) continue;
+          
+          const compName = String(row[0] || '').trim();
+          if (!compName) continue;
 
-        const echoVolumes: Record<string, number> = {};
-        let defaultVol = 25;
+          const echoVolumes: Record<string, number> = {};
+          let defaultVol = 25;
 
-        newProtocols.forEach((proto, idx) => {
-          const vol = Number(row[idx + 1]);
-          if (!isNaN(vol) && vol > 0) {
-            echoVolumes[proto.id] = vol;
-            defaultVol = vol;
-          } else {
-            echoVolumes[proto.id] = 25;
+          newProtocols.forEach((proto, idx) => {
+            const cellValue = row[idx + 1];
+            if (cellValue !== undefined && cellValue !== null && String(cellValue).trim() !== '') {
+              const vol = Number(cellValue);
+              if (!isNaN(vol) && vol > 0) {
+                echoVolumes[proto.id] = vol;
+                defaultVol = vol;
+              }
+            }
+          });
+
+          if (Object.keys(echoVolumes).length > 0) {
+            newComponents.push({
+              ...createProtocolComponent(newComponents, true),
+              name: compName,
+              transferVolume: defaultVol,
+              echoVolumes
+            });
           }
-        });
-
-        newComponents.push({
-          ...createProtocolComponent(newComponents, true),
-          name: compName,
-          transferVolume: defaultVol,
-          echoVolumes
-        });
-      }
+        }
 
       onProjectChange((current) => ({
         ...current,
@@ -152,19 +155,20 @@ export function ReactionSetupSection({
     });
     return Array.from(map.values()).map(group => {
       const base = group[0];
-      if (group.length === 1) return base;
       
       const allVols = new Set<number>();
       group.forEach(c => {
-        if (c.echoVolumes) {
+        if (c.echoVolumes && Object.keys(c.echoVolumes).length > 0) {
           Object.values(c.echoVolumes).forEach(v => allVols.add(v));
+        } else {
+          allVols.add(c.transferVolume);
         }
       });
       
       return {
         ...base,
         _isMergedGroup: true,
-        _mergedVolumeDisplay: allVols.size > 1 ? '-' : [...allVols][0]
+        _mergedVolumeDisplay: allVols.size > 1 ? '-' : (allVols.size === 1 ? [...allVols][0] : base.transferVolume)
       } as ProtocolComponent & { _isMergedGroup?: boolean, _mergedVolumeDisplay?: string | number };
     });
   }, [project.protocolComponents, isEcho]);
@@ -315,8 +319,32 @@ export function ReactionSetupSection({
                       }));
                     }}
                   />
-                  <span style={{ fontSize: '0.75rem', color: '#6c757d' }}>
-                    ({activeProtocolIndex + 1}/{project.echoProtocols.length})
+                  <span style={{ fontSize: '0.75rem', color: '#6c757d', display: 'flex', alignItems: 'center' }}>
+                    (
+                    <select
+                      value={activeProtocolIndex}
+                      onChange={(e) => setActiveProtocolIndex(Number(e.target.value))}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        borderBottom: '1px solid #6c757d',
+                        color: 'inherit',
+                        fontSize: 'inherit',
+                        padding: '0 2px',
+                        cursor: 'pointer',
+                        outline: 'none',
+                        textAlign: 'center',
+                        appearance: 'none',
+                        WebkitAppearance: 'none',
+                        MozAppearance: 'none'
+                      }}
+                      title="Jump to protocol"
+                    >
+                      {project.echoProtocols.map((_, idx) => (
+                        <option key={idx} value={idx}>{idx + 1}</option>
+                      ))}
+                    </select>
+                    /{project.echoProtocols.length})
                   </span>
                   <button
                     type="button"
