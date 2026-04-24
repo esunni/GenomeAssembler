@@ -306,7 +306,7 @@ export function ReactionSetupSection({
                 </button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                   <input
-                    style={{ fontWeight: 600, border: '1px solid #e2e8f0', borderRadius: '2px', background: 'transparent', width: '90px', textAlign: 'center', padding: '0.1rem 0.25rem' }}
+                    className="protocol-name-input"
                     value={activeProtocol.name}
                     onChange={(e) => {
                       onProjectChange(curr => ({
