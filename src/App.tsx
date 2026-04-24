@@ -54,7 +54,7 @@ function App() {
   const buildMenuRef = useRef<HTMLDivElement | null>(null);
   const loadInputRef = useRef<HTMLInputElement | null>(null);
 
-  const availableSources = useMemo(() => buildAvailableSources(project), [project]);
+  const availableSources = useMemo(() => buildAvailableSources(project, activeView === 'echo'), [project, activeView]);
   const preparationSummaries = useMemo(() => buildPreparationSummaries(project, activeView === 'echo'), [project, activeView]);
   const dispensingAssignments = useMemo(() => Object.values(project.dispensingPlate.wells), [project.dispensingPlate.wells]);
   const filledDispensingWellCount = useMemo(

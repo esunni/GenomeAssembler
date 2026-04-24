@@ -93,16 +93,51 @@ export function createDefaultProject(): ExperimentProject {
 
 export function buildAvailableSources(project: ExperimentProject, isEcho: boolean = false): AvailableSource[] {
   const itemSources: AvailableSource[] = [];
-  const seenComponentNames = new Set<string>();
-  const seenItemNames = new Set<string>();
+
+  if (isEcho) {
+    const mergedComponents = new Map<string, ProtocolComponent>();
+    
+    project.protocolComponents.forEach((component) => {
+      const name = component.name.trim() || component.id;
+      if (!mergedComponents.has(name)) {
+        mergedComponents.set(name, { ...component, subItems: [...component.subItems] });
+      } else {
+        const existing = mergedComponents.get(name)!;
+        const newSubItems = component.subItems.filter(si => !existing.subItems.some(e => e.name.trim() === si.name.trim()));
+        existing.subItems.push(...newSubItems);
+      }
+    });
+
+    mergedComponents.forEach((component, name) => {
+      if (component.subItems.length === 0) {
+        itemSources.push({
+          sourceId: component.id,
+          sourceType: 'component',
+          displayName: component.name || 'Unnamed component',
+          componentId: component.id,
+          parentColor: component.color,
+          familyId: name,
+          familyLabel: component.name || 'Unnamed component',
+        });
+      } else {
+        component.subItems.forEach((item) => {
+          itemSources.push({
+            sourceId: item.id,
+            sourceType: 'item',
+            displayName: item.name,
+            componentId: component.id,
+            parentColor: component.color,
+            familyId: name,
+            familyLabel: component.name || 'Unnamed component',
+          });
+        });
+      }
+    });
+
+    return itemSources;
+  }
 
   project.protocolComponents.forEach((component) => {
-    const compName = component.name.trim();
-    if (isEcho && compName) {
-      if (seenComponentNames.has(compName)) return;
-      seenComponentNames.add(compName);
-    }
-
     if (component.subItems.length === 0) {
       itemSources.push({
         sourceId: component.id,
@@ -117,12 +152,6 @@ export function buildAvailableSources(project: ExperimentProject, isEcho: boolea
     }
 
     component.subItems.forEach((item) => {
-      const itemName = item.name.trim();
-      if (isEcho && itemName) {
-        if (seenItemNames.has(itemName)) return;
-        seenItemNames.add(itemName);
-      }
-
       itemSources.push({
         sourceId: item.id,
         sourceType: 'item',

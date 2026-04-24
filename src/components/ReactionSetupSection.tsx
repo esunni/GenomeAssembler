@@ -293,7 +293,7 @@ export function ReactionSetupSection({
             {isEcho && project.echoProtocols && project.echoProtocols.length > 0 && (
               <div style={{ 
                 display: 'flex', alignItems: 'center', gap: '0.25rem', 
-                background: '#ffffff', border: '1px solid #e0d4f5', padding: '0.25rem', borderRadius: '6px' 
+                background: '#ffffff', border: '1px solid #e0d4f5', padding: '0.25rem', borderRadius: '2px' 
               }}>
                 <button 
                   type="button" 
@@ -306,7 +306,7 @@ export function ReactionSetupSection({
                 </button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                   <input
-                    style={{ fontWeight: 600, border: 'none', background: 'transparent', width: '90px', textAlign: 'center', padding: 0 }}
+                    style={{ fontWeight: 600, border: '1px solid #e2e8f0', borderRadius: '2px', background: 'transparent', width: '90px', textAlign: 'center', padding: '0.1rem 0.25rem' }}
                     value={activeProtocol.name}
                     onChange={(e) => {
                       onProjectChange(curr => ({
@@ -327,7 +327,10 @@ export function ReactionSetupSection({
                       onProjectChange(curr => {
                         const newId = createId('protocol');
                         const newProtocols = [...curr.echoProtocols!, { id: newId, name: `Protocol ${curr.echoProtocols!.length + 1}` }];
-                        return { ...curr, echoProtocols: newProtocols };
+                        const newComponent = createProtocolComponent(curr.protocolComponents, true);
+                        newComponent.echoVolumes = { [newId]: 25 };
+                        const newComps = [...curr.protocolComponents, newComponent];
+                        return { ...curr, echoProtocols: newProtocols, protocolComponents: newComps };
                       });
                       setActiveProtocolIndex((project.echoProtocols?.length || 1));
                     }}
@@ -619,13 +622,13 @@ export function ReactionSetupSection({
         <table>
           <thead>
             <tr>
-              <th style={{ width: '187px' }}>Component</th>
+              <th style={{ width: '168px' }}>Component</th>
               <th style={{ width: '75px', textAlign: 'center' }}>Vol ({isEcho ? 'nl' : 'ul'})</th>
               <th style={{ width: '40px', textAlign: 'center' }}>Color</th>
               {project.useGlobalDeadVolume ? null : (
                 <th style={{ width: '96px', textAlign: 'center' }}>Dead vol (ul)</th>
               )}
-              <th>Subitems</th>
+              <th style={{ width: 'auto' }}>Subitems</th>
               <th style={{ width: '40px' }}></th>
             </tr>
           </thead>
