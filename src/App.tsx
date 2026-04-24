@@ -167,7 +167,7 @@ function App() {
   };
 
   const handleGenerateMappingFiles = () => {
-    const errors = validateMappingExport(project);
+    const errors = validateMappingExport(project, activeView === 'echo');
     setExportErrors(errors);
 
     if (errors.length > 0) {
@@ -336,8 +336,8 @@ function App() {
                     <input ref={loadInputRef} type="file" accept=".json,application/json" hidden onChange={handleProjectLoad} />
                     <button 
                       type="button" 
-                      className="ghost" 
-                      style={{ marginLeft: 'auto', color: '#dc3545' }}
+                      className="clear-btn" 
+                      style={{ marginLeft: 'auto' }}
                       onClick={() => {
                         if (window.confirm('Are you sure you want to clear all data?')) {
                           if (activeView === 'echo') {
@@ -438,7 +438,7 @@ function App() {
                         <tr>
                           <th>Source</th>
                           <th style={{ textAlign: 'center' }}>Vol for 1 rxn ({activeView === 'echo' ? 'nl' : 'ul'})</th>
-                          <th style={{ textAlign: 'center' }}>Dispensing count</th>
+                          <th style={{ textAlign: 'center' }}>{activeView === 'echo' ? 'Transfer count' : 'Dispensing count'}</th>
                           <th style={{ textAlign: 'center' }}>Mix loss (Rxns)</th>
                           <th style={{ textAlign: 'center' }}>Whole required rxn</th>
                           <th style={{ textAlign: 'center' }}>Dead vol (ul)</th>
@@ -468,7 +468,7 @@ function App() {
 
                 <section id="mapping-files" className="section-card" style={{ scrollMarginTop: 'calc(82px + 2rem)' }}>
                   <h2>Mapping Files</h2>
-                  <p className="section-lead">Generate one combined CSV or partition aspiration plates into custom groupings.</p>
+                  <p className="section-lead">Generate one combined CSV or partition {activeView === 'echo' ? 'source' : 'aspiration'} plates into custom groupings.</p>
 
                   <div className="helper-box">
                     <h3 style={{ marginBottom: '1rem' }}>{activeView === 'echo' ? 'Source Plate Groupings' : 'Aspiration Plate Groupings'}</h3>

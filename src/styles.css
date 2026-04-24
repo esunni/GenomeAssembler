@@ -511,6 +511,18 @@ button:disabled {
   border-color: var(--accent-400);
 }
 
+.button-row .clear-btn {
+  background: #ffffff;
+  color: #dc3545;
+  border-color: #000000;
+}
+
+.button-row .clear-btn:hover {
+  background: #dc3545;
+  color: #ffffff;
+  border-color: #000000;
+}
+
 .coming-soon-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 2rem;

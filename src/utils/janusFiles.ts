@@ -174,7 +174,7 @@ export function generateMappingCsvFiles(project: ExperimentProject, isEcho: bool
   });
 }
 
-export function validateMappingExport(project: ExperimentProject): string[] {
+export function validateMappingExport(project: ExperimentProject, isEcho: boolean = false): string[] {
   const errors: string[] = [];
 
   if (project.experimentName.trim() === '') {
@@ -182,11 +182,11 @@ export function validateMappingExport(project: ExperimentProject): string[] {
   }
 
   if (project.aspirationPlates.some((plate) => plate.name.trim() === '')) {
-    errors.push('Aspiration plate names are required for export.');
+    errors.push(isEcho ? 'Source plate names are required for export.' : 'Aspiration plate names are required for export.');
   }
 
   if (project.dispensingPlate.name.trim() === '') {
-    errors.push('Dispensing plate name is required for export.');
+    errors.push(isEcho ? 'Destination plate name is required for export.' : 'Dispensing plate name is required for export.');
   }
 
   const allPlateNames = [...project.aspirationPlates.map((plate) => plate.name.trim()), project.dispensingPlate.name.trim()].filter(Boolean);
@@ -204,7 +204,7 @@ export function validateMappingExport(project: ExperimentProject): string[] {
     const missingPlateAssignment = project.aspirationPlates.some((plate) => !uniqueAssignedPlateIds.has(plate.id));
 
     if (hasUnknownPlate || hasDuplicateAssignment || missingPlateAssignment) {
-      errors.push('Mapping split groups must partition the aspiration plates exactly once.');
+      errors.push(isEcho ? 'Mapping split groups must partition the source plates exactly once.' : 'Mapping split groups must partition the aspiration plates exactly once.');
     }
   }
 
@@ -213,7 +213,7 @@ export function validateMappingExport(project: ExperimentProject): string[] {
     .some((item) => findAspirationLocation(project, item.sourceId, item.sourceType) === null);
 
   if (missingSourceReference) {
-    errors.push('Every dispensing assignment must reference a source placed on an aspiration plate.');
+    errors.push(isEcho ? 'Every destination assignment must reference a source placed on a source plate.' : 'Every dispensing assignment must reference a source placed on an aspiration plate.');
   }
 
   return errors;
