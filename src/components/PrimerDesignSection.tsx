@@ -52,7 +52,7 @@ function ColoredPrimerInput({ primer, onChange }: { primer: Primer, onChange: (v
   );
 }
 
-function VisualizerFrame({ primerF, primerR, originalDna, offsetF, offsetR }: { primerF: Primer, primerR: Primer, originalDna: string, offsetF: number, offsetR: number }) {
+function VisualizerFrame({ primerF, primerR, vis }: { primerF: Primer, primerR: Primer, vis: import('../utils/primerDesign').BindingVisualization }) {
   const fTypeIisSpan = primerF.typeIisSpan || [0, 0];
   const rTypeIisSpan = primerR.typeIisSpan || [0, 0];
 
@@ -66,16 +66,33 @@ function VisualizerFrame({ primerF, primerR, originalDna, offsetF, offsetR }: { 
   const rOverhang2 = primerR.sequence.substring(rTypeIisSpan[1], primerR.bindingStart || 0);
   const rBind = primerR.sequence.substring(primerR.bindingStart || 0, primerR.bindingEnd || primerR.sequence.length);
 
-  // Compute mismatch pipes against originalDna instead of primer's templateSeq
-  const fTarget = originalDna.substring(offsetF, offsetF + fBind.length);
+  // Compute mismatch pipes against templateF and templateR
+  const fTarget = vis.templateF;
   const fPipes = fBind.split('').map((char, i) => char === (fTarget[i]?.toUpperCase() || char) ? '|' : ' ').join('');
   
-  // For R primer, it binds to the bottom strand, so we must RC the originalDna region
-  const rTarget = reverseComplement(originalDna.substring(offsetR, offsetR + rBind.length));
+  const rTarget = reverseComplement(vis.templateR.substring(vis.paddingR));
   const rPipes = rBind.split('').map((char, i) => char === (rTarget[i]?.toUpperCase() || char) ? '|' : ' ').join('');
 
-  // Top strand display for R primer area
-  const rTopStrand = originalDna.substring(offsetR, offsetR + rBind.length);
+  const fBindElements = fBind.split('').map((char, i) => (
+    <span key={i} style={{ 
+      fontWeight: fPipes[i] === '|' ? 'bold' : 'normal',
+      color: fPipes[i] === '|' ? '#4a1b74' : '#ef4444' 
+    }}>
+      {char}
+    </span>
+  ));
+
+  const rBindRevStr = revStr(rBind);
+  const rBindElements = rBindRevStr.split('').map((char, i) => {
+    const origI = rBind.length - 1 - i;
+    const isMatch = rPipes[origI] === '|';
+    return (
+      <span key={i} style={{
+        fontWeight: isMatch ? 'bold' : 'normal',
+        color: isMatch ? '#047857' : '#ef4444'
+      }}>{char}</span>
+    );
+  });
 
   return (
     <div style={{ 
@@ -94,22 +111,22 @@ function VisualizerFrame({ primerF, primerR, originalDna, offsetF, offsetR }: { 
         <div style={{ color: '#8430bf', fontWeight: 600 }}>{primerF.name}</div>
         <div>
           <span style={{ color: '#94a3b8' }}>5' </span>
-          <span style={{ visibility: 'hidden' }}>{' '.repeat(offsetF)}</span>
           <span style={{ color: '#8430bf' }}>{fOverhang1}</span>
           <span style={{ color: '#ea580c', fontWeight: 600 }}>{fTypeIis}</span>
           <span style={{ color: '#8430bf' }}>{fOverhang2}</span>
-          <span style={{ color: '#4a1b74', fontWeight: 'bold' }}>{fBind}</span>
+          {fBindElements}
           <span style={{ color: '#94a3b8' }}> 3'</span>
         </div>
         <div>
           <span style={{ visibility: 'hidden' }}>5' </span>
-          <span style={{ visibility: 'hidden' }}>{' '.repeat(offsetF)}{fOverhang1}{fTypeIis}{fOverhang2}</span>
+          <span style={{ visibility: 'hidden' }}>{fOverhang1}{fTypeIis}{fOverhang2}</span>
           <span style={{ color: '#cbd5e1' }}>{fPipes}</span>
         </div>
         <div>
-          <span style={{ color: '#94a3b8' }}>5' </span>
-          <span style={{ color: '#4f4558' }}>{originalDna}</span>
-          <span style={{ color: '#94a3b8' }}> 3'</span>
+          <span style={{ visibility: 'hidden' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>{fOverhang1}{fTypeIis}{fOverhang2}</span>
+          <span style={{ color: '#4f4558' }}>{vis.templateF}</span>
+          <span style={{ color: '#94a3b8' }}>... 3'</span>
         </div>
       </div>
 
@@ -117,19 +134,19 @@ function VisualizerFrame({ primerF, primerR, originalDna, offsetF, offsetR }: { 
       <div style={{ marginTop: '2rem' }}>
         <div style={{ color: '#059669', fontWeight: 600 }}>{primerR.name}</div>
         <div>
-          <span style={{ color: '#94a3b8' }}>5' </span>
-          <span style={{ color: '#4f4558' }}>{originalDna}</span>
+          <span style={{ color: '#94a3b8' }}>5' ...</span>
+          <span style={{ color: '#4f4558' }}>{vis.templateR}</span>
           <span style={{ color: '#94a3b8' }}> 3'</span>
         </div>
         <div>
-          <span style={{ visibility: 'hidden' }}>5' </span>
-          <span style={{ visibility: 'hidden' }}>{' '.repeat(offsetR)}</span>
+          <span style={{ visibility: 'hidden' }}>5' ...</span>
+          <span style={{ visibility: 'hidden' }}>{' '.repeat(vis.paddingR)}</span>
           <span style={{ color: '#cbd5e1' }}>{revStr(rPipes)}</span>
         </div>
         <div>
-          <span style={{ visibility: 'hidden' }}>5' </span>
-          <span style={{ visibility: 'hidden' }}>{' '.repeat(offsetR)}</span>
-          <span style={{ color: '#047857', fontWeight: 'bold' }}>{revStr(rBind)}</span>
+          <span style={{ visibility: 'hidden' }}>5' ...</span>
+          <span style={{ visibility: 'hidden' }}>{' '.repeat(vis.paddingR)}</span>
+          {rBindElements}
           <span style={{ color: '#10b981' }}>{revStr(rOverhang2)}</span>
           <span style={{ color: '#ea580c', fontWeight: 600 }}>{revStr(rTypeIis)}</span>
           <span style={{ color: '#10b981' }}>{revStr(rOverhang1)}</span>
@@ -443,9 +460,7 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                         <VisualizerFrame 
                           primerF={pF}
                           primerR={pR}
-                          originalDna={vis.originalDna}
-                          offsetF={vis.offsetF}
-                          offsetR={vis.offsetR}
+                          vis={vis}
                         />
                       );
                     })()}
