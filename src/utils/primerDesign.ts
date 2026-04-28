@@ -29,6 +29,8 @@ export interface Primer {
   bindingEnd?: number;
   direction?: 'F' | 'R';
   templateSeq?: string;
+  typeIisSpan?: [number, number]; // [start, end]
+  templateOffset?: number; // Start index of binding region in the fragment/template
 }
 
 export interface AssemblyFragment {
@@ -209,13 +211,17 @@ export function designPrimers(
       name: `${config.vectorName}_F`,
       sequence: rcRsSpacer + vecRight20,
       tm: calculateTm(rcRsSpacer + vecRight20, rcRsSpacer.length),
-      type: 'vector'
+      type: 'vector',
+      direction: 'F',
+      typeIisSpan: [0, rcRsSpacer.length]
     },
     {
       name: `${config.vectorName}_R`,
       sequence: rcRsSpacer + reverseComplement(vecLeft20),
       tm: calculateTm(rcRsSpacer + reverseComplement(vecLeft20), rcRsSpacer.length),
-      type: 'vector'
+      type: 'vector',
+      direction: 'R',
+      typeIisSpan: [0, rcRsSpacer.length]
     }
   ];
 
@@ -223,37 +229,96 @@ export function designPrimers(
 
   for (let i = 0; i < fragments.length; i++) {
     const frag = fragments[i];
-    const isFirst = i === 0;
-    const isLast = i === fragments.length - 1;
     
     const origSeq = getOriginalSequence(originalGenome.toUpperCase(), frag.coordStart, frag.coordEnd, isLinear);
 
-    const fragFPart = frag.sequence.substring(4, 24);
-    const fPrefix = isFirst ? vecLeft13 : '';
-    const fSeq = fPrefix + rsSpacer + frag.overhang5 + fragFPart;
-    const fTarget = origSeq.substring(0, 24);
+    // Find mutations in this fragment to dynamically size the F/R primers
+    const allMutations: Mutation[] = [];
+    for (let j = 0; j < frag.sequence.length; j++) {
+      if (frag.sequence[j] !== origSeq[j]) {
+        allMutations.push({
+          position: j,
+          original: origSeq[j],
+          mutated: frag.sequence[j]
+        });
+      }
+    }
+
+    let fBindLen = 24;
+    let rBindLen = 24;
+
+    // Extend F primer if mutations are near the 5' end
+    const fMutations = allMutations.filter(m => m.position < 40);
+    if (fMutations.length > 0) {
+      const maxF = Math.max(...fMutations.map(m => m.position));
+      if (maxF >= fBindLen - 5) {
+        fBindLen = maxF + 8; // ensure some buffer after mutation
+      }
+    }
+
+    // Extend R primer if mutations are near the 3' end
+    const rMutations = allMutations.filter(m => m.position >= frag.sequence.length - 40);
+    if (rMutations.length > 0) {
+      const minR = Math.min(...rMutations.map(m => m.position));
+      if (frag.sequence.length - minR >= rBindLen - 5) {
+        rBindLen = (frag.sequence.length - minR) + 8;
+      }
+    }
+
+    const fSeq = vecLeft13 + rsSpacer + frag.sequence.substring(0, fBindLen);
+    const fTarget = origSeq.substring(0, fBindLen);
     
-    const fragRPart = frag.sequence.substring(frag.sequence.length - 24, frag.sequence.length - 4);
-    const rPrefix = isLast ? reverseComplement(vecRight13) : '';
-    const rSeq = rPrefix + rsSpacer + reverseComplement(frag.overhang3) + reverseComplement(fragRPart);
-    const rTarget = reverseComplement(origSeq.substring(origSeq.length - 24, origSeq.length));
+    const rSeq = reverseComplement(vecRight13) + rsSpacer + reverseComplement(frag.sequence.substring(frag.sequence.length - rBindLen));
+    const rTarget = reverseComplement(origSeq.substring(origSeq.length - rBindLen));
 
     const fragPrimers: Primer[] = [
       {
         name: `${frag.name}_F`,
         sequence: fSeq,
-        tm: calculateTm(fSeq, fSeq.length - 24, fSeq.length, fTarget),
+        tm: calculateTm(fSeq, fSeq.length - fBindLen, fSeq.length, fTarget),
         type: 'fragment',
-        bindingStart: fSeq.length - 24,
+        bindingStart: fSeq.length - fBindLen,
         bindingEnd: fSeq.length,
         direction: 'F',
-        templateSeq: fTarget
+        templateSeq: fTarget,
+        typeIisSpan: [vecLeft13.length, vecLeft13.length + rsSpacer.length],
+        templateOffset: 0
       }
     ];
 
-    const mutations = findMutations(frag, originalGenome, isLinear);
+    // Middle mutations
+    const midMutations = allMutations.filter(m => m.position >= fBindLen && m.position < frag.sequence.length - rBindLen);
     
-    mutations.forEach(mut => {
+    const groups: MutationGroup[] = [];
+    let currentGroup: Mutation[] = [];
+    
+    for (const mut of midMutations) {
+      if (currentGroup.length === 0) {
+        currentGroup.push(mut);
+      } else {
+        const lastMut = currentGroup[currentGroup.length - 1];
+        if (mut.position - lastMut.position <= 15) {
+          currentGroup.push(mut);
+        } else {
+          groups.push({
+            id: `mut${groups.length + 1}`,
+            mutations: [...currentGroup],
+            centerPosition: Math.floor((currentGroup[0].position + currentGroup[currentGroup.length - 1].position) / 2)
+          });
+          currentGroup = [mut];
+        }
+      }
+    }
+    
+    if (currentGroup.length > 0) {
+      groups.push({
+        id: `mut${groups.length + 1}`,
+        mutations: currentGroup,
+        centerPosition: Math.floor((currentGroup[0].position + currentGroup[currentGroup.length - 1].position) / 2)
+      });
+    }
+    
+    groups.forEach(mut => {
       // 25bp centered on mutation center
       let start = mut.centerPosition - 12;
       let end = mut.centerPosition + 13;
@@ -273,10 +338,11 @@ export function designPrimers(
         sequence: mutSeq,
         tm: calculateTm(mutSeq, 0, mutSeq.length, mutTargetF),
         type: 'mutation',
-        bindingStart: start,
-        bindingEnd: end,
+        bindingStart: 0,
+        bindingEnd: mutSeq.length,
         direction: 'F',
-        templateSeq: mutTargetF
+        templateSeq: mutTargetF,
+        templateOffset: start
       });
 
       const rMutSeq = reverseComplement(mutSeq);
@@ -287,22 +353,25 @@ export function designPrimers(
         sequence: rMutSeq,
         tm: calculateTm(rMutSeq, 0, rMutSeq.length, rMutTarget),
         type: 'mutation',
-        bindingStart: start,
-        bindingEnd: end,
+        bindingStart: 0,
+        bindingEnd: rMutSeq.length,
         direction: 'R',
-        templateSeq: rMutTarget
+        templateSeq: rMutTarget,
+        templateOffset: start
       });
     });
 
     fragPrimers.push({
       name: `${frag.name}_R`,
       sequence: rSeq,
-      tm: calculateTm(rSeq, rSeq.length - 24, rSeq.length, rTarget),
+      tm: calculateTm(rSeq, rSeq.length - rBindLen, rSeq.length, rTarget),
       type: 'fragment',
-      bindingStart: rSeq.length - 24,
+      bindingStart: rSeq.length - rBindLen,
       bindingEnd: rSeq.length,
       direction: 'R',
-      templateSeq: rTarget
+      templateSeq: rTarget,
+      typeIisSpan: [vecRight13.length, vecRight13.length + rsSpacer.length],
+      templateOffset: frag.sequence.length - rBindLen
     });
 
     // Create visualizations
@@ -318,16 +387,23 @@ export function designPrimers(
       
       if (!pF || !pR) continue;
 
-      const vStart = Math.max(0, (pF.bindingStart || 0) - 10);
-      const vEnd = Math.min(frag.sequence.length, (pR.bindingEnd || 0) + 10);
+      // Show about 10bps more after template binding section
+      const pF_offset = pF.templateOffset ?? 0;
+      const pF_bindLen = (pF.bindingEnd ?? pF.sequence.length) - (pF.bindingStart ?? 0);
+      const pR_offset = pR.templateOffset ?? 0;
+      const pR_bindLen = (pR.bindingEnd ?? pR.sequence.length) - (pR.bindingStart ?? 0);
+
+      const vStart = Math.max(0, pF_offset - 10);
+      const vEnd = Math.min(frag.sequence.length, pR_offset + pR_bindLen + 10);
       
       visualizations.push({
         title: `${pF.name} & ${pR.name}`,
-        originalDna: frag.sequence.substring(vStart, vEnd),
-        primerF: pF.name, // We'll compute visual dynamically in UI
-        primerR: pR.name, // We'll compute visual dynamically in UI
-        offsetF: vStart,
-        offsetR: vEnd
+        // Use ORIGINAL DNA for visualization binding!
+        originalDna: origSeq.substring(vStart, vEnd),
+        primerF: pF.name,
+        primerR: pR.name,
+        offsetF: pF_offset - vStart,
+        offsetR: pR_offset - vStart
       });
     }
 

@@ -1,21 +1,81 @@
 import { useState, useRef, useEffect } from 'react';
 import { parseSplitSetResult, designPrimers, type AssemblyFragment, type Primer, calculateTm, reverseComplement } from '../utils/primerDesign';
-import type { ParsedCircularFasta } from '../utils/designTools';
+import { ENZYMES, type ParsedCircularFasta } from '../utils/designTools';
+import type { SiteAnalysis } from '../utils/mutationTools';
 
 interface PrimerDesignSectionProps {
   uploadedGenome: ParsedCircularFasta | null;
   isLinear: boolean;
+  siteAnalyses: SiteAnalysis[];
 }
 
 const revStr = (str: string) => Array.from(str).reverse().join('');
 
 // Bending Primer Visualizer Component
-function VisualizerFrame({ primerF, primerR, originalDna }: { primerF: Primer, primerR: Primer, originalDna: string }) {
-  const fOverhang = primerF.sequence.substring(0, primerF.bindingStart || 0);
+// Bending Primer Visualizer Component
+function ColoredPrimerInput({ primer, onChange }: { primer: Primer, onChange: (val: string) => void }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditing]);
+
+  const typeIisSpan = primer.typeIisSpan || [0, 0];
+  const part1 = primer.sequence.substring(0, typeIisSpan[0]);
+  const part2 = primer.sequence.substring(typeIisSpan[0], typeIisSpan[1]);
+  const part3 = primer.sequence.substring(typeIisSpan[1]);
+
+  if (isEditing) {
+    return (
+      <input 
+        ref={inputRef}
+        style={{ width: '100%', fontFamily: 'monospace', padding: '0.5rem', fontSize: '1rem', border: '1px solid #0284c7', borderRadius: '4px' }} 
+        value={primer.sequence}
+        onChange={e => onChange(e.target.value)}
+        onBlur={() => setIsEditing(false)}
+      />
+    );
+  }
+
+  return (
+    <div 
+      style={{ width: '100%', fontFamily: 'monospace', padding: '0.5rem', fontSize: '1rem', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'text', background: '#fff', minHeight: '38px', boxSizing: 'border-box' }}
+      onClick={() => setIsEditing(true)}
+    >
+      <span>{part1}</span>
+      <span style={{ color: '#ea580c', fontWeight: 600 }}>{part2}</span>
+      <span>{part3}</span>
+    </div>
+  );
+}
+
+function VisualizerFrame({ primerF, primerR, originalDna, offsetF, offsetR }: { primerF: Primer, primerR: Primer, originalDna: string, offsetF: number, offsetR: number }) {
+  const fTypeIisSpan = primerF.typeIisSpan || [0, 0];
+  const rTypeIisSpan = primerR.typeIisSpan || [0, 0];
+
+  const fOverhang1 = primerF.sequence.substring(0, fTypeIisSpan[0]);
+  const fTypeIis = primerF.sequence.substring(fTypeIisSpan[0], fTypeIisSpan[1]);
+  const fOverhang2 = primerF.sequence.substring(fTypeIisSpan[1], primerF.bindingStart || 0);
   const fBind = primerF.sequence.substring(primerF.bindingStart || 0, primerF.bindingEnd || primerF.sequence.length);
 
-  const rOverhang = primerR.sequence.substring(0, primerR.bindingStart || 0);
+  const rOverhang1 = primerR.sequence.substring(0, rTypeIisSpan[0]);
+  const rTypeIis = primerR.sequence.substring(rTypeIisSpan[0], rTypeIisSpan[1]);
+  const rOverhang2 = primerR.sequence.substring(rTypeIisSpan[1], primerR.bindingStart || 0);
   const rBind = primerR.sequence.substring(primerR.bindingStart || 0, primerR.bindingEnd || primerR.sequence.length);
+
+  // Compute mismatch pipes against originalDna instead of primer's templateSeq
+  const fTarget = originalDna.substring(offsetF, offsetF + fBind.length);
+  const fPipes = fBind.split('').map((char, i) => char === (fTarget[i]?.toUpperCase() || char) ? '|' : ' ').join('');
+  
+  // For R primer, it binds to the bottom strand, so we must RC the originalDna region
+  const rTarget = reverseComplement(originalDna.substring(offsetR, offsetR + rBind.length));
+  const rPipes = rBind.split('').map((char, i) => char === (rTarget[i]?.toUpperCase() || char) ? '|' : ' ').join('');
+
+  // Top strand display for R primer area
+  const rTopStrand = originalDna.substring(offsetR, offsetR + rBind.length);
 
   return (
     <div style={{ 
@@ -34,20 +94,22 @@ function VisualizerFrame({ primerF, primerR, originalDna }: { primerF: Primer, p
         <div style={{ color: '#8430bf', fontWeight: 600 }}>{primerF.name}</div>
         <div>
           <span style={{ color: '#94a3b8' }}>5' </span>
-          <span style={{ color: '#8430bf' }}>{fOverhang}</span>
+          <span style={{ visibility: 'hidden' }}>{' '.repeat(offsetF)}</span>
+          <span style={{ color: '#8430bf' }}>{fOverhang1}</span>
+          <span style={{ color: '#ea580c', fontWeight: 600 }}>{fTypeIis}</span>
+          <span style={{ color: '#8430bf' }}>{fOverhang2}</span>
           <span style={{ color: '#4a1b74', fontWeight: 'bold' }}>{fBind}</span>
           <span style={{ color: '#94a3b8' }}> 3'</span>
         </div>
         <div>
           <span style={{ visibility: 'hidden' }}>5' </span>
-          <span style={{ visibility: 'hidden' }}>{fOverhang}</span>
-          <span style={{ color: '#cbd5e1' }}>{'|'.repeat(fBind.length)}</span>
+          <span style={{ visibility: 'hidden' }}>{' '.repeat(offsetF)}{fOverhang1}{fTypeIis}{fOverhang2}</span>
+          <span style={{ color: '#cbd5e1' }}>{fPipes}</span>
         </div>
         <div>
-          <span style={{ visibility: 'hidden' }}>5' </span>
-          <span style={{ visibility: 'hidden' }}>{fOverhang}</span>
-          <span style={{ color: '#4f4558' }}>{primerF.templateSeq || fBind}</span>
-          <span style={{ color: '#94a3b8' }}>... 3'</span>
+          <span style={{ color: '#94a3b8' }}>5' </span>
+          <span style={{ color: '#4f4558' }}>{originalDna}</span>
+          <span style={{ color: '#94a3b8' }}> 3'</span>
         </div>
       </div>
 
@@ -55,19 +117,22 @@ function VisualizerFrame({ primerF, primerR, originalDna }: { primerF: Primer, p
       <div style={{ marginTop: '2rem' }}>
         <div style={{ color: '#059669', fontWeight: 600 }}>{primerR.name}</div>
         <div>
-          <span style={{ color: '#94a3b8' }}>5' ...</span>
-          <span style={{ color: '#4f4558' }}>{reverseComplement(primerR.templateSeq || rBind)}</span>
-          <span style={{ visibility: 'hidden' }}>{rOverhang}</span>
+          <span style={{ color: '#94a3b8' }}>5' </span>
+          <span style={{ color: '#4f4558' }}>{originalDna}</span>
           <span style={{ color: '#94a3b8' }}> 3'</span>
         </div>
         <div>
-          <span style={{ visibility: 'hidden' }}>5' ...</span>
-          <span style={{ color: '#cbd5e1' }}>{'|'.repeat(rBind.length)}</span>
+          <span style={{ visibility: 'hidden' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>{' '.repeat(offsetR)}</span>
+          <span style={{ color: '#cbd5e1' }}>{revStr(rPipes)}</span>
         </div>
         <div>
-          <span style={{ visibility: 'hidden' }}>5' ...</span>
+          <span style={{ visibility: 'hidden' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>{' '.repeat(offsetR)}</span>
           <span style={{ color: '#047857', fontWeight: 'bold' }}>{revStr(rBind)}</span>
-          <span style={{ color: '#10b981' }}>{revStr(rOverhang)}</span>
+          <span style={{ color: '#10b981' }}>{revStr(rOverhang2)}</span>
+          <span style={{ color: '#ea580c', fontWeight: 600 }}>{revStr(rTypeIis)}</span>
+          <span style={{ color: '#10b981' }}>{revStr(rOverhang1)}</span>
           <span style={{ color: '#94a3b8' }}> 5'</span>
         </div>
       </div>
@@ -75,7 +140,7 @@ function VisualizerFrame({ primerF, primerR, originalDna }: { primerF: Primer, p
   );
 }
 
-export function PrimerDesignSection({ uploadedGenome, isLinear }: PrimerDesignSectionProps) {
+export function PrimerDesignSection({ uploadedGenome, isLinear, siteAnalyses }: PrimerDesignSectionProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [splitsetText, setSplitsetText] = useState('');
   const [vectorName, setVectorName] = useState('Vector');
@@ -100,6 +165,11 @@ export function PrimerDesignSection({ uploadedGenome, isLinear }: PrimerDesignSe
 
   const handleDesign = () => {
     if (!uploadedGenome) return alert("Please upload a genome sequence first.");
+    
+    const unmutatedSites = siteAnalyses.filter(site => !site.userMutation && !site.suggestedMutation);
+    if (unmutatedSites.length > 0) {
+      alert(`Warning: ${unmutatedSites.length} site(s) (including intergenic) have no silent mutation specified. The design will NOT include mutations for these sites, which may cause assembly failure.`);
+    }
     
     const cutIndex = vectorSeq.indexOf('↓') !== -1 ? vectorSeq.indexOf('↓') : vectorSeq.indexOf('|');
     if (cutIndex === -1) return alert("Please mark the insertion site in the vector sequence with '↓' or '|'.");
@@ -184,7 +254,7 @@ export function PrimerDesignSection({ uploadedGenome, isLinear }: PrimerDesignSe
       <button 
         type="button" 
         className="primary-cta" 
-        style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#0284c7', borderColor: '#0284c7' }} 
+        style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#a855f7', borderColor: '#a855f7' }} 
         onClick={() => setIsOpen(true)}
       >
         Advanced Primer Design
@@ -241,10 +311,17 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                         ref={inputRef}
                         style={{ flex: 1, fontFamily: 'inherit' }} 
                         value={vectorSeq} 
-                        onChange={e => setVectorSeq(e.target.value)} 
+                        onChange={e => {
+                          const val = e.target.value;
+                          const arrowCount = (val.match(/↓/g) || []).length;
+                          if (arrowCount <= 1) {
+                            setVectorSeq(val);
+                          }
+                        }} 
                         placeholder="e.g. GATCGATC↓GATCGATC"
                       />
                       <button type="button" className="primary-cta" style={{ background: '#8430bf', borderColor: '#8430bf', padding: '0.4rem 0.75rem' }} onClick={() => {
+                        if (vectorSeq.includes('↓')) return;
                         const input = inputRef.current;
                         if (input) {
                           const start = input.selectionStart ?? vectorSeq.length;
@@ -265,15 +342,16 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                   <label className="design-select-field" style={{ flex: 1 }}>
                     <span>Enzyme Site</span>
                     <select value={restrictionSite} onChange={e => setRestrictionSite(e.target.value)}>
-                      <option value="GGTCTC">BsaI (GGTCTC)</option>
-                      <option value="CGTCTC">BsmBI (CGTCTC)</option>
-                      <option value="ACCTGC">BspQI (ACCTGC)</option>
-                      <option value="GAGACG">BsmAI (GAGACG)</option>
+                      {ENZYMES.map(enzyme => (
+                        <option key={enzyme.id} value={enzyme.recognitionSite}>
+                          {enzyme.name} ({enzyme.cutPattern})
+                        </option>
+                      ))}
                     </select>
                   </label>
-                  <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#4f4558' }}>Spacer Base</span>
-                    <input style={{ width: '100%', padding: '0.6rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontFamily: 'inherit' }} value={spacer} onChange={e => setSpacer(e.target.value)} maxLength={1} />
+                  <label className="design-select-field" style={{ flex: 1 }}>
+                    <span>Spacer Base</span>
+                    <input style={{ width: '100%', fontFamily: 'inherit' }} value={spacer} onChange={e => setSpacer(e.target.value)} maxLength={1} />
                   </label>
                 </div>
 
@@ -293,16 +371,6 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                     </button>
                     <button type="button" className="primary-cta" onClick={handleDownload}>Download All (FASTA)</button>
-                  </div>
-                  
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <select style={{ padding: '0.2rem 1.5rem 0.2rem 0.5rem', fontSize: '0.9rem' }} value={restrictionSite} onChange={e => { setRestrictionSite(e.target.value); setTimeout(handleDesign, 0); }}>
-                      <option value="GGTCTC">BsaI</option>
-                      <option value="CGTCTC">BsmBI</option>
-                      <option value="ACCTGC">BspQI</option>
-                      <option value="GAGACG">BsmAI</option>
-                    </select>
-                    <input style={{ width: '40px', padding: '0.2rem 0.5rem', textAlign: 'center' }} value={spacer} onChange={e => { setSpacer(e.target.value); setTimeout(handleDesign, 0); }} maxLength={1} />
                   </div>
                 </div>
 
@@ -376,6 +444,8 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                           primerF={pF}
                           primerR={pR}
                           originalDna={vis.originalDna}
+                          offsetF={vis.offsetF}
+                          offsetR={vis.offsetR}
                         />
                       );
                     })()}
@@ -403,10 +473,9 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                                 Tm: {p.tm.toFixed(1)}°C {tmDiff > 10 && `(Diff > 10°C)`}
                               </span>
                             </div>
-                            <input 
-                              style={{ width: '100%', fontFamily: 'monospace', padding: '0.5rem', fontSize: '1rem' }} 
-                              value={p.sequence}
-                              onChange={(e) => updatePrimerSequence(activeFragIndex, pIdx, e.target.value)}
+                            <ColoredPrimerInput 
+                              primer={p}
+                              onChange={(val) => updatePrimerSequence(activeFragIndex, pIdx, val)}
                             />
                           </div>
                         );
@@ -424,16 +493,14 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                         <strong>{p.name}</strong>
                         <span>Tm: {p.tm.toFixed(1)}°C</span>
                       </div>
-                      <input 
-                        style={{ width: '100%', fontFamily: 'monospace', padding: '0.5rem', fontSize: '1rem' }} 
-                        value={p.sequence}
-                        onChange={(e) => {
+                      <ColoredPrimerInput 
+                        primer={p}
+                        onChange={(newSeq) => {
                           setResults(curr => {
                             if (!curr) return curr;
                             const newRes = { ...curr };
                             const vPrimers = [...newRes.vectorPrimers];
                             const oldP = vPrimers[idx];
-                            const newSeq = e.target.value.toUpperCase();
                             
                             let bStart = 0;
                             let bEnd = newSeq.length;
@@ -443,7 +510,7 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                                bEnd = Math.min(newSeq.length, 20);
                             }
 
-                            vPrimers[idx] = { ...oldP, sequence: newSeq, tm: calculateTm(newSeq, bStart, bEnd) };
+                            vPrimers[idx] = { ...oldP, sequence: newSeq.toUpperCase(), tm: calculateTm(newSeq, bStart, bEnd) };
                             newRes.vectorPrimers = vPrimers;
                             return newRes;
                           });

@@ -147,7 +147,7 @@ export function DesignPage() {
           <select aria-label="Type IIS enzyme" value={selectedEnzymeId} onChange={(event) => setSelectedEnzymeId(event.target.value)}>
             {ENZYMES.map((enzyme) => (
               <option key={enzyme.id} value={enzyme.id}>
-                {enzyme.name}
+                {enzyme.name} ({enzyme.cutPattern})
               </option>
             ))}
           </select>
@@ -222,6 +222,7 @@ export function DesignPage() {
           <PrimerDesignSection 
             uploadedGenome={uploadedGenome}
             isLinear={isLinear}
+            siteAnalyses={siteAnalyses}
           />
         </>
       )}
