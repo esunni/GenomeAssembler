@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { parseSplitSetResult, designPrimers, type AssemblyFragment, type Primer, calculateTm, reverseComplement } from '../utils/primerDesign';
+import { parseSplitSetResult, designPrimers, computeVisualizations, type AssemblyFragment, type Primer, calculateTm, reverseComplement } from '../utils/primerDesign';
 import { ENZYMES, type ParsedCircularFasta } from '../utils/designTools';
 import type { SiteAnalysis } from '../utils/mutationTools';
 
@@ -69,11 +69,10 @@ function VisualizerFrame({ primerF, primerR, vis }: { primerF: Primer, primerR: 
   const rOverhang2 = primerR.sequence.substring(rTypeIisSpan[1], primerR.bindingStart || 0);
   const rBind = primerR.sequence.substring(primerR.bindingStart || 0, primerR.bindingEnd || primerR.sequence.length);
 
-  // Compute mismatch pipes against templateF and templateR
-  const fTarget = vis.templateF;
+  const fTarget = vis.templateF.substring(vis.offsetF);
   const fPipes = fBind.split('').map((char, i) => char === (fTarget[i]?.toUpperCase() || char) ? '|' : ' ').join('');
   
-  const rTarget = reverseComplement(vis.templateR.substring(vis.paddingR));
+  const rTarget = reverseComplement(vis.templateR.substring(vis.offsetR));
   const rPipes = rBind.split('').map((char, i) => char === (rTarget[i]?.toUpperCase() || char) ? '|' : ' ').join('');
 
   const fBindElements = fBind.split('').map((char, i) => (
@@ -97,6 +96,15 @@ function VisualizerFrame({ primerF, primerR, vis }: { primerF: Primer, primerR: 
     );
   });
 
+  const fOverhangTotalLen = fOverhang1.length + fTypeIis.length + fOverhang2.length;
+  const fMaxLeft = Math.max(fOverhangTotalLen, vis.offsetF);
+  const fPrimerPad = ' '.repeat(fMaxLeft - fOverhangTotalLen);
+  const fTemplatePad = ' '.repeat(fMaxLeft - vis.offsetF);
+
+  const rMaxLeft = Math.max(0, vis.offsetR);
+  const rPrimerPad = ' '.repeat(rMaxLeft);
+  const rTemplatePad = ' '.repeat(rMaxLeft - vis.offsetR);
+
   return (
     <div style={{ 
       background: '#fff', 
@@ -114,6 +122,7 @@ function VisualizerFrame({ primerF, primerR, vis }: { primerF: Primer, primerR: 
         <div style={{ color: '#8430bf', fontWeight: 600 }}>{primerF.name}</div>
         <div>
           <span style={{ color: '#94a3b8' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>{fPrimerPad}</span>
           <span style={{ color: '#8430bf' }}>{fOverhang1}</span>
           <span style={{ color: '#ea580c', fontWeight: 600 }}>{fTypeIis}</span>
           <span style={{ color: '#8430bf' }}>{fOverhang2}</span>
@@ -122,14 +131,14 @@ function VisualizerFrame({ primerF, primerR, vis }: { primerF: Primer, primerR: 
         </div>
         <div>
           <span style={{ visibility: 'hidden' }}>5' </span>
-          <span style={{ visibility: 'hidden' }}>{fOverhang1}{fTypeIis}{fOverhang2}</span>
+          <span style={{ visibility: 'hidden' }}>{fPrimerPad}{fOverhang1}{fTypeIis}{fOverhang2}</span>
           <span style={{ color: '#cbd5e1' }}>{fPipes}</span>
         </div>
         <div>
-          <span style={{ visibility: 'hidden' }}>5' </span>
-          <span style={{ visibility: 'hidden' }}>{fOverhang1}{fTypeIis}{fOverhang2}</span>
+          <span style={{ color: '#94a3b8' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>{fTemplatePad}</span>
           <span style={{ color: '#4f4558' }}>{vis.templateF}</span>
-          <span style={{ color: '#94a3b8' }}>... 3'</span>
+          <span style={{ color: '#94a3b8' }}> 3'</span>
         </div>
       </div>
 
@@ -137,18 +146,19 @@ function VisualizerFrame({ primerF, primerR, vis }: { primerF: Primer, primerR: 
       <div style={{ marginTop: '2rem' }}>
         <div style={{ color: '#059669', fontWeight: 600 }}>{primerR.name}</div>
         <div>
-          <span style={{ color: '#94a3b8' }}>5' ...</span>
+          <span style={{ color: '#94a3b8' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>{rTemplatePad}</span>
           <span style={{ color: '#4f4558' }}>{vis.templateR}</span>
           <span style={{ color: '#94a3b8' }}> 3'</span>
         </div>
         <div>
-          <span style={{ visibility: 'hidden' }}>5' ...</span>
-          <span style={{ visibility: 'hidden' }}>{' '.repeat(vis.paddingR)}</span>
+          <span style={{ visibility: 'hidden' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>{rPrimerPad}</span>
           <span style={{ color: '#cbd5e1' }}>{revStr(rPipes)}</span>
         </div>
         <div>
-          <span style={{ visibility: 'hidden' }}>5' ...</span>
-          <span style={{ visibility: 'hidden' }}>{' '.repeat(vis.paddingR)}</span>
+          <span style={{ visibility: 'hidden' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>{rPrimerPad}</span>
           {rBindElements}
           <span style={{ color: '#10b981' }}>{revStr(rOverhang2)}</span>
           <span style={{ color: '#ea580c', fontWeight: 600 }}>{revStr(rTypeIis)}</span>
@@ -489,7 +499,7 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                                 fontWeight: 600,
                                 border: `1px solid ${tmDiff > 10 ? '#fca5a5' : '#e2e8f0'}`
                               }}>
-                                Tm: {p.tm.toFixed(1)}°C {tmDiff > 10 && `(Diff > 10°C)`}
+                                Tm: {p.tm.toFixed(1)}°C
                               </span>
                             </div>
                             <ColoredPrimerInput 

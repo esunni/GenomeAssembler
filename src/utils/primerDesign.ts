@@ -38,6 +38,7 @@ export interface Primer {
 export interface AssemblyFragment {
   name: string;
   primers: Primer[];
+  originalSequence: string;
   bindingVisualizations: BindingVisualization[];
 }
 
@@ -47,7 +48,8 @@ export interface BindingVisualization {
   primerR: string;
   templateF: string;
   templateR: string;
-  paddingR: number;
+  offsetF: number;
+  offsetR: number;
 }
 
 export const reverseComplement = (seq: string) => {
@@ -190,6 +192,41 @@ export interface PrimerDesignConfig {
   vectorRight: string; // sequence exactly after insert
   restrictionSite: string;
   spacer: string;
+}
+
+export function computeVisualizations(primers: Primer[], origSeq: string): BindingVisualization[] {
+  const visualizations: BindingVisualization[] = [];
+  const fwdPrimers = primers.filter(p => p.direction === 'F').sort((a, b) => (a.templateOffset || 0) - (b.templateOffset || 0));
+  const revPrimers = primers.filter(p => p.direction === 'R').sort((a, b) => (a.templateOffset || 0) - (b.templateOffset || 0));
+  
+  for (let j = 0; j < Math.max(fwdPrimers.length, revPrimers.length); j++) {
+    const pF = fwdPrimers[j] || fwdPrimers[0];
+    const pR = revPrimers[j] || revPrimers[0];
+    
+    if (!pF || !pR) continue;
+
+    const pF_offset = pF.templateOffset ?? 0;
+    const pF_bindLen = (pF.bindingEnd ?? pF.sequence.length) - (pF.bindingStart ?? 0);
+    const pR_offset = pR.templateOffset ?? 0;
+    const pR_bindLen = (pR.bindingEnd ?? pR.sequence.length) - (pR.bindingStart ?? 0);
+
+    const vStartF = Math.max(0, pF_offset - 10);
+    const vEndF = Math.min(origSeq.length, pF_offset + pF_bindLen + 20);
+    
+    const vStartR = Math.max(0, pR_offset - 20);
+    const vEndR = Math.min(origSeq.length, pR_offset + pR_bindLen + 10);
+    
+    visualizations.push({
+      title: `${pF.name} & ${pR.name}`,
+      primerF: pF.name,
+      primerR: pR.name,
+      templateF: origSeq.substring(vStartF, vEndF),
+      templateR: origSeq.substring(vStartR, vEndR),
+      offsetF: pF_offset - vStartF,
+      offsetR: pR_offset - vStartR
+    });
+  }
+  return visualizations;
 }
 
 export function designPrimers(
@@ -392,40 +429,12 @@ export function designPrimers(
     });
 
     // Create visualizations
-    const visualizations: BindingVisualization[] = [];
-    
-    // Sort primers by position
-    const fwdPrimers = fragPrimers.filter(p => p.direction === 'F').sort((a, b) => (a.bindingStart || 0) - (b.bindingStart || 0));
-    const revPrimers = fragPrimers.filter(p => p.direction === 'R').sort((a, b) => (a.bindingStart || 0) - (b.bindingStart || 0));
-    
-    for (let j = 0; j < Math.max(fwdPrimers.length, revPrimers.length); j++) {
-      const pF = fwdPrimers[j] || fwdPrimers[0];
-      const pR = revPrimers[j] || revPrimers[0];
-      
-      if (!pF || !pR) continue;
-
-      // Show about 10bps more after template binding section
-      const pF_offset = pF.templateOffset ?? 0;
-      const pF_bindLen = (pF.bindingEnd ?? pF.sequence.length) - (pF.bindingStart ?? 0);
-      const pR_offset = pR.templateOffset ?? 0;
-      const pR_bindLen = (pR.bindingEnd ?? pR.sequence.length) - (pR.bindingStart ?? 0);
-
-      const vStart = Math.max(0, pF_offset - 10);
-      const vEnd = Math.min(mutSeq.length, pR_offset + pR_bindLen + 10);
-      
-      visualizations.push({
-        title: `${pF.name} & ${pR.name}`,
-        primerF: pF.name,
-        primerR: pR.name,
-        templateF: origSeq.substring(vStart, pF_offset + pF_bindLen + 20),
-        templateR: origSeq.substring(Math.max(0, pR_offset - 20), pR_offset + pR_bindLen),
-        paddingR: pR_offset - Math.max(0, pR_offset - 20)
-      });
-    }
+    const visualizations = computeVisualizations(fragPrimers, origSeq);
 
     fragmentAssemblies.push({
       name: frag.name,
       primers: fragPrimers,
+      originalSequence: origSeq,
       bindingVisualizations: visualizations
     });
   }
