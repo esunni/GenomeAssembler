@@ -28,6 +28,7 @@ export interface Primer {
   bindingStart?: number;
   bindingEnd?: number;
   direction?: 'F' | 'R';
+  templateSeq?: string;
 }
 
 export interface AssemblyFragment {
@@ -50,17 +51,42 @@ export const reverseComplement = (seq: string) => {
   return seq.split('').reverse().map(c => complement[c] || c).join('');
 };
 
-export const calculateTm = (seq: string): number => {
+export const calculateTm = (seq: string, bindingStart: number = 0, bindingEnd: number = seq.length, templateSeq?: string): number => {
+  const bindingSeq = seq.substring(bindingStart, bindingEnd);
   let gc = 0;
   let at = 0;
-  for (const char of seq.toUpperCase()) {
+  
+  for (let i = 0; i < bindingSeq.length; i++) {
+    const char = bindingSeq[i].toUpperCase();
+    
+    // If we have a genomic template, we check if the primer actually matches it.
+    // Mismatched bases (like a silent mutation inside the binding region) "bubble" and do not contribute to Tm!
+    if (templateSeq) {
+      const targetChar = templateSeq[i]?.toUpperCase();
+      if (char !== targetChar) {
+        continue; // This base doesn't bind to the template, so it provides no thermal stability
+      }
+    }
+
     if (char === 'G' || char === 'C') gc++;
     if (char === 'A' || char === 'T') at++;
   }
-  if (seq.length < 14) {
+
+  const len = gc + at; // Only counting bases that actually annealed
+  if (len === 0) return 0;
+  if (len < 14) {
     return (at * 2) + (gc * 4);
   }
-  return 64.9 + 41 * (gc - 16.4) / seq.length;
+  
+  // Simplified nearest neighbor approx that doesn't drop when adding A/T
+  // This uses a very simple salt-adjusted formula that is stable:
+  const tm = 64.9 + 41 * (gc - 16.4) / len;
+  
+  // If it's a very long sequence with low GC, Wallace formula drops. 
+  // We clamp it or use Marmur-Doty if it drops too low.
+  const marmur = 81.5 + 16.6 * Math.log10(0.05) + 41 * (gc / len) - 500 / len;
+  
+  return Math.max(tm, marmur, (at * 2) + (gc * 4) - (len * 0.5));
 };
 
 export function parseSplitSetResult(text: string): SplitSetFragment[] {
@@ -179,13 +205,13 @@ export function designPrimers(
     {
       name: `${config.vectorName}_F`,
       sequence: rs + spacer + vecRight20,
-      tm: calculateTm(rs + spacer + vecRight20),
+      tm: calculateTm(rs + spacer + vecRight20, (rs + spacer).length),
       type: 'vector'
     },
     {
       name: `${config.vectorName}_R`,
       sequence: reverseComplement(vecLeft20) + reverseComplement(spacer) + reverseComplement(rs),
-      tm: calculateTm(reverseComplement(vecLeft20) + reverseComplement(spacer) + reverseComplement(rs)),
+      tm: calculateTm(reverseComplement(vecLeft20) + reverseComplement(spacer) + reverseComplement(rs), 0, 20),
       type: 'vector'
     }
   ];
@@ -197,23 +223,26 @@ export function designPrimers(
     const isFirst = i === 0;
     const isLast = i === fragments.length - 1;
     
-    // As per user rule: "All fragments get vector overlap"
-    // F primer: vector(13) + RS(6) + spacer(1) + OH(4) + Frag(20)
+    const origSeq = getOriginalSequence(originalGenome.toUpperCase(), frag.coordStart, frag.coordEnd, isLinear);
+
     const fragFPart = frag.sequence.substring(4, 24);
     const fSeq = vecLeft13 + rs + spacer + frag.overhang5 + fragFPart;
+    const fTarget = origSeq.substring(0, 24);
     
     const fragRPart = frag.sequence.substring(frag.sequence.length - 24, frag.sequence.length - 4);
     const rSeq = reverseComplement(vecRight13) + reverseComplement(rs) + reverseComplement(spacer) + reverseComplement(frag.overhang3) + reverseComplement(fragRPart);
+    const rTarget = reverseComplement(origSeq.substring(origSeq.length - 24, origSeq.length));
 
     const fragPrimers: Primer[] = [
       {
         name: `${frag.name}_F`,
         sequence: fSeq,
-        tm: calculateTm(fSeq),
+        tm: calculateTm(fSeq, fSeq.length - 24, fSeq.length, fTarget),
         type: 'fragment',
-        bindingStart: 0,
-        bindingEnd: 24,
-        direction: 'F'
+        bindingStart: fSeq.length - 24,
+        bindingEnd: fSeq.length,
+        direction: 'F',
+        templateSeq: fTarget
       }
     ];
 
@@ -232,35 +261,43 @@ export function designPrimers(
         start = end - 25;
       }
       const mutSeq = frag.sequence.substring(start, end);
+      const mutTargetF = origSeq.substring(start, end);
       
       fragPrimers.push({
         name: `${frag.name}_${mut.id}_F`,
         sequence: mutSeq,
-        tm: calculateTm(mutSeq),
+        tm: calculateTm(mutSeq, 0, mutSeq.length, mutTargetF),
         type: 'mutation',
         bindingStart: start,
         bindingEnd: end,
-        direction: 'F'
+        direction: 'F',
+        templateSeq: mutTargetF
       });
+
+      const rMutSeq = reverseComplement(mutSeq);
+      const rMutTarget = reverseComplement(mutTargetF);
+
       fragPrimers.push({
         name: `${frag.name}_${mut.id}_R`,
-        sequence: reverseComplement(mutSeq),
-        tm: calculateTm(reverseComplement(mutSeq)),
+        sequence: rMutSeq,
+        tm: calculateTm(rMutSeq, 0, rMutSeq.length, rMutTarget),
         type: 'mutation',
         bindingStart: start,
         bindingEnd: end,
-        direction: 'R'
+        direction: 'R',
+        templateSeq: rMutTarget
       });
     });
 
     fragPrimers.push({
       name: `${frag.name}_R`,
       sequence: rSeq,
-      tm: calculateTm(rSeq),
+      tm: calculateTm(rSeq, rSeq.length - 24, rSeq.length, rTarget),
       type: 'fragment',
-      bindingStart: frag.sequence.length - 24,
-      bindingEnd: frag.sequence.length,
-      direction: 'R'
+      bindingStart: rSeq.length - 24,
+      bindingEnd: rSeq.length,
+      direction: 'R',
+      templateSeq: rTarget
     });
 
     // Create visualizations
@@ -279,29 +316,13 @@ export function designPrimers(
       const vStart = Math.max(0, (pF.bindingStart || 0) - 10);
       const vEnd = Math.min(frag.sequence.length, (pR.bindingEnd || 0) + 10);
       
-      const origContext = frag.sequence.substring(vStart, vEnd);
-      
-      let visF = "";
-      if (pF.type === 'fragment') {
-        visF = " ".repeat((pF.bindingStart || 0) - vStart) + pF.sequence.slice(-24);
-      } else {
-        visF = " ".repeat((pF.bindingStart || 0) - vStart) + pF.sequence;
-      }
-
-      let visR = "";
-      if (pR.type === 'fragment') {
-        visR = " ".repeat((pR.bindingStart || 0) - vStart) + reverseComplement(pR.sequence).substring(0, 24);
-      } else {
-        visR = " ".repeat((pR.bindingStart || 0) - vStart) + reverseComplement(pR.sequence);
-      }
-      
       visualizations.push({
         title: `${pF.name} & ${pR.name}`,
-        originalDna: origContext,
-        primerF: visF,
-        primerR: visR,
-        offsetF: (pF.bindingStart || 0) - vStart,
-        offsetR: (pR.bindingStart || 0) - vStart
+        originalDna: frag.sequence.substring(vStart, vEnd),
+        primerF: pF.name, // We'll compute visual dynamically in UI
+        primerR: pR.name, // We'll compute visual dynamically in UI
+        offsetF: vStart,
+        offsetR: vEnd
       });
     }
 
