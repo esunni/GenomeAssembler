@@ -201,17 +201,20 @@ export function designPrimers(
   const rs = config.restrictionSite.toUpperCase();
   const spacer = config.spacer.toUpperCase();
   
+  const rsSpacer = rs + spacer;
+  const rcRsSpacer = reverseComplement(rsSpacer);
+  
   const vectorPrimers: Primer[] = [
     {
       name: `${config.vectorName}_F`,
-      sequence: rs + spacer + vecRight20,
-      tm: calculateTm(rs + spacer + vecRight20, (rs + spacer).length),
+      sequence: rcRsSpacer + vecRight20,
+      tm: calculateTm(rcRsSpacer + vecRight20, rcRsSpacer.length),
       type: 'vector'
     },
     {
       name: `${config.vectorName}_R`,
-      sequence: reverseComplement(vecLeft20) + reverseComplement(spacer) + reverseComplement(rs),
-      tm: calculateTm(reverseComplement(vecLeft20) + reverseComplement(spacer) + reverseComplement(rs), 0, 20),
+      sequence: rcRsSpacer + reverseComplement(vecLeft20),
+      tm: calculateTm(rcRsSpacer + reverseComplement(vecLeft20), rcRsSpacer.length),
       type: 'vector'
     }
   ];
@@ -226,11 +229,13 @@ export function designPrimers(
     const origSeq = getOriginalSequence(originalGenome.toUpperCase(), frag.coordStart, frag.coordEnd, isLinear);
 
     const fragFPart = frag.sequence.substring(4, 24);
-    const fSeq = vecLeft13 + rs + spacer + frag.overhang5 + fragFPart;
+    const fPrefix = isFirst ? vecLeft13 : '';
+    const fSeq = fPrefix + rsSpacer + frag.overhang5 + fragFPart;
     const fTarget = origSeq.substring(0, 24);
     
     const fragRPart = frag.sequence.substring(frag.sequence.length - 24, frag.sequence.length - 4);
-    const rSeq = reverseComplement(vecRight13) + reverseComplement(rs) + reverseComplement(spacer) + reverseComplement(frag.overhang3) + reverseComplement(fragRPart);
+    const rPrefix = isLast ? reverseComplement(vecRight13) : '';
+    const rSeq = rPrefix + rsSpacer + reverseComplement(frag.overhang3) + reverseComplement(fragRPart);
     const rTarget = reverseComplement(origSeq.substring(origSeq.length - 24, origSeq.length));
 
     const fragPrimers: Primer[] = [

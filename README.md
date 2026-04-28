@@ -1,7 +1,11 @@
 # GenomeAssembler
 
 GenomeAssembler is a web application designed to help scientists streamline synthetic biology workflows. It provides two main tools:
-1. **Design**: Helps find optimal 30bp overlapping regions for fragment assembly based on user constraints (promoter regions, CDS conservation, and silent mutations). Includes an interactive linear and circular genome map.
+1. **Design**: 
+   - **Search Windows:** Helps find optimal 30bp overlapping regions for fragment assembly based on user constraints (promoter regions, CDS conservation, and silent mutations). 
+   - **Silent Mutations:** Detects internal restriction enzyme sites within CDS regions and suggests optimal silent mutations based on codon usage frequencies.
+   - **Primer Design:** Generates sequences for vector backbones, fragment assembly, and mutation incorporation with robust Tm calculation and visualization.
+   - **Maps:** Includes interactive linear and circular genome maps.
 2. **Build (JANUS)**: A liquid handling protocol configurator. It takes protocol components and dispensing plate maps to automatically generate precise aspiration mapping files (.csv) for the JANUS automated pipetting system.
 
 ## GitHub Pages Deployment

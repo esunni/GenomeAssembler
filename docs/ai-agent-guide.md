@@ -25,9 +25,17 @@ It is deployed automatically to GitHub Pages via GitHub Actions upon pushing to 
 ## 3. Core Workflows & Domain Logic
 
 ### A. The "Design" Workflow (Fragment Design)
-- **Goal:** Upload a circular genome sequence, detect recognition sites for Type IIS enzymes (like BsaI, BsmBI), and visualize the fragmentation strategy.
-- **Key Components:** `DesignPage.tsx`, `CircularGenomeMap.tsx`
-- **Key Utilities:** `src/utils/designTools.ts` (handles FASTA parsing and circular enzyme site calculations).
+- **Goal:** Upload a circular or linear genome sequence, detect recognition sites for Type IIS enzymes (like BsaI, BsmBI), and visually plan the fragmentation strategy.
+- **Features:**
+  - **Search Window Finding:** Automatically identifies optimal 30bp overlapping regions for fragment assembly based on user constraints (promoter regions, CDS conservation/intergenic preference, and silent mutations).
+  - **Silent Mutation Analysis:** Detects internal restriction enzyme sites and suggests silent mutations based on codon usage frequencies and CDS reading frames to eliminate unwanted sites without changing amino acids.
+  - **Primer Design:** Generates sequences for vector backbones, fragment assembly, and mutation incorporation. Calculates Tm and visualizes primer binding against templates.
+- **Key Components:** `DesignPage.tsx`, `CircularGenomeMap.tsx`, `LinearGenomeMap.tsx`, `SearchWindowFinder.tsx`, `SilentMutationAnalysis.tsx`, `PrimerDesignSection.tsx`
+- **Key Utilities:** 
+  - `src/utils/designTools.ts` (handles FASTA parsing and circular enzyme site calculations).
+  - `src/utils/searchWindowTools.ts` (calculates optimal cut regions).
+  - `src/utils/mutationTools.ts` (CDS analysis and silent mutation recommendation).
+  - `src/utils/primerDesign.ts` (primer Tm and sequence generation).
 
 ### B. The "Build" Workflow (Janus Mapping File Generator)
 - **Goal:** Set up a protocol for a liquid handling robot to perform the assembly reactions.
@@ -49,11 +57,17 @@ src/
 │   ├── DesignPage.tsx   # Entry for Fragment Design
 │   ├── ReactionSetupSection.tsx  # Defines reagents
 │   ├── AspirationPlatesSection.tsx # Defines source labware
-│   └── DispensingPlateSection.tsx  # Defines target labware
+│   ├── DispensingPlateSection.tsx  # Defines target labware
+│   ├── SearchWindowFinder.tsx    # Optimal cut window logic
+│   ├── SilentMutationAnalysis.tsx # Silent mutation detection
+│   └── PrimerDesignSection.tsx   # Primer generation
 ├── utils/               # Pure functions & Domain logic
 │   ├── designTools.ts   # Sequence algorithms
 │   ├── janusFiles.ts    # I/O (Export JSON/CSV)
-│   └── janusState.ts    # Calculators for volumes/mixes
+│   ├── janusState.ts    # Calculators for volumes/mixes
+│   ├── searchWindowTools.ts # Cut site algorithms
+│   ├── mutationTools.ts # Codon and CDS algorithms
+│   └── primerDesign.ts  # Tm and primer logic
 ├── App.tsx              # Main orchestrator; holds global state
 ├── types.ts             # Domain models (ExperimentProject, ProtocolComponent, etc.)
 └── styles.css           # Global stylesheet

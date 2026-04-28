@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { parseSplitSetResult, designPrimers, type AssemblyFragment, type Primer, calculateTm, reverseComplement } from '../utils/primerDesign';
 import type { ParsedCircularFasta } from '../utils/designTools';
 
@@ -7,138 +7,70 @@ interface PrimerDesignSectionProps {
   isLinear: boolean;
 }
 
+const revStr = (str: string) => Array.from(str).reverse().join('');
+
 // Bending Primer Visualizer Component
-function VisualizerFrame({ primerF, primerR, originalDna, offsetF, offsetR }: { primerF: Primer, primerR: Primer, originalDna: string, offsetF: number, offsetR: number }) {
-  // Compute dynamic alignment for F
-  const computeF = () => {
-    let pSeq = primerF.sequence;
-    let overhang = '';
-    let binding = '';
-    let mismatchMask = '';
-    
-    // Heuristic: start aligning from 3' end. Find longest match in originalDna.
-    const searchTarget = originalDna;
-    let matchIdx = -1;
-    let matchLen = 0;
-    
-    // We assume the last 10-15bp must bind.
-    for (let i = pSeq.length - 10; i >= 0; i--) {
-      const chunk = pSeq.substring(i);
-      const idx = searchTarget.indexOf(chunk);
-      if (idx !== -1) {
-        matchIdx = idx;
-        matchLen = chunk.length;
-        // Expand backwards allowing mismatches
-        let pI = i - 1;
-        let dI = idx - 1;
-        while (pI >= 0 && dI >= 0) {
-          pI--;
-          dI--;
-        }
-        
-        overhang = pSeq.substring(0, pI + 1);
-        binding = pSeq.substring(pI + 1);
-        const dnaCompare = searchTarget.substring(dI + 1, dI + 1 + binding.length);
-        
-        mismatchMask = binding.split('').map((char, i) => char === dnaCompare[i] ? char : char.toLowerCase()).join('');
-        
-        return { overhang, binding: mismatchMask, space: dI + 1 };
-      }
-    }
-    
-    // Fallback if completely no match
-    return { overhang: pSeq, binding: '', space: 0 };
-  };
+function VisualizerFrame({ primerF, primerR, originalDna }: { primerF: Primer, primerR: Primer, originalDna: string }) {
+  const fOverhang = primerF.sequence.substring(0, primerF.bindingStart || 0);
+  const fBind = primerF.sequence.substring(primerF.bindingStart || 0, primerF.bindingEnd || primerF.sequence.length);
 
-  // Compute dynamic alignment for R
-  const computeR = () => {
-    let pSeq = primerR.sequence; // R primer is reverse complement of bottom strand
-    let pSeqRC = reverseComplement(pSeq); // Forward strand equivalent
-    
-    let overhang = '';
-    let binding = '';
-    let mismatchMask = '';
-    
-    const searchTarget = originalDna;
-    
-    // R primer binds to bottom strand, its 3' end is at the left of the forward strand view.
-    // So the 3' end of R primer is the 5' end of its reverse complement.
-    for (let i = 10; i <= pSeqRC.length; i++) {
-      const chunk = pSeqRC.substring(0, i);
-      const idx = searchTarget.indexOf(chunk);
-      if (idx !== -1) {
-        // Expand forwards
-        let pI = i;
-        let dI = idx + i;
-        while (pI < pSeqRC.length && dI < searchTarget.length) {
-          pI++;
-          dI++;
-        }
-        
-        binding = pSeqRC.substring(0, pI);
-        overhang = pSeqRC.substring(pI);
-        const dnaCompare = searchTarget.substring(idx, idx + binding.length);
-        
-        mismatchMask = binding.split('').map((char, i) => char === dnaCompare[i] ? char : char.toLowerCase()).join('');
-        
-        return { overhang, binding: mismatchMask, space: idx };
-      }
-    }
-    
-    return { overhang: pSeqRC, binding: '', space: 0 };
-  };
-
-  const fData = computeF();
-  const rData = computeR();
+  const rOverhang = primerR.sequence.substring(0, primerR.bindingStart || 0);
+  const rBind = primerR.sequence.substring(primerR.bindingStart || 0, primerR.bindingEnd || primerR.sequence.length);
 
   return (
     <div style={{ 
       background: '#fff', 
-      padding: '1.5rem 1rem', 
-      borderRadius: '4px', 
+      padding: '1.5rem', 
+      borderRadius: '8px', 
       overflowX: 'auto', 
-      fontFamily: 'monospace', 
+      fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace', 
       whiteSpace: 'pre', 
       border: '1px solid #e2e8f0',
       fontSize: '0.9rem',
-      lineHeight: '1.2'
+      lineHeight: '1.5'
     }}>
-      {/* F Primer Overhang Bending Up */}
-      {fData.overhang && (
-        <div style={{ color: '#8430bf', display: 'flex' }}>
-          <span style={{ width: `${fData.space}ch`, display: 'inline-block' }}></span>
-          <span style={{ transform: 'translateY(-4px)', display: 'inline-block' }}>{fData.overhang.split('').join(' ')}</span>
+      {/* Forward Primer */}
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ color: '#8430bf', fontWeight: 600 }}>{primerF.name}</div>
+        <div>
+          <span style={{ color: '#94a3b8' }}>5' </span>
+          <span style={{ color: '#8430bf' }}>{fOverhang}</span>
+          <span style={{ color: '#4a1b74', fontWeight: 'bold' }}>{fBind}</span>
+          <span style={{ color: '#94a3b8' }}> 3'</span>
         </div>
-      )}
-      
-      {/* F Primer Binding */}
-      <div style={{ color: '#4a1b74', fontWeight: 'bold' }}>
-        {' '.repeat(fData.space)}
-        {fData.binding.split('').map((c, i) => (
-          <span key={i} style={{ color: c === c.toUpperCase() ? '#4a1b74' : '#ef4444' }}>{c.toUpperCase()}</span>
-        ))}
-      </div>
-      
-      {/* Original DNA */}
-      <div style={{ color: '#4f4558', padding: '0.2rem 0' }}>
-        {originalDna}
-      </div>
-      
-      {/* R Primer Binding */}
-      <div style={{ color: '#059669', fontWeight: 'bold' }}>
-        {' '.repeat(rData.space)}
-        {rData.binding.split('').map((c, i) => (
-          <span key={i} style={{ color: c === c.toUpperCase() ? '#059669' : '#ef4444' }}>{c.toUpperCase()}</span>
-        ))}
-      </div>
-      
-      {/* R Primer Overhang Bending Down */}
-      {rData.overhang && (
-        <div style={{ color: '#10b981', display: 'flex' }}>
-          <span style={{ width: `${rData.space + rData.binding.length}ch`, display: 'inline-block' }}></span>
-          <span style={{ transform: 'translateY(4px)', display: 'inline-block' }}>{rData.overhang.split('').join(' ')}</span>
+        <div>
+          <span style={{ visibility: 'hidden' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>{fOverhang}</span>
+          <span style={{ color: '#cbd5e1' }}>{'|'.repeat(fBind.length)}</span>
         </div>
-      )}
+        <div>
+          <span style={{ visibility: 'hidden' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>{fOverhang}</span>
+          <span style={{ color: '#4f4558' }}>{primerF.templateSeq || fBind}</span>
+          <span style={{ color: '#94a3b8' }}>... 3'</span>
+        </div>
+      </div>
+
+      {/* Reverse Primer */}
+      <div style={{ marginTop: '2rem' }}>
+        <div style={{ color: '#059669', fontWeight: 600 }}>{primerR.name}</div>
+        <div>
+          <span style={{ color: '#94a3b8' }}>5' ...</span>
+          <span style={{ color: '#4f4558' }}>{reverseComplement(primerR.templateSeq || rBind)}</span>
+          <span style={{ visibility: 'hidden' }}>{rOverhang}</span>
+          <span style={{ color: '#94a3b8' }}> 3'</span>
+        </div>
+        <div>
+          <span style={{ visibility: 'hidden' }}>5' ...</span>
+          <span style={{ color: '#cbd5e1' }}>{'|'.repeat(rBind.length)}</span>
+        </div>
+        <div>
+          <span style={{ visibility: 'hidden' }}>5' ...</span>
+          <span style={{ color: '#047857', fontWeight: 'bold' }}>{revStr(rBind)}</span>
+          <span style={{ color: '#10b981' }}>{revStr(rOverhang)}</span>
+          <span style={{ color: '#94a3b8' }}> 5'</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -154,6 +86,17 @@ export function PrimerDesignSection({ uploadedGenome, isLinear }: PrimerDesignSe
   
   const [activeFragIndex, setActiveFragIndex] = useState(0);
   const [activeVisIndex, setActiveVisIndex] = useState(0);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (tabsRef.current) {
+      const activeTab = tabsRef.current.children[activeFragIndex] as HTMLElement;
+      if (activeTab) {
+        activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [activeFragIndex]);
 
   const handleDesign = () => {
     if (!uploadedGenome) return alert("Please upload a genome sequence first.");
@@ -161,7 +104,7 @@ export function PrimerDesignSection({ uploadedGenome, isLinear }: PrimerDesignSe
     const cutIndex = vectorSeq.indexOf('↓') !== -1 ? vectorSeq.indexOf('↓') : vectorSeq.indexOf('|');
     if (cutIndex === -1) return alert("Please mark the insertion site in the vector sequence with '↓' or '|'.");
 
-    const cleanVec = vectorSeq.replace(/[↓\|]/g, '').toUpperCase();
+    const cleanVec = vectorSeq.replace(/[↓|]/g, '').toUpperCase();
     const vecLeft = cleanVec.substring(0, cutIndex);
     const vecRight = cleanVec.substring(cutIndex);
 
@@ -241,12 +184,9 @@ export function PrimerDesignSection({ uploadedGenome, isLinear }: PrimerDesignSe
       <button 
         type="button" 
         className="primary-cta" 
-        style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
+        style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#0284c7', borderColor: '#0284c7' }} 
         onClick={() => setIsOpen(true)}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M2 12h20M12 2v20M2 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12z"/>
-        </svg>
         Advanced Primer Design
       </button>
 
@@ -298,16 +238,21 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                     <strong>Vector Sequence around insert</strong>
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                       <input 
+                        ref={inputRef}
                         style={{ flex: 1, fontFamily: 'inherit' }} 
                         value={vectorSeq} 
                         onChange={e => setVectorSeq(e.target.value)} 
                         placeholder="e.g. GATCGATC↓GATCGATC"
                       />
                       <button type="button" className="primary-cta" style={{ background: '#8430bf', borderColor: '#8430bf', padding: '0.4rem 0.75rem' }} onClick={() => {
-                        const input = document.activeElement as HTMLInputElement;
-                        if (input && input.tagName === 'INPUT') {
-                          const start = input.selectionStart || vectorSeq.length;
+                        const input = inputRef.current;
+                        if (input) {
+                          const start = input.selectionStart ?? vectorSeq.length;
                           setVectorSeq(vectorSeq.slice(0, start) + '↓' + vectorSeq.slice(start));
+                          setTimeout(() => {
+                            input.focus();
+                            input.setSelectionRange(start + 1, start + 1);
+                          }, 0);
                         } else {
                           setVectorSeq(vectorSeq + '↓');
                         }
@@ -316,24 +261,26 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                   </label>
                 </div>
                 
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <label style={{ flex: 1 }}>
-                    <strong>Enzyme Site</strong>
-                    <select style={{ width: '100%', marginTop: '0.5rem' }} value={restrictionSite} onChange={e => setRestrictionSite(e.target.value)}>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <label className="design-select-field" style={{ flex: 1 }}>
+                    <span>Enzyme Site</span>
+                    <select value={restrictionSite} onChange={e => setRestrictionSite(e.target.value)}>
                       <option value="GGTCTC">BsaI (GGTCTC)</option>
                       <option value="CGTCTC">BsmBI (CGTCTC)</option>
                       <option value="ACCTGC">BspQI (ACCTGC)</option>
                       <option value="GAGACG">BsmAI (GAGACG)</option>
                     </select>
                   </label>
-                  <label style={{ flex: 1 }}>
-                    <strong>Spacer Base</strong>
-                    <input style={{ width: '100%', marginTop: '0.5rem', fontFamily: 'inherit' }} value={spacer} onChange={e => setSpacer(e.target.value)} maxLength={1} />
+                  <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#4f4558' }}>Spacer Base</span>
+                    <input style={{ width: '100%', padding: '0.6rem', border: '1px solid #cbd5e1', borderRadius: '4px', fontFamily: 'inherit' }} value={spacer} onChange={e => setSpacer(e.target.value)} maxLength={1} />
                   </label>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
-                  <button type="button" className="clear-btn" onClick={() => { setSplitsetText(''); setVectorSeq(''); }}>Reset</button>
+                  <button type="button" className="icon-button" onClick={() => { setSplitsetText(''); setVectorSeq(''); }} title="Reset">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                  </button>
                   <button type="button" className="primary-cta" onClick={handleDesign}>Generate Primers</button>
                 </div>
               </>
@@ -342,12 +289,14 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                 {/* Results View */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem' }}>
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <button type="button" className="ghost" onClick={() => setResults(null)}>Back to Settings</button>
+                    <button type="button" className="icon-button" onClick={() => setResults(null)} title="Back to Settings">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    </button>
                     <button type="button" className="primary-cta" onClick={handleDownload}>Download All (FASTA)</button>
                   </div>
                   
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <select style={{ padding: '0.2rem 0.5rem' }} value={restrictionSite} onChange={e => { setRestrictionSite(e.target.value); setTimeout(handleDesign, 0); }}>
+                    <select style={{ padding: '0.2rem 1.5rem 0.2rem 0.5rem', fontSize: '0.9rem' }} value={restrictionSite} onChange={e => { setRestrictionSite(e.target.value); setTimeout(handleDesign, 0); }}>
                       <option value="GGTCTC">BsaI</option>
                       <option value="CGTCTC">BsmBI</option>
                       <option value="ACCTGC">BspQI</option>
@@ -362,7 +311,7 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
                   </button>
                   
-                  <div style={{ display: 'flex', gap: '0.25rem', overflowX: 'auto', flex: 1, scrollbarWidth: 'none' }}>
+                  <div ref={tabsRef} style={{ display: 'flex', gap: '0.25rem', overflowX: 'auto', flex: 1, scrollbarWidth: 'none', scrollBehavior: 'smooth' }}>
                     {results.fragmentAssemblies.map((frag, idx) => (
                       <button 
                         key={frag.name}
@@ -427,8 +376,6 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                           primerF={pF}
                           primerR={pR}
                           originalDna={vis.originalDna}
-                          offsetF={vis.offsetF}
-                          offsetR={vis.offsetR}
                         />
                       );
                     })()}
