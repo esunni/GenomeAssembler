@@ -6,11 +6,12 @@ import { DispensingPlateSection } from './components/DispensingPlateSection';
 import { ReactionSetupSection } from './components/ReactionSetupSection';
 import type { ExperimentProject } from './types';
 import { exportProjectJson, generateMappingCsvFiles, importProjectJson, validateMappingExport } from './utils/janusFiles';
-import {
-  buildAvailableSources,
-  buildPreparationSummaries,
-  createDefaultProject,
-  createProtocolComponent,
+import { 
+  buildAvailableSources, 
+  buildPreparationSummaries, 
+  createDefaultProject, 
+  createAspirationPlate,
+  createProtocolComponent, 
   cleanupOrphanedSources,
 } from './utils/janusState';
 
@@ -42,6 +43,7 @@ function App() {
       p.protocolComponents[0].echoVolumes = { 'protocol-1': 25 };
     }
     p.dispensingPlate.labware = 'plate-384';
+    p.aspirationPlates = [createAspirationPlate('plate-384')];
     return p;
   });
   const [activeView, setActiveView] = useState<PortalView>('design');
@@ -301,7 +303,7 @@ function App() {
 
                   <div className="page-stat-grid" style={{ display: 'flex', justifyContent: 'flex-end', gap: '2.5rem' }}>
                     <article className="stat-card">
-                      <span>{activeView === 'echo' ? 'Source plates' : 'Aspiration plates'}</span>
+                      <span>{activeView === 'echo' ? 'Source plate' : 'Aspiration plates'}</span>
                       <strong>{project.aspirationPlates.length}</strong>
                     </article>
                     <article className="stat-card">
@@ -343,18 +345,19 @@ function App() {
                       style={{ marginLeft: 'auto' }}
                       onClick={() => {
                         if (window.confirm('Are you sure you want to clear all data?')) {
-                          if (activeView === 'echo') {
-                            setEchoProject(() => {
-                              const p = createDefaultProject();
-                              p.echoProtocols = [{ id: 'protocol-1', name: 'Protocol 1' }];
-                              if (p.protocolComponents.length > 0) {
-                                p.protocolComponents[0].transferVolume = 25;
-                                p.protocolComponents[0].echoVolumes = { 'protocol-1': 25 };
-                              }
-                              p.dispensingPlate.labware = 'plate-384';
-                              return p;
-                            });
-                          } else {
+                            if (activeView === 'echo') {
+                              setEchoProject(() => {
+                                const p = createDefaultProject();
+                                p.echoProtocols = [{ id: 'protocol-1', name: 'Protocol 1' }];
+                                if (p.protocolComponents.length > 0) {
+                                  p.protocolComponents[0].transferVolume = 25;
+                                  p.protocolComponents[0].echoVolumes = { 'protocol-1': 25 };
+                                }
+                                p.dispensingPlate.labware = 'plate-384';
+                                p.aspirationPlates = [createAspirationPlate('plate-384')];
+                                return p;
+                              });
+                            } else {
                             setJanusProject(createDefaultProject());
                           }
                           setGeneratedFiles([]);
@@ -372,7 +375,7 @@ function App() {
                 <div style={{ position: 'sticky', top: 'calc(82px + 2rem)', height: 'fit-content' }}>
                   <nav className="quick-menu" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '150px' }}>
                     <a href="#reaction-setup" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Reaction Setup</a>
-                    <a href="#aspiration-plates" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>{activeView === 'echo' ? 'Source Plates' : 'Aspiration Plates'}</a>
+                    <a href="#aspiration-plates" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>{activeView === 'echo' ? 'Source Plate' : 'Aspiration Plates'}</a>
                     <a href="#dispensing-plate" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>{activeView === 'echo' ? 'Destination Plate' : 'Dispensing Plate'}</a>
                     <a href="#preparation" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>REAGENT PREP</a>
                     <a href="#mapping-files" style={{ color: 'var(--brand)', textDecoration: 'none', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.82rem' }}>Mapping Files</a>

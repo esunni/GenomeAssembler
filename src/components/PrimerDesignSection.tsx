@@ -34,7 +34,10 @@ function ColoredPrimerInput({ primer, onChange }: { primer: Primer, onChange: (v
         ref={inputRef}
         style={{ width: '100%', fontFamily: 'monospace', padding: '0.5rem', fontSize: '1rem', border: '1px solid #0284c7', borderRadius: '4px' }} 
         value={primer.sequence}
-        onChange={e => onChange(e.target.value)}
+        onChange={e => {
+          const val = e.target.value.toUpperCase().replace(/[^ATGCU]/ig, '');
+          onChange(val);
+        }}
         onBlur={() => setIsEditing(false)}
       />
     );
@@ -208,7 +211,7 @@ export function PrimerDesignSection({ uploadedGenome, isLinear, siteAnalyses }: 
       vectorRight: vecRight,
       restrictionSite,
       spacer
-    }, isLinear);
+    }, isLinear, siteAnalyses);
 
     setResults(res);
     setActiveFragIndex(0);
@@ -242,24 +245,17 @@ export function PrimerDesignSection({ uploadedGenome, isLinear, siteAnalyses }: 
       const frag = { ...newRes.fragmentAssemblies[fragIndex] };
       const primers = [...frag.primers];
       const p = primers[primerIndex];
-      // For manual edits, if it's a fragment/vector primer we assume the newly typed portion modifies the binding region if it's at the 3' end.
-      // But calculating exactly where the overhang ends dynamically is hard.
-      // We will re-calculate Tm assuming the last N bases bind, where N is the original binding length.
-      let bindingLen = p.sequence.length;
-      if (p.type === 'fragment') bindingLen = 24;
-      if (p.type === 'vector') bindingLen = 20;
-
-      let bStart = 0;
+      
+      let bStart = p.typeIisSpan ? p.typeIisSpan[1] : 0;
       let bEnd = newSeq.length;
-      if (p.type === 'fragment' || (p.type === 'vector' && p.direction !== 'R')) {
-        // Forward/fragment primers bind at their 3' end
-        bStart = Math.max(0, newSeq.length - bindingLen);
-      } else if (p.type === 'vector' && p.direction === 'R') {
-        // R vector primer binds at its 5' end
-        bEnd = Math.min(newSeq.length, bindingLen);
-      }
 
-      primers[primerIndex] = { ...p, sequence: newSeq.toUpperCase(), tm: calculateTm(newSeq, bStart, bEnd, p.templateSeq) };
+      primers[primerIndex] = { 
+        ...p, 
+        sequence: newSeq,
+        bindingStart: bStart,
+        bindingEnd: bEnd,
+        tm: calculateTm(newSeq, bStart, bEnd, p.templateSeq) 
+      };
       frag.primers = primers;
       newRes.fragmentAssemblies[fragIndex] = frag;
       return newRes;
@@ -482,9 +478,17 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
 
                         return (
                           <div key={p.name}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
                               <strong>{p.name}</strong>
-                              <span style={{ color: tmColor, fontWeight: tmDiff > 10 ? 600 : 400 }}>
+                              <span style={{ 
+                                background: tmDiff > 10 ? '#fee2e2' : '#f1f5f9',
+                                color: tmDiff > 10 ? '#ef4444' : '#475569',
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                                border: `1px solid ${tmDiff > 10 ? '#fca5a5' : '#e2e8f0'}`
+                              }}>
                                 Tm: {p.tm.toFixed(1)}°C {tmDiff > 10 && `(Diff > 10°C)`}
                               </span>
                             </div>
@@ -504,9 +508,19 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                   <h3 style={{ margin: '0 0 1rem 0' }}>Vector Primers</h3>
                   {results.vectorPrimers.map((p, idx) => (
                     <div key={p.name} style={{ marginBottom: '1rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
                         <strong>{p.name}</strong>
-                        <span>Tm: {p.tm.toFixed(1)}°C</span>
+                        <span style={{ 
+                          background: '#f1f5f9',
+                          color: '#475569',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          border: `1px solid #e2e8f0`
+                        }}>
+                          Tm: {p.tm.toFixed(1)}°C
+                        </span>
                       </div>
                       <ColoredPrimerInput 
                         primer={p}
@@ -517,15 +531,16 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                             const vPrimers = [...newRes.vectorPrimers];
                             const oldP = vPrimers[idx];
                             
-                            let bStart = 0;
+                            let bStart = oldP.typeIisSpan ? oldP.typeIisSpan[1] : 0;
                             let bEnd = newSeq.length;
-                            if (oldP.name.endsWith('_F')) {
-                               bStart = Math.max(0, newSeq.length - 20);
-                            } else {
-                               bEnd = Math.min(newSeq.length, 20);
-                            }
 
-                            vPrimers[idx] = { ...oldP, sequence: newSeq.toUpperCase(), tm: calculateTm(newSeq, bStart, bEnd) };
+                            vPrimers[idx] = { 
+                              ...oldP, 
+                              sequence: newSeq.toUpperCase(), 
+                              bindingStart: bStart,
+                              bindingEnd: bEnd,
+                              tm: calculateTm(newSeq, bStart, bEnd, oldP.templateSeq) 
+                            };
                             newRes.vectorPrimers = vPrimers;
                             return newRes;
                           });

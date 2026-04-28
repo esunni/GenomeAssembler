@@ -285,16 +285,19 @@ export function designPrimers(
     const rSeq = reverseComplement(vecRight13) + rsSpacer + reverseComplement(mutSeq.substring(mutSeq.length - rBindLen));
     const rTarget = reverseComplement(origSeq.substring(origSeq.length - rBindLen));
 
+    const fTargetForTm = origSeq.substring(0, fBindLen + 20);
+    const rTargetForTm = reverseComplement(origSeq.substring(Math.max(0, origSeq.length - rBindLen - 20)));
+
     const fragPrimers: Primer[] = [
       {
         name: `${frag.name}_F`,
         sequence: fSeq,
-        tm: calculateTm(fSeq, fSeq.length - fBindLen, fSeq.length, fTarget),
+        tm: calculateTm(fSeq, fSeq.length - fBindLen, fSeq.length, fTargetForTm),
         type: 'fragment',
         bindingStart: fSeq.length - fBindLen,
         bindingEnd: fSeq.length,
         direction: 'F',
-        templateSeq: fTarget,
+        templateSeq: fTargetForTm,
         typeIisSpan: [vecLeft13.length, vecLeft13.length + rsSpacer.length],
         templateOffset: 0
       }
@@ -345,32 +348,32 @@ export function designPrimers(
         start = end - 25;
       }
       const mutSeqForPrimer = mutSeq.substring(start, end);
-      const mutTargetF = origSeq.substring(start, end);
+      const mutTargetFForTm = origSeq.substring(start, Math.min(origSeq.length, end + 20));
       
       fragPrimers.push({
         name: `${frag.name}_${mut.id}_F`,
         sequence: mutSeqForPrimer,
-        tm: calculateTm(mutSeqForPrimer, 0, mutSeqForPrimer.length, mutTargetF),
+        tm: calculateTm(mutSeqForPrimer, 0, mutSeqForPrimer.length, mutTargetFForTm),
         type: 'mutation',
         bindingStart: 0,
-        bindingEnd: mutSeq.length,
+        bindingEnd: mutSeqForPrimer.length,
         direction: 'F',
-        templateSeq: mutTargetF,
+        templateSeq: mutTargetFForTm,
         templateOffset: start
       });
 
       const rMutSeq = reverseComplement(mutSeqForPrimer);
-      const rMutTarget = reverseComplement(mutTargetF);
+      const rMutTargetForTm = reverseComplement(origSeq.substring(Math.max(0, start - 20), end));
 
       fragPrimers.push({
         name: `${frag.name}_${mut.id}_R`,
         sequence: rMutSeq,
-        tm: calculateTm(rMutSeq, 0, rMutSeq.length, rMutTarget),
+        tm: calculateTm(rMutSeq, 0, rMutSeq.length, rMutTargetForTm),
         type: 'mutation',
         bindingStart: 0,
         bindingEnd: rMutSeq.length,
         direction: 'R',
-        templateSeq: rMutTarget,
+        templateSeq: rMutTargetForTm,
         templateOffset: start
       });
     });
@@ -378,12 +381,12 @@ export function designPrimers(
     fragPrimers.push({
       name: `${frag.name}_R`,
       sequence: rSeq,
-      tm: calculateTm(rSeq, rSeq.length - rBindLen, rSeq.length, rTarget),
+      tm: calculateTm(rSeq, rSeq.length - rBindLen, rSeq.length, rTargetForTm),
       type: 'fragment',
       bindingStart: rSeq.length - rBindLen,
       bindingEnd: rSeq.length,
       direction: 'R',
-      templateSeq: rTarget,
+      templateSeq: rTargetForTm,
       typeIisSpan: [vecRight13.length, vecRight13.length + rsSpacer.length],
       templateOffset: mutSeq.length - rBindLen
     });
