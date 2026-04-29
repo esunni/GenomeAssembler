@@ -76,11 +76,11 @@ export function computeVisualizations(primers: Primer[], origSeq: string): Bindi
     const pR_right = pR.templateAnchor5 ?? 0;
     const pR_left = pR_right - pR_bindLen + 1;
 
-    const vStartF = Math.max(0, pF_left - 10);
-    const vEndF = Math.min(origSeq.length, pF_right + 21);
+    const vStartF = Math.max(0, pF_left - 20);
+    const vEndF = Math.min(origSeq.length, pF_left + Math.max(60, pF_bindLen + 20));
     
-    const vStartR = Math.max(0, pR_left - 20);
-    const vEndR = Math.min(origSeq.length, pR_right + 11);
+    const vEndR = Math.min(origSeq.length, pR_right + 20);
+    const vStartR = Math.max(0, pR_right - Math.max(60, pR_bindLen + 20));
     
     visualizations.push({
       title: `${pF.name} & ${pR.name}`,
