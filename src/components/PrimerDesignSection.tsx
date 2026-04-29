@@ -258,15 +258,27 @@ export function PrimerDesignSection({ uploadedGenome, isLinear, siteAnalyses }: 
       
       let bStart = p.typeIisSpan ? p.typeIisSpan[1] : 0;
       let bEnd = newSeq.length;
+      const newBindLen = bEnd - bStart;
+
+      let targetSeq = '';
+      if (p.templateAnchor5 !== undefined) {
+        if (p.direction === 'F') {
+          targetSeq = frag.originalSequence.substring(p.templateAnchor5, p.templateAnchor5 + newBindLen + 20);
+        } else {
+          targetSeq = reverseComplement(frag.originalSequence.substring(Math.max(0, p.templateAnchor5 - newBindLen - 20 + 1), p.templateAnchor5 + 1));
+        }
+      }
 
       primers[primerIndex] = { 
         ...p, 
         sequence: newSeq,
         bindingStart: bStart,
         bindingEnd: bEnd,
-        tm: calculateTm(newSeq, bStart, bEnd, p.templateSeq) 
+        templateSeq: targetSeq || p.templateSeq,
+        tm: calculateTm(newSeq, bStart, bEnd, targetSeq || p.templateSeq) 
       };
       frag.primers = primers;
+      frag.bindingVisualizations = computeVisualizations(primers, frag.originalSequence);
       newRes.fragmentAssemblies[fragIndex] = frag;
       return newRes;
     });

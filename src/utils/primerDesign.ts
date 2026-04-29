@@ -32,7 +32,7 @@ export interface Primer {
   direction?: 'F' | 'R';
   templateSeq?: string;
   typeIisSpan?: [number, number]; // [start, end]
-  templateOffset?: number; // Start index of binding region in the fragment/template
+  templateAnchor5?: number; // 0-based index on forward strand where the 5' end of the binding region aligns
 }
 
 export interface AssemblyFragment {
@@ -50,6 +50,53 @@ export interface BindingVisualization {
   templateR: string;
   offsetF: number;
   offsetR: number;
+  prefixF: string;
+  suffixF: string;
+  prefixR: string;
+  suffixR: string;
+}
+
+export function computeVisualizations(primers: Primer[], origSeq: string): BindingVisualization[] {
+  const visualizations: BindingVisualization[] = [];
+  const fwdPrimers = primers.filter(p => p.direction === 'F').sort((a, b) => (a.templateAnchor5 || 0) - (b.templateAnchor5 || 0));
+  const revPrimers = primers.filter(p => p.direction === 'R').sort((a, b) => (a.templateAnchor5 || 0) - (b.templateAnchor5 || 0));
+  
+  for (let j = 0; j < Math.max(fwdPrimers.length, revPrimers.length); j++) {
+    const pF = fwdPrimers[j] || fwdPrimers[0];
+    const pR = revPrimers[j] || revPrimers[0];
+    
+    if (!pF || !pR) continue;
+
+    const pF_bindLen = (pF.bindingEnd ?? pF.sequence.length) - (pF.bindingStart ?? 0);
+    const pR_bindLen = (pR.bindingEnd ?? pR.sequence.length) - (pR.bindingStart ?? 0);
+
+    const pF_left = pF.templateAnchor5 ?? 0;
+    const pF_right = pF_left + pF_bindLen - 1;
+
+    const pR_right = pR.templateAnchor5 ?? 0;
+    const pR_left = pR_right - pR_bindLen + 1;
+
+    const vStartF = Math.max(0, pF_left - 10);
+    const vEndF = Math.min(origSeq.length, pF_right + 21);
+    
+    const vStartR = Math.max(0, pR_left - 20);
+    const vEndR = Math.min(origSeq.length, pR_right + 11);
+    
+    visualizations.push({
+      title: `${pF.name} & ${pR.name}`,
+      primerF: pF.name,
+      primerR: pR.name,
+      templateF: origSeq.substring(vStartF, vEndF),
+      templateR: origSeq.substring(vStartR, vEndR),
+      offsetF: pF_left - vStartF,
+      offsetR: pR_left - vStartR,
+      prefixF: pF.type === 'mutation' || vStartF > 0 ? '... ' : '    ',
+      suffixF: pF.type === 'mutation' || vEndF < origSeq.length ? ' ...' : '    ',
+      prefixR: pR.type === 'mutation' || vStartR > 0 ? '... ' : '    ',
+      suffixR: pR.type === 'mutation' || vEndR < origSeq.length ? ' ...' : '    ',
+    });
+  }
+  return visualizations;
 }
 
 export const reverseComplement = (seq: string) => {
@@ -194,41 +241,6 @@ export interface PrimerDesignConfig {
   spacer: string;
 }
 
-export function computeVisualizations(primers: Primer[], origSeq: string): BindingVisualization[] {
-  const visualizations: BindingVisualization[] = [];
-  const fwdPrimers = primers.filter(p => p.direction === 'F').sort((a, b) => (a.templateOffset || 0) - (b.templateOffset || 0));
-  const revPrimers = primers.filter(p => p.direction === 'R').sort((a, b) => (a.templateOffset || 0) - (b.templateOffset || 0));
-  
-  for (let j = 0; j < Math.max(fwdPrimers.length, revPrimers.length); j++) {
-    const pF = fwdPrimers[j] || fwdPrimers[0];
-    const pR = revPrimers[j] || revPrimers[0];
-    
-    if (!pF || !pR) continue;
-
-    const pF_offset = pF.templateOffset ?? 0;
-    const pF_bindLen = (pF.bindingEnd ?? pF.sequence.length) - (pF.bindingStart ?? 0);
-    const pR_offset = pR.templateOffset ?? 0;
-    const pR_bindLen = (pR.bindingEnd ?? pR.sequence.length) - (pR.bindingStart ?? 0);
-
-    const vStartF = Math.max(0, pF_offset - 10);
-    const vEndF = Math.min(origSeq.length, pF_offset + pF_bindLen + 20);
-    
-    const vStartR = Math.max(0, pR_offset - 20);
-    const vEndR = Math.min(origSeq.length, pR_offset + pR_bindLen + 10);
-    
-    visualizations.push({
-      title: `${pF.name} & ${pR.name}`,
-      primerF: pF.name,
-      primerR: pR.name,
-      templateF: origSeq.substring(vStartF, vEndF),
-      templateR: origSeq.substring(vStartR, vEndR),
-      offsetF: pF_offset - vStartF,
-      offsetR: pR_offset - vStartR
-    });
-  }
-  return visualizations;
-}
-
 export function designPrimers(
   fragments: SplitSetFragment[],
   originalGenome: string,
@@ -336,7 +348,7 @@ export function designPrimers(
         direction: 'F',
         templateSeq: fTargetForTm,
         typeIisSpan: [vecLeft13.length, vecLeft13.length + rsSpacer.length],
-        templateOffset: 0
+        templateAnchor5: 0
       }
     ];
 
@@ -396,7 +408,7 @@ export function designPrimers(
         bindingEnd: mutSeqForPrimer.length,
         direction: 'F',
         templateSeq: mutTargetFForTm,
-        templateOffset: start
+        templateAnchor5: start
       });
 
       const rMutSeq = reverseComplement(mutSeqForPrimer);
@@ -411,7 +423,7 @@ export function designPrimers(
         bindingEnd: rMutSeq.length,
         direction: 'R',
         templateSeq: rMutTargetForTm,
-        templateOffset: start
+        templateAnchor5: end - 1
       });
     });
 
@@ -425,7 +437,7 @@ export function designPrimers(
       direction: 'R',
       templateSeq: rTargetForTm,
       typeIisSpan: [vecRight13.length, vecRight13.length + rsSpacer.length],
-      templateOffset: mutSeq.length - rBindLen
+      templateAnchor5: mutSeq.length - 1
     });
 
     // Create visualizations
