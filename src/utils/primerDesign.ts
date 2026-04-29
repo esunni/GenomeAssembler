@@ -90,10 +90,10 @@ export function computeVisualizations(primers: Primer[], origSeq: string): Bindi
       templateR: origSeq.substring(vStartR, vEndR),
       offsetF: pF_left - vStartF,
       offsetR: pR_left - vStartR,
-      prefixF: pF.type === 'mutation' || vStartF > 0 ? '... ' : '    ',
-      suffixF: pF.type === 'mutation' || vEndF < origSeq.length ? ' ...' : '    ',
-      prefixR: pR.type === 'mutation' || vStartR > 0 ? '... ' : '    ',
-      suffixR: pR.type === 'mutation' || vEndR < origSeq.length ? ' ...' : '    ',
+      prefixF: pF.type === 'mutation' ? '... ' : '    ',
+      suffixF: ' ...',
+      prefixR: '... ',
+      suffixR: pR.type === 'mutation' ? ' ...' : '    ',
     });
   }
   return visualizations;

@@ -121,7 +121,7 @@ function VisualizerFrame({ primerF, primerR, vis }: { primerF: Primer, primerR: 
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ color: '#8430bf', fontWeight: 600 }}>{primerF.name}</div>
         <div>
-          <span style={{ color: '#94a3b8' }}>5' </span>
+          <span style={{ color: '#94a3b8' }}>5' {vis.prefixF.trim() ? '... ' : ''}</span>
           <span style={{ visibility: 'hidden' }}>{fPrimerPad}</span>
           <span style={{ color: '#8430bf' }}>{fOverhang1}</span>
           <span style={{ color: '#ea580c', fontWeight: 600 }}>{fTypeIis}</span>
@@ -130,14 +130,16 @@ function VisualizerFrame({ primerF, primerR, vis }: { primerF: Primer, primerR: 
           <span style={{ color: '#94a3b8' }}> 3'</span>
         </div>
         <div>
-          <span style={{ visibility: 'hidden' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>5' {vis.prefixF.trim() ? '... ' : ''}</span>
           <span style={{ visibility: 'hidden' }}>{fPrimerPad}{fOverhang1}{fTypeIis}{fOverhang2}</span>
           <span style={{ color: '#cbd5e1' }}>{fPipes}</span>
         </div>
         <div>
           <span style={{ color: '#94a3b8' }}>5' </span>
+          <span style={{ color: '#94a3b8' }}>{vis.prefixF.replace(/ /g, '\u00A0')}</span>
           <span style={{ visibility: 'hidden' }}>{fTemplatePad}</span>
           <span style={{ color: '#4f4558' }}>{vis.templateF}</span>
+          <span style={{ color: '#94a3b8' }}>{vis.suffixF.replace(/ /g, '\u00A0')}</span>
           <span style={{ color: '#94a3b8' }}> 3'</span>
         </div>
       </div>
@@ -147,17 +149,19 @@ function VisualizerFrame({ primerF, primerR, vis }: { primerF: Primer, primerR: 
         <div style={{ color: '#059669', fontWeight: 600 }}>{primerR.name}</div>
         <div>
           <span style={{ color: '#94a3b8' }}>5' </span>
+          <span style={{ color: '#94a3b8' }}>{vis.prefixR.replace(/ /g, '\u00A0')}</span>
           <span style={{ visibility: 'hidden' }}>{rTemplatePad}</span>
           <span style={{ color: '#4f4558' }}>{vis.templateR}</span>
+          <span style={{ color: '#94a3b8' }}>{vis.suffixR.replace(/ /g, '\u00A0')}</span>
           <span style={{ color: '#94a3b8' }}> 3'</span>
         </div>
         <div>
-          <span style={{ visibility: 'hidden' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>5' {vis.prefixR.trim() ? '... ' : ''}</span>
           <span style={{ visibility: 'hidden' }}>{rPrimerPad}</span>
           <span style={{ color: '#cbd5e1' }}>{revStr(rPipes)}</span>
         </div>
         <div>
-          <span style={{ visibility: 'hidden' }}>5' </span>
+          <span style={{ visibility: 'hidden' }}>5' {vis.prefixR.trim() ? '... ' : ''}</span>
           <span style={{ visibility: 'hidden' }}>{rPrimerPad}</span>
           {rBindElements}
           <span style={{ color: '#10b981' }}>{revStr(rOverhang2)}</span>
