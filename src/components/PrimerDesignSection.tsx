@@ -281,16 +281,59 @@ export function PrimerDesignSection({ uploadedGenome, isLinear, siteAnalyses, in
       const primers = [...frag.primers];
       const p = primers[primerIndex];
       
-      let bStart = p.typeIisSpan ? p.typeIisSpan[1] : 0;
+      const oldSeq = p.sequence;
+      const lengthDiff = newSeq.length - oldSeq.length;
+
+      let prefixMatch = 0;
+      while(prefixMatch < oldSeq.length && prefixMatch < newSeq.length && oldSeq[prefixMatch] === newSeq[prefixMatch]) prefixMatch++;
+
+      let newTypeIisSpan = p.typeIisSpan;
+      let bStart = p.bindingStart ?? 0;
+      let shift5 = 0;
+
+      if (lengthDiff !== 0) {
+        if (prefixMatch < bStart) {
+          bStart += lengthDiff;
+          if (newTypeIisSpan) {
+            let [ts0, ts1] = newTypeIisSpan;
+            if (prefixMatch < ts0) {
+              ts0 += lengthDiff;
+              ts1 += lengthDiff;
+            } else if (prefixMatch < ts1) {
+              ts1 += lengthDiff;
+            }
+            newTypeIisSpan = [Math.max(0, ts0), Math.max(0, ts1)];
+          }
+        } else if (prefixMatch === bStart) {
+          shift5 = lengthDiff;
+        }
+      }
+
+      let newAnchor5 = p.templateAnchor5;
+      if (newAnchor5 !== undefined && shift5 !== 0) {
+        if (p.direction === 'F') {
+          newAnchor5 -= shift5;
+        } else {
+          newAnchor5 += shift5;
+        }
+      }
+
       let bEnd = newSeq.length;
       const newBindLen = bEnd - bStart;
 
       let targetSeq = '';
-      if (p.templateAnchor5 !== undefined) {
+      if (newAnchor5 !== undefined) {
         if (p.direction === 'F') {
-          targetSeq = frag.originalSequence.substring(p.templateAnchor5, p.templateAnchor5 + newBindLen + 20);
+          let seq = '';
+          if (newAnchor5 < 0) seq += 'N'.repeat(-newAnchor5);
+          seq += frag.originalSequence.substring(Math.max(0, newAnchor5), newAnchor5 + newBindLen + 20);
+          targetSeq = seq;
         } else {
-          targetSeq = reverseComplement(frag.originalSequence.substring(Math.max(0, p.templateAnchor5 - newBindLen - 20 + 1), p.templateAnchor5 + 1));
+          const leftBound = newAnchor5 - newBindLen - 20 + 1;
+          let seq = frag.originalSequence.substring(Math.max(0, leftBound), newAnchor5 + 1);
+          let rc = reverseComplement(seq);
+          if (leftBound < 0) rc += 'N'.repeat(-leftBound);
+          targetSeq = rc;
         }
       }
 
@@ -299,6 +342,8 @@ export function PrimerDesignSection({ uploadedGenome, isLinear, siteAnalyses, in
         sequence: newSeq,
         bindingStart: bStart,
         bindingEnd: bEnd,
+        typeIisSpan: newTypeIisSpan,
+        templateAnchor5: newAnchor5,
         templateSeq: targetSeq || p.templateSeq,
         tm: calculateTm(newSeq, bStart, bEnd, targetSeq || p.templateSeq) 
       };
@@ -578,7 +623,27 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                             const vPrimers = [...newRes.vectorPrimers];
                             const oldP = vPrimers[idx];
                             
-                            let bStart = oldP.typeIisSpan ? oldP.typeIisSpan[1] : 0;
+                            const lengthDiff = newSeq.length - oldP.sequence.length;
+                            let prefixMatch = 0;
+                            while(prefixMatch < oldP.sequence.length && prefixMatch < newSeq.length && oldP.sequence[prefixMatch] === newSeq[prefixMatch]) prefixMatch++;
+
+                            let bStart = oldP.bindingStart ?? 0;
+                            let newTypeIisSpan = oldP.typeIisSpan;
+
+                            if (lengthDiff !== 0 && prefixMatch < bStart) {
+                              bStart += lengthDiff;
+                              if (newTypeIisSpan) {
+                                let [ts0, ts1] = newTypeIisSpan;
+                                if (prefixMatch < ts0) {
+                                  ts0 += lengthDiff;
+                                  ts1 += lengthDiff;
+                                } else if (prefixMatch < ts1) {
+                                  ts1 += lengthDiff;
+                                }
+                                newTypeIisSpan = [Math.max(0, ts0), Math.max(0, ts1)];
+                              }
+                            }
+
                             let bEnd = newSeq.length;
 
                             vPrimers[idx] = { 
@@ -586,6 +651,7 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                               sequence: newSeq.toUpperCase(), 
                               bindingStart: bStart,
                               bindingEnd: bEnd,
+                              typeIisSpan: newTypeIisSpan,
                               tm: calculateTm(newSeq, bStart, bEnd, oldP.templateSeq) 
                             };
                             newRes.vectorPrimers = vPrimers;
