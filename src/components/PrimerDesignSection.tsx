@@ -304,8 +304,16 @@ export function PrimerDesignSection({ uploadedGenome, isLinear, siteAnalyses, in
             }
             newTypeIisSpan = [Math.max(0, ts0), Math.max(0, ts1)];
           }
-        } else if (prefixMatch === bStart) {
-          shift5 = lengthDiff;
+        } else {
+          // Edit is within the binding region
+          const distTo5 = prefixMatch - bStart;
+          const distTo3 = oldSeq.length - prefixMatch;
+          
+          // If the edit is closer to the 5' end of the binding region,
+          // assume we are extending/modifying the 5' side (so 3' stays anchored, 5' anchor shifts).
+          if (distTo5 < distTo3) {
+            shift5 = lengthDiff;
+          }
         }
       }
 
@@ -629,18 +637,36 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
 
                             let bStart = oldP.bindingStart ?? 0;
                             let newTypeIisSpan = oldP.typeIisSpan;
+                            let shift5 = 0;
 
-                            if (lengthDiff !== 0 && prefixMatch < bStart) {
-                              bStart += lengthDiff;
-                              if (newTypeIisSpan) {
-                                let [ts0, ts1] = newTypeIisSpan;
-                                if (prefixMatch < ts0) {
-                                  ts0 += lengthDiff;
-                                  ts1 += lengthDiff;
-                                } else if (prefixMatch < ts1) {
-                                  ts1 += lengthDiff;
+                            if (lengthDiff !== 0) {
+                              if (prefixMatch < bStart) {
+                                bStart += lengthDiff;
+                                if (newTypeIisSpan) {
+                                  let [ts0, ts1] = newTypeIisSpan;
+                                  if (prefixMatch < ts0) {
+                                    ts0 += lengthDiff;
+                                    ts1 += lengthDiff;
+                                  } else if (prefixMatch < ts1) {
+                                    ts1 += lengthDiff;
+                                  }
+                                  newTypeIisSpan = [Math.max(0, ts0), Math.max(0, ts1)];
                                 }
-                                newTypeIisSpan = [Math.max(0, ts0), Math.max(0, ts1)];
+                              } else {
+                                const distTo5 = prefixMatch - bStart;
+                                const distTo3 = oldP.sequence.length - prefixMatch;
+                                if (distTo5 < distTo3) {
+                                  shift5 = lengthDiff;
+                                }
+                              }
+                            }
+                            
+                            let newAnchor5 = oldP.templateAnchor5;
+                            if (newAnchor5 !== undefined && shift5 !== 0) {
+                              if (oldP.direction === 'F') {
+                                newAnchor5 -= shift5;
+                              } else {
+                                newAnchor5 += shift5;
                               }
                             }
 
@@ -652,6 +678,7 @@ TGTATTGATTCACTTGAAGTACGAAAAAAACCGGGAGGACATTGGATTATTCGGGATCTGATGGGATTAGATTTGGTGG.
                               bindingStart: bStart,
                               bindingEnd: bEnd,
                               typeIisSpan: newTypeIisSpan,
+                              templateAnchor5: newAnchor5,
                               tm: calculateTm(newSeq, bStart, bEnd, oldP.templateSeq) 
                             };
                             newRes.vectorPrimers = vPrimers;
