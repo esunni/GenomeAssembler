@@ -223,6 +223,7 @@ export function DesignPage() {
             uploadedGenome={uploadedGenome}
             isLinear={isLinear}
             siteAnalyses={siteAnalyses}
+            initialEnzymeSite={selectedEnzyme.recognitionSite}
           />
         </>
       )}

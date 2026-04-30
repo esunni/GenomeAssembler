@@ -7,6 +7,7 @@ interface PrimerDesignSectionProps {
   uploadedGenome: ParsedCircularFasta | null;
   isLinear: boolean;
   siteAnalyses: SiteAnalysis[];
+  initialEnzymeSite?: string;
 }
 
 const revStr = (str: string) => Array.from(str).reverse().join('');
@@ -69,10 +70,22 @@ function VisualizerFrame({ primerF, primerR, vis }: { primerF: Primer, primerR: 
   const rOverhang2 = primerR.sequence.substring(rTypeIisSpan[1], primerR.bindingStart || 0);
   const rBind = primerR.sequence.substring(primerR.bindingStart || 0, primerR.bindingEnd || primerR.sequence.length);
 
-  const fTarget = vis.templateF.substring(vis.offsetF);
+  const getTarget = (template: string, offset: number, len: number) => {
+    let res = '';
+    if (offset < 0) {
+      res += ' '.repeat(-offset);
+      res += template.substring(0, len + offset);
+    } else {
+      res += template.substring(offset, offset + len);
+    }
+    return res.padEnd(len, ' ');
+  };
+
+  const fTarget = getTarget(vis.templateF, vis.offsetF, fBind.length);
   const fPipes = fBind.split('').map((char, i) => char === (fTarget[i]?.toUpperCase() || char) ? '|' : ' ').join('');
   
-  const rTarget = reverseComplement(vis.templateR.substring(vis.offsetR));
+  const rTargetRaw = getTarget(vis.templateR, vis.offsetR, rBind.length);
+  const rTarget = reverseComplement(rTargetRaw);
   const rPipes = rBind.split('').map((char, i) => char === (rTarget[i]?.toUpperCase() || char) ? '|' : ' ').join('');
 
   const fBindElements = fBind.split('').map((char, i) => (
@@ -178,14 +191,18 @@ function VisualizerFrame({ primerF, primerR, vis }: { primerF: Primer, primerR: 
   );
 }
 
-export function PrimerDesignSection({ uploadedGenome, isLinear, siteAnalyses }: PrimerDesignSectionProps) {
+export function PrimerDesignSection({ uploadedGenome, isLinear, siteAnalyses, initialEnzymeSite = 'GGTCTC' }: PrimerDesignSectionProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [splitsetText, setSplitsetText] = useState('');
   const [vectorName, setVectorName] = useState('Vector');
   const [vectorSeq, setVectorSeq] = useState('');
-  const [restrictionSite, setRestrictionSite] = useState('GGTCTC');
+  const [restrictionSite, setRestrictionSite] = useState(initialEnzymeSite);
   const [spacer, setSpacer] = useState('A');
   const [results, setResults] = useState<{ vectorPrimers: Primer[], fragmentAssemblies: AssemblyFragment[] } | null>(null);
+
+  useEffect(() => {
+    setRestrictionSite(initialEnzymeSite);
+  }, [initialEnzymeSite]);
   
   const [activeFragIndex, setActiveFragIndex] = useState(0);
   const [activeVisIndex, setActiveVisIndex] = useState(0);
