@@ -22,6 +22,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
   const [promoterFirst, setPromoterFirst] = useState(false);
   const [orfConservation, setOrfConservation] = useState(false);
   const [cutAtSilentMutations, setCutAtSilentMutations] = useState(false);
+  const [showPromoterInfo, setShowPromoterInfo] = useState(false);
 
   const [searchWindows, setSearchWindows] = useState<SearchWindow[] | null>(null);
   const [showWarning, setShowWarning] = useState(false);
@@ -187,7 +188,88 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
               </div>
             </label>
             <div>
-              <span style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Promoter-first option</span>
+              <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', marginBottom: '0.25rem' }}>
+                Promoter-first option
+                <div style={{ position: 'relative', display: 'inline-block', marginLeft: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    style={{ width: '18px', height: '18px', padding: 2, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Promoter Format Info"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowPromoterInfo(!showPromoterInfo);
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                  </button>
+                  {showPromoterInfo && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      marginTop: '8px',
+                      width: '340px',
+                      padding: '16px',
+                      backgroundColor: '#fff',
+                      border: '1px solid #e0d4f5',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      zIndex: 100,
+                      fontSize: '0.85rem',
+                      color: '#333',
+                      textAlign: 'left',
+                      cursor: 'default',
+                      fontWeight: 'normal'
+                    }}>
+                      <button
+                        type="button"
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#6c757d'
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setShowPromoterInfo(false);
+                        }}
+                      >
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                      <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem', color: '#111' }}>Promoter File Format</h4>
+                      <p style={{ margin: '0 0 8px 0' }}><strong>Extensions:</strong> .txt, .csv, .tsv</p>
+                      <p style={{ margin: '0 0 4px 0' }}><strong>Required Content:</strong></p>
+                      <ul style={{ margin: '0 0 12px 0', paddingLeft: '20px', color: '#555' }}>
+                        <li>Line-by-line format or comma-separated values.</li>
+                        <li>Requires promoter name and start position (or start-end range).</li>
+                      </ul>
+                      <p style={{ margin: '0 0 4px 0' }}><strong>Examples:</strong></p>
+                      <div style={{ backgroundColor: '#f5edfc', padding: '8px', borderRadius: '4px', fontFamily: 'monospace', color: '#555', fontSize: '0.8rem' }}>
+                        <div style={{ marginBottom: '4px' }}>// Format 1: Text</div>
+                        <div>T7 promoter: 154-173</div>
+                        <div style={{ margin: '8px 0 4px 0' }}>// Format 2: CSV/TSV</div>
+                        <div>Name,Start,End</div>
+                        <div>lac,405,439</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </span>
               <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>Find the range in the promoter region if possible.</p>
             </div>
           </div>

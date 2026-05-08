@@ -31,6 +31,8 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
   const [codonUsage, setCodonUsage] = useState<Map<string, CodonUsage[]>>(() => parseCodonUsage(defaultCodonUsageCsv || ''));
   const [siteAnalyses, setSiteAnalyses] = useState<SiteAnalysis[]>([]);
 
+  const [showCodonInfo, setShowCodonInfo] = useState(false);
+
   useEffect(() => {
     if (codonUsage.size > 0 && detectedSites.length > 0) {
       const analyses = analyzeEnzymeSites(detectedSites, cdsRegions, uploadedGenome.sequence, isLinear);
@@ -171,7 +173,103 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
             />
             <span className="toggle-slider"></span>
           </div>
-          Use custom host's codon usage table
+          <span style={{ display: 'flex', alignItems: 'center' }}>
+            Use custom host's codon usage table
+            <div style={{ position: 'relative', display: 'inline-block', marginLeft: '0.5rem' }}>
+              <button
+                type="button"
+                className="icon-button"
+                style={{ width: '18px', height: '18px', padding: 2, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                title="Codon Usage Table Format Info"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowCodonInfo(!showCodonInfo);
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </button>
+              {showCodonInfo && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  marginTop: '8px',
+                  width: '340px',
+                  padding: '16px',
+                  backgroundColor: '#fff',
+                  border: '1px solid #e0d4f5',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  zIndex: 100,
+                  fontSize: '0.85rem',
+                  color: '#333',
+                  textAlign: 'left',
+                  cursor: 'default',
+                  fontWeight: 'normal'
+                }}>
+                  <button
+                    type="button"
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#6c757d'
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowCodonInfo(false);
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem', color: '#111' }}>Custom Codon Usage Format</h4>
+                  <p style={{ margin: '0 0 8px 0' }}><strong>Extensions:</strong> .csv</p>
+                  <p style={{ margin: '0 0 4px 0' }}><strong>Required Columns:</strong></p>
+                  <ul style={{ margin: '0 0 12px 0', paddingLeft: '20px', color: '#555' }}>
+                    <li>Column 1: Amino acid abbreviation (e.g., Leu)</li>
+                    <li>Column 2: Codon triplet (e.g., CUG)</li>
+                    <li>Column 3: Frequency fraction (e.g., 0.52)</li>
+                  </ul>
+                  <p style={{ margin: '0 0 4px 0' }}><strong>Example:</strong></p>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', border: '1px solid #eee' }}>
+                    <thead style={{ backgroundColor: '#f5edfc', color: '#333' }}>
+                      <tr>
+                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>AA</th>
+                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>Codon</th>
+                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>Frequency</th>
+                      </tr>
+                    </thead>
+                    <tbody style={{ color: '#555' }}>
+                      <tr>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>Leu</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>CUG</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>0.52</td>
+                      </tr>
+                      <tr>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>Leu</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>CUA</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>0.04</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </span>
         </label>
       </div>
 
