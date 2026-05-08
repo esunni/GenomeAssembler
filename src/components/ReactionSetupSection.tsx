@@ -414,7 +414,8 @@ export function ReactionSetupSection({
                   <div style={{
                     position: 'absolute',
                     top: '100%',
-                    right: 0,
+                    right: '50%',
+                    transform: 'translateX(50%)',
                     marginTop: '8px',
                     width: '340px',
                     padding: '16px',

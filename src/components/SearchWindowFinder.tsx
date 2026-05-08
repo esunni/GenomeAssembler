@@ -211,7 +211,8 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                     <div style={{
                       position: 'absolute',
                       top: '100%',
-                      left: 0,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
                       marginTop: '8px',
                       width: '340px',
                       padding: '16px',
@@ -259,13 +260,25 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
                         <li>Requires promoter name and start position (or start-end range).</li>
                       </ul>
                       <p style={{ margin: '0 0 4px 0' }}><strong>Examples:</strong></p>
-                      <div style={{ backgroundColor: '#f5edfc', padding: '8px', borderRadius: '4px', fontFamily: 'monospace', color: '#555', fontSize: '0.8rem' }}>
-                        <div style={{ marginBottom: '4px' }}>// Format 1: Text</div>
-                        <div>T7 promoter: 154-173</div>
-                        <div style={{ margin: '8px 0 4px 0' }}>// Format 2: CSV/TSV</div>
-                        <div>Name,Start,End</div>
-                        <div>lac,405,439</div>
-                      </div>
+                      
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', border: '1px solid #eee' }}>
+                        <thead style={{ backgroundColor: '#f5edfc', color: '#333' }}>
+                          <tr>
+                            <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>Format</th>
+                            <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>Example Content</th>
+                          </tr>
+                        </thead>
+                        <tbody style={{ color: '#555' }}>
+                          <tr>
+                            <td style={{ border: '1px solid #eee', padding: '6px', fontWeight: 'bold' }}>Text</td>
+                            <td style={{ border: '1px solid #eee', padding: '6px', fontFamily: 'monospace' }}>T7 promoter: 154-173</td>
+                          </tr>
+                          <tr>
+                            <td style={{ border: '1px solid #eee', padding: '6px', fontWeight: 'bold' }}>CSV/TSV</td>
+                            <td style={{ border: '1px solid #eee', padding: '6px', fontFamily: 'monospace' }}>Name,Start,End<br/>lac,405,439</td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   )}
                 </div>

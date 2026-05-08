@@ -196,7 +196,8 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                 <div style={{
                   position: 'absolute',
                   top: '100%',
-                  left: 0,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
                   marginTop: '8px',
                   width: '340px',
                   padding: '16px',
