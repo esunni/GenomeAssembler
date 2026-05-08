@@ -28,6 +28,7 @@ export function ReactionSetupSection({
   const [draggedSubitem, setDraggedSubitem] = useState<{ componentId: string; index: number } | null>(null);
   const [volumeWarning, setVolumeWarning] = useState<{ isOpen: boolean; message: string } | null>(null);
   const [activeProtocolIndex, setActiveProtocolIndex] = useState(0);
+  const [showTemplateInfo, setShowTemplateInfo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeProtocol = project.echoProtocols?.[activeProtocolIndex] ?? { id: 'default', name: 'Default Protocol' };
@@ -297,7 +298,8 @@ export function ReactionSetupSection({
             {isEcho && project.echoProtocols && project.echoProtocols.length > 0 && (
               <div style={{ 
                 display: 'flex', alignItems: 'center', gap: '0.25rem', 
-                background: '#ffffff', border: '1.5px solid #e0d4f5', padding: '0.25rem', borderRadius: '2px' 
+                background: '#ffffff', border: '1.5px solid #e0d4f5', padding: '0.25rem', borderRadius: '2px',
+                position: 'relative'
               }}>
                 <button 
                   type="button" 
@@ -385,7 +387,7 @@ export function ReactionSetupSection({
                 <button
                   type="button"
                   className="icon-button"
-                  style={{ width: '24px', height: '24px', padding: 2, marginRight: '0.25rem' }}
+                  style={{ width: '24px', height: '24px', padding: 2 }}
                   title="Upload Protocols"
                   onClick={() => fileInputRef.current?.click()}
                 >
@@ -395,6 +397,90 @@ export function ReactionSetupSection({
                     <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
                 </button>
+                <button
+                  type="button"
+                  className="icon-button"
+                  style={{ width: '24px', height: '24px', padding: 2, marginRight: '0.25rem' }}
+                  title="Template Format Info"
+                  onClick={() => setShowTemplateInfo(!showTemplateInfo)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </button>
+                {showTemplateInfo && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '8px',
+                    width: '340px',
+                    padding: '16px',
+                    backgroundColor: '#fff',
+                    border: '1px solid #e0d4f5',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    zIndex: 100,
+                    fontSize: '0.85rem',
+                    color: '#333',
+                    textAlign: 'left',
+                    cursor: 'default'
+                  }}>
+                    <button
+                      type="button"
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#6c757d'
+                      }}
+                      onClick={() => setShowTemplateInfo(false)}
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem', color: '#111' }}>Upload Template Format</h4>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Extensions:</strong> .csv, .tsv, .xlsx</p>
+                    <p style={{ margin: '0 0 4px 0' }}><strong>Required Columns:</strong></p>
+                    <ul style={{ margin: '0 0 12px 0', paddingLeft: '20px', color: '#555' }}>
+                      <li>Column A: Component Name (e.g., Buffer, Enzyme)</li>
+                      <li>Columns B onwards: Protocol Names (e.g., Protocol 1). Values should be the transfer volume (nL).</li>
+                    </ul>
+                    <p style={{ margin: '0 0 4px 0' }}><strong>Example:</strong></p>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', border: '1px solid #eee' }}>
+                      <thead style={{ backgroundColor: '#f5edfc', color: '#333' }}>
+                        <tr>
+                          <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>Component</th>
+                          <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>Protocol 1</th>
+                          <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>Protocol 2</th>
+                        </tr>
+                      </thead>
+                      <tbody style={{ color: '#555' }}>
+                        <tr>
+                          <td style={{ border: '1px solid #eee', padding: '6px' }}>Buffer</td>
+                          <td style={{ border: '1px solid #eee', padding: '6px' }}>25</td>
+                          <td style={{ border: '1px solid #eee', padding: '6px' }}>30</td>
+                        </tr>
+                        <tr>
+                          <td style={{ border: '1px solid #eee', padding: '6px' }}>Enzyme</td>
+                          <td style={{ border: '1px solid #eee', padding: '6px' }}>25</td>
+                          <td style={{ border: '1px solid #eee', padding: '6px' }}>25</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
             <button
