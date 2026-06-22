@@ -4,10 +4,14 @@ import { CircularGenomeMap } from './CircularGenomeMap';
 import { SilentMutationAnalysis } from './SilentMutationAnalysis';
 import { SearchWindowFinder } from './SearchWindowFinder';
 import { PrimerDesignSection } from './PrimerDesignSection';
+import { RestrictionEnzymeAnalysis } from './RestrictionEnzymeAnalysis';
 import { ENZYMES, findCircularEnzymeSites, parseSingleCircularFasta, type ParsedCircularFasta } from '../utils/designTools';
 import { CdsRegion, SiteAnalysis } from '../utils/mutationTools';
 
+type DesignTab = 'fragment' | 'restriction';
+
 export function DesignPage() {
+  const [activeTab, setActiveTab] = useState<DesignTab>('fragment');
   const [selectedEnzymeId, setSelectedEnzymeId] = useState(ENZYMES[0]?.id ?? '');
   const [uploadedGenome, setUploadedGenome] = useState<ParsedCircularFasta | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string>('');
@@ -75,14 +79,40 @@ export function DesignPage() {
       <div className="page-header design-header">
         <div>
           <p className="page-eyebrow">Design</p>
-          <h2>Fragment Design</h2>
+          <h2>{activeTab === 'restriction' ? 'Restriction Site Analyzer' : 'Fragment Design'}</h2>
           <p className="page-copy">
-            Upload a circular genome sequence and design optimal fragmentation strategies. Plan Type IIS recognition site placements to create
-            assembly-ready fragments that can be experimentally validated and assembled into a complete genome.
+            {activeTab === 'restriction'
+              ? 'Upload a sequence and locate restriction sites for one or more enzymes. Shift+click sites on the map to plan how they cut the molecule, review fragment positions and lengths, and download the cut sequences as FASTA.'
+              : 'Upload a circular genome sequence and design optimal fragmentation strategies. Plan Type IIS recognition site placements to create assembly-ready fragments that can be experimentally validated and assembled into a complete genome.'}
           </p>
         </div>
       </div>
 
+      <div className="design-tabs" role="tablist" aria-label="Design tools">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'fragment'}
+          className={`design-tab${activeTab === 'fragment' ? ' is-active' : ''}`}
+          onClick={() => setActiveTab('fragment')}
+        >
+          Fragment Design
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'restriction'}
+          className={`design-tab${activeTab === 'restriction' ? ' is-active' : ''}`}
+          onClick={() => setActiveTab('restriction')}
+        >
+          Restriction Sites
+        </button>
+      </div>
+
+      {activeTab === 'restriction' ? (
+        <RestrictionEnzymeAnalysis />
+      ) : (
+      <>
       <div className="design-controls">
         <div style={{ gridColumn: '1 / -1', marginBottom: '0.5rem' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>
@@ -219,13 +249,15 @@ export function DesignPage() {
             isLinear={isLinear}
           />
           
-          <PrimerDesignSection 
+          <PrimerDesignSection
             uploadedGenome={uploadedGenome}
             isLinear={isLinear}
             siteAnalyses={siteAnalyses}
             initialEnzymeSite={selectedEnzyme.recognitionSite}
           />
         </>
+      )}
+      </>
       )}
     </section>
   );
