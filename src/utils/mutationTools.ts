@@ -134,6 +134,21 @@ function getAminoAcid(codon: string): string {
   return GENETIC_CODE[codon.toUpperCase()] || '?';
 }
 
+const COMPLEMENT_MAP: Record<string, string> = {
+  A: 'T', T: 'A', C: 'G', G: 'C',
+  R: 'Y', Y: 'R', S: 'S', W: 'W', K: 'M', M: 'K',
+  B: 'V', V: 'B', D: 'H', H: 'D', N: 'N',
+};
+
+export function reverseComplement(sequence: string): string {
+  return sequence
+    .toUpperCase()
+    .split('')
+    .reverse()
+    .map((base) => COMPLEMENT_MAP[base] ?? 'N')
+    .join('');
+}
+
 export function analyzeEnzymeSites(
   sites: EnzymeSite[],
   cdsRegions: CdsRegion[],
@@ -161,27 +176,54 @@ export function analyzeEnzymeSites(
     if (overlappingCds) {
       analysis.cdsId = overlappingCds.id;
       analysis.cdsStrand = overlappingCds.strand;
-      
-      let frameStart = overlappingCds.start;
-      let offset = (siteStart - frameStart) % 3;
-      if (offset < 0) offset += 3;
-      
-      let firstCodonStart = siteStart - offset;
-      
-      const startCodonIndex = firstCodonStart - 6;
-      const endCodonIndex = firstCodonStart + Math.ceil(site.matchSequence.length / 3) * 3 + 6;
-      
-      for (let pos = startCodonIndex; pos < endCodonIndex; pos += 3) {
-        if (pos >= 1 && pos + 2 <= genomeSequence.length) {
-          const codonSeq = genomeSequence.substring(pos - 1, pos + 2);
-          const isSite = (pos + 2 >= siteStart && pos <= siteEnd);
-          
-          analysis.contextCodons.push({
-            codon: codonSeq,
-            aminoAcid: getAminoAcid(codonSeq),
-            isSite,
-            globalStart: pos
-          });
+
+      if (overlappingCds.strand === '-') {
+        // - strand CDS: frame anchored at CDS.end; codons read 5'→3' on the reverse strand,
+        // i.e., walk from higher forward positions down by 3 and reverse-complement each triplet.
+        const cdsEnd = overlappingCds.end;
+        const upOffset = (((cdsEnd - siteEnd) % 3) + 3) % 3;
+        const firstCodonLastForward = siteEnd + upOffset; // codon containing siteEnd
+        const numCodons = Math.ceil(site.matchSequence.length / 3) + 4;
+        let lastForward = firstCodonLastForward + 6; // 2 codons of upstream (gene direction)
+
+        for (let i = 0; i < numCodons; i += 1) {
+          const codonStart = lastForward - 2;
+          if (codonStart >= 1 && lastForward <= genomeSequence.length) {
+            const forwardTriplet = genomeSequence.substring(codonStart - 1, lastForward);
+            const codonSeq = reverseComplement(forwardTriplet);
+            const isSite = (lastForward >= siteStart && codonStart <= siteEnd);
+
+            analysis.contextCodons.push({
+              codon: codonSeq,
+              aminoAcid: getAminoAcid(codonSeq),
+              isSite,
+              globalStart: codonStart,
+            });
+          }
+          lastForward -= 3;
+        }
+      } else {
+        // + strand CDS
+        const frameStart = overlappingCds.start;
+        let offset = (siteStart - frameStart) % 3;
+        if (offset < 0) offset += 3;
+
+        const firstCodonStart = siteStart - offset;
+        const startCodonIndex = firstCodonStart - 6;
+        const endCodonIndex = firstCodonStart + Math.ceil(site.matchSequence.length / 3) * 3 + 6;
+
+        for (let pos = startCodonIndex; pos < endCodonIndex; pos += 3) {
+          if (pos >= 1 && pos + 2 <= genomeSequence.length) {
+            const codonSeq = genomeSequence.substring(pos - 1, pos + 2);
+            const isSite = (pos + 2 >= siteStart && pos <= siteEnd);
+
+            analysis.contextCodons.push({
+              codon: codonSeq,
+              aminoAcid: getAminoAcid(codonSeq),
+              isSite,
+              globalStart: pos,
+            });
+          }
         }
       }
     } else {
@@ -244,10 +286,13 @@ export function recommendSilentMutations(
     return ''; // Intergenic: no automatic suggestion
   }
 
-  // Build the full sequence of the context window
+  // Build the full sequence of the context window (in gene direction; for - strand CDS this is the reverse complement of the forward strand window).
   const origWindow = analysis.contextCodons.map(c => c.codon).join('');
-  const siteCodons = analysis.contextCodons.filter(c => c.isSite);
-  
+  const isReverseStrand = analysis.cdsStrand === '-';
+  const targetInWindow = isReverseStrand
+    ? reverseComplement(analysis.matchSequence)
+    : analysis.matchSequence;
+
   for (let i = 0; i < analysis.contextCodons.length; i++) {
     const codonCtx = analysis.contextCodons[i];
     if (!codonCtx.isSite) continue;
@@ -269,21 +314,17 @@ export function recommendSilentMutations(
           const testWindowCodons = [...analysis.contextCodons];
           testWindowCodons[i] = { ...codonCtx, codon: altCodon.codon };
           const testWindow = testWindowCodons.map(c => c.codon).join('');
-          
-          let broken = false;
-          if (!testWindow.toUpperCase().includes(analysis.matchSequence.toUpperCase())) {
-            broken = true;
-          }
 
-          if (broken) {
+          if (!testWindow.toUpperCase().includes(targetInWindow.toUpperCase())) {
             // Find where the restriction site was in origWindow
-            let siteIndexInWindow = origWindow.toUpperCase().indexOf(analysis.matchSequence.toUpperCase());
-            
+            const siteIndexInWindow = origWindow.toUpperCase().indexOf(targetInWindow.toUpperCase());
+
             if (siteIndexInWindow !== -1) {
-              const newSiteSequence = testWindow.substring(siteIndexInWindow, siteIndexInWindow + analysis.matchSequence.length);
-              return newSiteSequence;
+              const newSiteSequence = testWindow.substring(siteIndexInWindow, siteIndexInWindow + targetInWindow.length);
+              // For - strand CDS, convert gene-direction replacement back to forward strand for download.
+              return isReverseStrand ? reverseComplement(newSiteSequence) : newSiteSequence;
             }
-            return altCodon.codon; // fallback
+            return isReverseStrand ? reverseComplement(altCodon.codon) : altCodon.codon; // fallback
           }
         }
       }

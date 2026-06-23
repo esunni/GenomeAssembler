@@ -1,12 +1,13 @@
 import { ChangeEvent, DragEvent, useState, useEffect } from 'react';
 import { ParsedCircularFasta, EnzymeSite } from '../utils/designTools';
 import { defaultCodonUsageCsv } from '../utils/defaultCodonUsage';
-import { 
-  parsePhastestDetails, 
-  parseCodonUsage, 
-  analyzeEnzymeSites, 
-  recommendSilentMutations, 
+import {
+  parsePhastestDetails,
+  parseCodonUsage,
+  analyzeEnzymeSites,
+  recommendSilentMutations,
   applyMutations,
+  reverseComplement,
   SiteAnalysis,
   CdsRegion,
   CodonUsage
@@ -406,8 +407,12 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                       {site.contextCodons.length > 0 ? (
                         (() => {
                           const joinedCodons = site.contextCodons.map(c => c.codon).join('');
-                          let matchIdx = joinedCodons.toUpperCase().indexOf(site.matchSequence.toUpperCase());
-                          const matchLen = site.matchSequence.length;
+                          const isReverseCds = site.cdsStrand === '-' && site.inCds;
+                          const motifInWindow = isReverseCds
+                            ? reverseComplement(site.matchSequence)
+                            : site.matchSequence;
+                          let matchIdx = joinedCodons.toUpperCase().indexOf(motifInWindow.toUpperCase());
+                          const matchLen = motifInWindow.length;
 
                           let globalCharIdx = 0;
 
