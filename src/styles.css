@@ -1700,6 +1700,17 @@ button.ghost:hover {
   font-weight: 700;
 }
 
+.syn-aa-line {
+  user-select: none;
+  line-height: 1.2;
+  opacity: 0.85;
+}
+
+.syn-aa-seg {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
 .syn-orf-tag {
   display: inline-block;
   margin-right: 0.3rem;

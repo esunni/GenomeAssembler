@@ -12,6 +12,7 @@ import {
 import {
   locateOrfs,
   parseProdigalCds,
+  translateCodon,
   type LocatedOrf,
   type LocationResult,
   type ProdigalOrf,
@@ -31,7 +32,7 @@ function formatRange(start: number, end: number): string {
 
 function orfShortLabel(orf: ProdigalOrf): string {
   const i = orf.id.lastIndexOf('_');
-  return i >= 0 ? orf.id.slice(i + 1) : orf.id;
+  return i >= 0 ? `ORF${orf.id.slice(i + 1)}` : orf.id;
 }
 
 function orfTitle(orf: LocatedOrf): string {
@@ -204,6 +205,25 @@ export function SynthesisCheck() {
     return map;
   }, [report, locatedOrfs]);
 
+  // Amino acid to display under each base. A codon's residue is placed under its
+  // middle base, mapped onto the (plus-strand) pasted coordinates for both
+  // strands.
+  const aaCells = useMemo(() => {
+    if (!report) return [] as ({ char: string; orfIndex: number } | null)[];
+    const cells: ({ char: string; orfIndex: number } | null)[] = new Array(report.length).fill(null);
+    locatedOrfs.forEach((orf, oi) => {
+      const codons = Math.floor(orf.sequence.length / 3);
+      for (let c = 0; c < codons; c += 1) {
+        let aa = translateCodon(orf.sequence.slice(c * 3, c * 3 + 3));
+        if (c === 0 && orf.startType) aa = 'M'; // alternative start codons read as M
+        const mid =
+          orf.strand === '+' ? orf.pastedStart + 3 * c + 1 : orf.pastedEnd - 2 - 3 * c;
+        if (mid >= 0 && mid < report.length) cells[mid] = { char: aa, orfIndex: oi };
+      }
+    });
+    return cells;
+  }, [report, locatedOrfs]);
+
   const jumpToIssue = (issue: SequenceIssue) => {
     setFocusedIssue(issue);
     if (issue.type === 'averageGc') return;
@@ -330,12 +350,52 @@ export function SynthesisCheck() {
     );
   };
 
+  const renderAaLine = (lineStart: number, lineEnd: number): ReactNode => {
+    const cols = lineEnd - lineStart;
+    const spans: ReactNode[] = [];
+    let i = 0;
+    while (i < cols) {
+      const cell = aaCells[lineStart + i];
+      const oi = cell ? cell.orfIndex : -1;
+      let j = i + 1;
+      while (j < cols) {
+        const next = aaCells[lineStart + j];
+        if ((next ? next.orfIndex : -1) !== oi) break;
+        j += 1;
+      }
+      const text = Array.from({ length: j - i }, (_, c) => aaCells[lineStart + i + c]?.char ?? ' ').join('');
+      if (oi < 0) {
+        spans.push(<span key={i}>{text}</span>);
+      } else {
+        const orf = locatedOrfs[oi];
+        spans.push(
+          <span
+            key={i}
+            className="syn-aa-seg"
+            style={{ color: orf.strand === '+' ? ORF_PLUS : ORF_MINUS }}
+            title={orfTitle(orf)}
+          >
+            {text}
+          </span>,
+        );
+      }
+      i = j;
+    }
+    return (
+      <div className="syn-line syn-aa-line">
+        <span className="syn-gutter" />
+        <span className="syn-line-seq">{spans}</span>
+      </div>
+    );
+  };
+
   const renderFullView = (seq: string): ReactNode => {
     const groups: ReactNode[] = [];
     for (let lineStart = 0; lineStart < seq.length; lineStart += LINE_LENGTH) {
       const lineEnd = Math.min(lineStart + LINE_LENGTH, seq.length);
 
       let trackRow: ReactNode = null;
+      let aaRow: ReactNode = null;
       if (orfsActive) {
         let hasOrf = false;
         for (let p = lineStart; p < lineEnd; p += 1) {
@@ -344,7 +404,10 @@ export function SynthesisCheck() {
             break;
           }
         }
-        if (hasOrf) trackRow = renderTrackLine(lineStart, lineEnd);
+        if (hasOrf) {
+          trackRow = renderTrackLine(lineStart, lineEnd);
+          aaRow = renderAaLine(lineStart, lineEnd);
+        }
       }
 
       const segments: ReactNode[] = [];
@@ -371,6 +434,7 @@ export function SynthesisCheck() {
             <span className="syn-gutter">{(lineStart + 1).toLocaleString()}</span>
             <span className="syn-line-seq">{segments}</span>
           </div>
+          {aaRow}
         </div>,
       );
     }

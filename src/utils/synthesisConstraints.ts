@@ -38,14 +38,14 @@ export const CONSTRAINTS: Record<ConstraintType, ConstraintMeta> = {
     type: 'invertedRepeat',
     label: 'Inverted Repeat (Hairpin)',
     color: '#14b8a6',
-    range: 'Stem ≤ 100 bp',
+    range: 'Stem < 16 bp',
     priority: 5,
   },
   longRepeat: {
     type: 'longRepeat',
     label: 'Long Repeat',
     color: '#8b5cf6',
-    range: '≥10 bp unit, ≤ 200 bp total',
+    range: '≥10 bp unit, ≤ 200 bp (tandem or dispersed)',
     priority: 4,
   },
   shortTandemRepeat: {
@@ -91,11 +91,20 @@ export const CONSTRAINT_ORDER: ConstraintType[] = [
 const STR_UNIT_MIN = 3;
 const STR_UNIT_MAX = 9;
 const STR_MAX_SPAN = 100;
-const LONG_UNIT_MIN = 10;
 const LONG_UNIT_MAX = 100;
 const LONG_MAX_SPAN = 200;
-const INVERTED_MAX_ARM = 100;
-const INVERTED_MAX_LOOP = 50;
+// Dispersed (non-adjacent) repeats: a substring (≥10 bp) that recurs elsewhere.
+// A repeat family is flagged when its total repeated content exceeds 200 bp.
+const DISPERSED_SEED = 12;
+const DISPERSED_MIN_UNIT = 10;
+const DISPERSED_MAX_TOTAL = 200;
+const DISPERSED_MAX_OCC = 40;
+// Inverted repeats (hairpins). The bar is intentionally low so realistic
+// hairpins are surfaced: a paired stem of ≥16 bp (allowing a few mismatches and
+// a short loop) is flagged.
+const INVERTED_MIN_STEM = 16;
+const INVERTED_MAX_LOOP = 30;
+const INVERTED_MAX_MISMATCH = 3;
 const LOCAL_GC_WINDOW = 50;
 const LOCAL_GC_MIN = 0.1;
 const LOCAL_GC_MAX = 0.9;
@@ -319,13 +328,14 @@ export function findLocalGcExtremes(sequence: string): SequenceIssue[] {
 }
 
 /**
- * Detects inverted repeats (hairpins) whose stem (arm) exceeds 100 bp. For each
- * possible loop position the arms are extended outward while bases pair by
- * Watson–Crick complementarity. Overlapping hairpins are merged.
+ * Detects inverted repeats (hairpins). For each loop position the two arms are
+ * extended outward while bases pair by Watson–Crick complementarity, tolerating
+ * a few isolated mismatches (no more than one in a row). A hairpin is flagged
+ * when its paired stem reaches 16 bp. Overlapping hairpins are merged.
  */
 export function findInvertedRepeats(sequence: string): SequenceIssue[] {
   const n = sequence.length;
-  const raw: { start: number; end: number; arm: number }[] = [];
+  const raw: { start: number; end: number; matches: number; loop: number }[] = [];
 
   const pairs = (left: string, right: string) => COMPLEMENT[left] === right;
 
@@ -334,30 +344,45 @@ export function findInvertedRepeats(sequence: string): SequenceIssue[] {
       // Left arm ends just before p; right arm starts at p + loop.
       const rightStart = p + loop;
       if (rightStart >= n) break;
-      let arm = 0;
-      while (
-        p - 1 - arm >= 0 &&
-        rightStart + arm < n &&
-        pairs(sequence[p - 1 - arm], sequence[rightStart + arm])
-      ) {
-        arm += 1;
+
+      let matches = 0;
+      let mismatches = 0;
+      let consecutive = 0;
+      let lastMatch = -1;
+      let t = 0;
+      while (p - 1 - t >= 0 && rightStart + t < n) {
+        if (pairs(sequence[p - 1 - t], sequence[rightStart + t])) {
+          matches += 1;
+          consecutive = 0;
+          lastMatch = t;
+        } else {
+          mismatches += 1;
+          consecutive += 1;
+          if (consecutive > 1 || mismatches > INVERTED_MAX_MISMATCH) break;
+        }
+        t += 1;
       }
-      if (arm > INVERTED_MAX_ARM) {
-        raw.push({ start: p - arm, end: rightStart + arm, arm });
+
+      if (matches >= INVERTED_MIN_STEM && lastMatch >= 0) {
+        const arm = lastMatch + 1;
+        raw.push({ start: p - arm, end: rightStart + arm, matches, loop });
       }
     }
   }
 
   if (raw.length === 0) return [];
 
-  // Merge overlapping hairpin regions, keeping the longest stem seen.
+  // Merge overlapping hairpin regions, keeping the strongest stem seen.
   raw.sort((a, b) => a.start - b.start || a.end - b.end);
   const merged: typeof raw = [];
   for (const region of raw) {
     const last = merged[merged.length - 1];
     if (last && region.start <= last.end) {
       last.end = Math.max(last.end, region.end);
-      last.arm = Math.max(last.arm, region.arm);
+      if (region.matches > last.matches) {
+        last.matches = region.matches;
+        last.loop = region.loop;
+      }
     } else {
       merged.push({ ...region });
     }
@@ -368,8 +393,101 @@ export function findInvertedRepeats(sequence: string): SequenceIssue[] {
     start: region.start,
     end: region.end,
     length: region.end - region.start,
-    reason: `inverted repeat with ${region.arm} bp stem (max ${INVERTED_MAX_ARM} bp)`,
+    reason: `inverted repeat (hairpin): ${region.matches} bp paired stem, ${region.loop} bp loop`,
   }));
+}
+
+/** A k-mer seed is "low complexity" when it is a homopolymer/dinucleotide or a
+ *  short tandem unit — those regions are covered by the other detectors. */
+function lowComplexitySeed(seed: string): boolean {
+  if (new Set(seed).size <= 2) return true;
+  return (
+    hasPeriod(seed, 0, seed.length, 1) ||
+    hasPeriod(seed, 0, seed.length, 2) ||
+    hasPeriod(seed, 0, seed.length, 3)
+  );
+}
+
+/**
+ * Detects dispersed (non-adjacent) direct repeats: a substring of ≥10 bp that
+ * occurs at two or more separate locations. A repeat family is flagged when its
+ * total repeated content (unit length × number of copies) exceeds 200 bp. Each
+ * copy is reported so it is highlighted everywhere it appears.
+ */
+export function findDispersedRepeats(sequence: string): SequenceIssue[] {
+  const n = sequence.length;
+  const k = DISPERSED_SEED;
+  if (n < 2 * k) return [];
+
+  // Index every forward k-mer position.
+  const index = new Map<string, number[]>();
+  for (let i = 0; i + k <= n; i += 1) {
+    const key = sequence.slice(i, i + k);
+    const list = index.get(key);
+    if (list) list.push(i);
+    else index.set(key, [i]);
+  }
+
+  // Group maximal repeat occurrences by their (exact) repeated sequence.
+  const families = new Map<string, Map<number, number>>(); // unitSeq -> (start -> end)
+
+  for (const [seed, positions] of index) {
+    if (positions.length < 2 || positions.length > DISPERSED_MAX_OCC) continue;
+    if (lowComplexitySeed(seed)) continue;
+
+    for (let x = 0; x < positions.length; x += 1) {
+      for (let y = x + 1; y < positions.length; y += 1) {
+        const p = positions[x];
+        const q = positions[y];
+        if (q - p < k) continue; // overlapping seeds (tandem-like)
+
+        // Extend right (keep the two copies from overlapping).
+        let r = k;
+        while (q + r < n && sequence[p + r] === sequence[q + r] && p + r < q) r += 1;
+        // Extend left.
+        let l = 0;
+        while (p - l - 1 >= 0 && sequence[p - l - 1] === sequence[q - l - 1] && q - l - 1 >= p + r) {
+          l += 1;
+        }
+
+        const start1 = p - l;
+        const end1 = p + r;
+        const start2 = q - l;
+        const end2 = q + r;
+        const unit = end1 - start1;
+        if (unit < DISPERSED_MIN_UNIT) continue;
+        if (start2 < end1) continue; // copies must be separate
+
+        const unitSeq = sequence.slice(start1, end1);
+        let family = families.get(unitSeq);
+        if (!family) {
+          family = new Map();
+          families.set(unitSeq, family);
+        }
+        family.set(start1, end1);
+        family.set(start2, end2);
+      }
+    }
+  }
+
+  const issues: SequenceIssue[] = [];
+  for (const [unitSeq, intervals] of families) {
+    const occurrences = intervals.size;
+    const unit = unitSeq.length;
+    const total = unit * occurrences;
+    if (total <= DISPERSED_MAX_TOTAL) continue;
+    for (const [start, end] of intervals) {
+      issues.push({
+        type: 'longRepeat',
+        start,
+        end,
+        length: end - start,
+        reason: `dispersed repeat: ${unit} bp unit × ${occurrences} copies (≈${total} bp total, max 200 bp)`,
+      });
+    }
+  }
+
+  return issues;
 }
 
 /** Checks the overall GC content of the whole sequence (25–75%). */
@@ -392,6 +510,7 @@ export function analyzeSynthesis(parsed: ParsedSequence): SynthesisReport {
 
   const issues: SequenceIssue[] = [
     ...findTandemRepeats(sequence),
+    ...findDispersedRepeats(sequence),
     ...findInvertedRepeats(sequence),
     ...findLocalGcExtremes(sequence),
     ...findHomopolymers(sequence),
@@ -400,7 +519,17 @@ export function analyzeSynthesis(parsed: ParsedSequence): SynthesisReport {
   const avgGc = findAverageGcIssue(sequence, gc);
   if (avgGc) issues.push(avgGc);
 
-  issues.sort((a, b) => a.start - b.start || a.end - b.end);
+  // Drop exact duplicate regions (e.g. a tandem array also seen as dispersed).
+  const seen = new Set<string>();
+  const deduped = issues.filter((issue) => {
+    const key = `${issue.type}:${issue.start}:${issue.end}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  deduped.sort((a, b) => a.start - b.start || a.end - b.end);
+  issues.length = 0;
+  issues.push(...deduped);
 
   const countsByType = {
     shortTandemRepeat: 0,

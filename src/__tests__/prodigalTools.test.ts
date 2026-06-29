@@ -4,6 +4,7 @@ import {
   locateOrfs,
   parseProdigalCds,
   reverseComplement,
+  translateCodon,
 } from '../utils/prodigalTools';
 
 // Deterministic, non-repetitive 60 bp "genome" via a simple LCG (so 12-mers are
@@ -47,6 +48,15 @@ describe('parseProdigalCds', () => {
 
   test('throws on a file without Prodigal headers', () => {
     expect(() => parseProdigalCds('>plain\nACGTACGT')).toThrow(/No Prodigal CDS records/);
+  });
+});
+
+describe('translateCodon', () => {
+  test('translates codons, stops and unknowns', () => {
+    expect(translateCodon('ATG')).toBe('M');
+    expect(translateCodon('ggg')).toBe('G');
+    expect(translateCodon('TAA')).toBe('*');
+    expect(translateCodon('TANN')).toBe('X');
   });
 });
 

@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   analyzeSynthesis,
+  findDispersedRepeats,
   findHomopolymers,
   findInvertedRepeats,
   findLocalGcExtremes,
@@ -18,6 +19,17 @@ const revComp = (seq: string) =>
     .map((base) => COMPLEMENT[base])
     .join('');
 const repeat = (unit: string, copies: number) => unit.repeat(copies);
+
+// Deterministic non-repetitive sequence generator (LCG).
+const mkSeq = (len: number, seed: number) => {
+  let state = seed >>> 0;
+  let out = '';
+  for (let i = 0; i < len; i += 1) {
+    state = (state * 1103515245 + 12345) & 0x7fffffff;
+    out += 'ACGT'[(state >>> 16) & 3];
+  }
+  return out;
+};
 
 describe('parseSequenceInput', () => {
   test('parses a FASTA record and uppercases the sequence', () => {
@@ -112,31 +124,54 @@ describe('findLocalGcExtremes', () => {
 });
 
 describe('findInvertedRepeats', () => {
-  const arm = repeat('ACGT', 26).slice(0, 101); // 101 bp arm
-
-  test('flags a hairpin stem longer than 100 bp', () => {
-    const hairpin = arm + 'AAAA' + revComp(arm);
+  test('flags a 20 bp perfect hairpin stem', () => {
+    const arm = mkSeq(20, 4242);
+    const hairpin = arm + 'TTTT' + revComp(arm);
     const issues = findInvertedRepeats(hairpin);
     expect(issues.length).toBeGreaterThan(0);
     expect(issues[0].type).toBe('invertedRepeat');
   });
 
-  test('does not flag a stem of 100 bp', () => {
-    const shortArm = arm.slice(0, 100);
-    const hairpin = shortArm + 'AAAA' + revComp(shortArm);
+  test('still flags a hairpin with a single stem mismatch', () => {
+    const arm = mkSeq(20, 13);
+    const rc = revComp(arm).split('');
+    rc[10] = rc[10] === 'A' ? 'C' : 'A'; // one mismatch in the middle
+    const hairpin = arm + 'TTTT' + rc.join('');
+    expect(findInvertedRepeats(hairpin).length).toBeGreaterThan(0);
+  });
+
+  test('does not flag a short 12 bp stem', () => {
+    const arm = mkSeq(12, 88);
+    const hairpin = arm + 'TTTT' + revComp(arm);
     expect(findInvertedRepeats(hairpin)).toHaveLength(0);
+  });
+});
+
+describe('findDispersedRepeats', () => {
+  test('flags a dispersed repeat whose total content exceeds 200 bp', () => {
+    const unit = mkSeq(30, 555);
+    let seq = '';
+    for (let i = 0; i < 8; i += 1) {
+      seq += unit + mkSeq(10, 1000 + i); // distinct spacers between copies
+    }
+    const issues = findDispersedRepeats(seq);
+    expect(issues.length).toBeGreaterThanOrEqual(8);
+    expect(issues.every((issue) => issue.type === 'longRepeat')).toBe(true);
+    expect(issues[0].reason).toMatch(/dispersed/);
+  });
+
+  test('does not flag a small dispersed repeat (≤200 bp total)', () => {
+    const unit = mkSeq(20, 321);
+    const seq = `${unit}${mkSeq(15, 9)}${unit}${mkSeq(15, 17)}${unit}`; // 3×20 = 60 bp
+    expect(findDispersedRepeats(seq)).toHaveLength(0);
   });
 });
 
 describe('analyzeSynthesis', () => {
   test('passes a benign sequence', () => {
-    // A non-repetitive, GC-balanced 180-mer: no homopolymer, no short period,
-    // no out-of-range GC window.
-    const benign = Array.from(
-      { length: 180 },
-      (_, i) => 'ACGT'[(i * 3 + Math.floor(i / 4) + (i % 7)) % 4],
-    ).join('');
-    const report = analyzeSynthesis(parseSequenceInput(benign));
+    // A random, GC-balanced 180-mer: no homopolymer, no repeats, no hairpin,
+    // no out-of-range GC.
+    const report = analyzeSynthesis(parseSequenceInput(mkSeq(180, 2026)));
     expect(report.passed).toBe(true);
     expect(report.issues).toHaveLength(0);
   });
