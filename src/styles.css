@@ -1627,6 +1627,90 @@ button.ghost:hover {
   color: var(--text);
 }
 
+/* ORF overlay (Prodigal) */
+.synthesis-prodigal {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fbf9fe;
+}
+
+.synthesis-prodigal-head {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.synthesis-prodigal-title {
+  font-size: 0.9rem;
+}
+
+.synthesis-prodigal-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px dashed var(--line-strong);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent-700);
+  cursor: pointer;
+}
+
+.synthesis-prodigal-upload:hover {
+  border-color: var(--accent-400);
+}
+
+.synthesis-prodigal-upload input {
+  display: none;
+}
+
+.synthesis-prodigal-status {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+  font-size: 0.84rem;
+}
+
+.syn-orf-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.syn-line-group {
+  scroll-margin-top: 1rem;
+}
+
+.syn-track-line {
+  color: var(--muted);
+  user-select: none;
+  line-height: 1.2;
+}
+
+.syn-orf-track-seg {
+  font-weight: 700;
+}
+
+.syn-orf-tag {
+  display: inline-block;
+  margin-right: 0.3rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--accent-100);
+  color: var(--accent-700);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .synthesis-table-section {
   margin-top: 1.8rem;
 }
