@@ -5,10 +5,11 @@ import { SilentMutationAnalysis } from './SilentMutationAnalysis';
 import { SearchWindowFinder } from './SearchWindowFinder';
 import { PrimerDesignSection } from './PrimerDesignSection';
 import { RestrictionEnzymeAnalysis } from './RestrictionEnzymeAnalysis';
+import { SynthesisCheck } from './SynthesisCheck';
 import { ENZYMES, findCircularEnzymeSites, parseSingleCircularFasta, type ParsedCircularFasta } from '../utils/designTools';
 import { CdsRegion, SiteAnalysis } from '../utils/mutationTools';
 
-type DesignTab = 'fragment' | 'restriction';
+type DesignTab = 'fragment' | 'restriction' | 'synthesis';
 
 export function DesignPage() {
   const [activeTab, setActiveTab] = useState<DesignTab>('fragment');
@@ -79,11 +80,19 @@ export function DesignPage() {
       <div className="page-header design-header">
         <div>
           <p className="page-eyebrow">Design</p>
-          <h2>{activeTab === 'restriction' ? 'Restriction Site Analyzer' : 'Fragment Design'}</h2>
+          <h2>
+            {activeTab === 'restriction'
+              ? 'Restriction Site Analyzer'
+              : activeTab === 'synthesis'
+                ? 'Synthesis Feasibility'
+                : 'Fragment Design'}
+          </h2>
           <p className="page-copy">
             {activeTab === 'restriction'
               ? 'Upload a sequence and locate restriction sites for one or more enzymes. Shift+click sites on the map to plan how they cut the molecule, review fragment positions and lengths, and download the cut sequences as FASTA.'
-              : 'Upload a circular genome sequence and design optimal fragmentation strategies. Plan Type IIS recognition site placements to create assembly-ready fragments that can be experimentally validated and assembled into a complete genome.'}
+              : activeTab === 'synthesis'
+                ? 'Paste a sequence or upload a FASTA file to flag the regions that gene-synthesis vendors cannot reliably produce — repeats, hairpins, homopolymers and extreme GC content. Problem regions are highlighted in the full sequence with a colour-coded reason and a summary.'
+                : 'Upload a circular genome sequence and design optimal fragmentation strategies. Plan Type IIS recognition site placements to create assembly-ready fragments that can be experimentally validated and assembled into a complete genome.'}
           </p>
         </div>
       </div>
@@ -107,9 +116,20 @@ export function DesignPage() {
         >
           Restriction Sites
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'synthesis'}
+          className={`design-tab${activeTab === 'synthesis' ? ' is-active' : ''}`}
+          onClick={() => setActiveTab('synthesis')}
+        >
+          Synthesis Feasibility
+        </button>
       </div>
 
-      {activeTab === 'restriction' ? (
+      {activeTab === 'synthesis' ? (
+        <SynthesisCheck />
+      ) : activeTab === 'restriction' ? (
         <RestrictionEnzymeAnalysis />
       ) : (
       <>

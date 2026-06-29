@@ -1358,6 +1358,299 @@ input.protocol-name-input:focus {
   padding-top: 0.5rem;
 }
 
+/* ---- Synthesis Feasibility ---- */
+.synthesis-page {
+  padding-top: 0.5rem;
+}
+
+.synthesis-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.synthesis-textarea {
+  width: 100%;
+  min-height: 132px;
+  resize: vertical;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: #fbf9fe;
+  color: var(--text);
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+
+.synthesis-textarea:focus {
+  outline: none;
+  border-color: var(--accent-500);
+  box-shadow: 0 0 0 3px rgba(132, 48, 191, 0.12);
+}
+
+.synthesis-input-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.synthesis-analyze {
+  background: var(--accent-600);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 1.4rem;
+  font-weight: 600;
+}
+
+.synthesis-analyze:hover {
+  background: var(--accent-700);
+}
+
+button.ghost {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+button.ghost:hover {
+  color: var(--accent-700);
+  border-color: var(--accent-400);
+}
+
+.synthesis-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.5rem;
+}
+
+.synthesis-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  transition: border-color 140ms ease, opacity 140ms ease, box-shadow 140ms ease;
+}
+
+.synthesis-card:hover {
+  border-color: var(--accent-400);
+}
+
+.synthesis-card.has-issues {
+  border-color: #f3c6c6;
+  background: #fef6f6;
+}
+
+.synthesis-card.is-disabled {
+  opacity: 0.45;
+}
+
+.synthesis-card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.synthesis-card-label {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.86rem;
+}
+
+.synthesis-card-count {
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.synthesis-card-count.ok {
+  color: #15803d;
+  background: #e7f6ec;
+}
+
+.synthesis-card-count.bad {
+  color: #fff;
+  background: #dc2626;
+}
+
+.synthesis-card-range {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.syn-color-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.synthesis-view-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.8rem;
+}
+
+.synthesis-view-controls h3 {
+  margin: 0;
+}
+
+.synthesis-view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.synthesis-view-toggle button {
+  background: transparent;
+  border: none;
+  padding: 0.4rem 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.synthesis-view-toggle button.is-active {
+  background: var(--accent-600);
+  color: #fff;
+}
+
+.synthesis-note {
+  margin: 0.6rem 0 0;
+  color: #92400e;
+  font-size: 0.84rem;
+}
+
+.syn-sequence {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fbf9fe;
+  max-height: 460px;
+  overflow: auto;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+
+.syn-line {
+  display: flex;
+  gap: 0.9rem;
+  white-space: pre;
+}
+
+.syn-gutter {
+  flex-shrink: 0;
+  width: 5.5ch;
+  text-align: right;
+  color: var(--muted);
+  user-select: none;
+}
+
+.syn-line-seq {
+  letter-spacing: 0.08em;
+  word-break: break-all;
+}
+
+.syn-hl {
+  border-radius: 2px;
+  padding: 0.05rem 0;
+}
+
+.syn-hl.is-focused {
+  outline: 2px solid var(--accent-600);
+  outline-offset: 1px;
+}
+
+.syn-snippets {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.syn-snippet {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  background: #fff;
+}
+
+.syn-snippet.is-focused {
+  border-color: var(--accent-500);
+  box-shadow: 0 0 0 3px rgba(132, 48, 191, 0.12);
+}
+
+.syn-snippet-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.syn-snippet-pos {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.syn-snippet-seq {
+  display: block;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  word-break: break-all;
+  line-height: 1.7;
+}
+
+.syn-snippet-reason {
+  margin: 0.45rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.synthesis-table-section {
+  margin-top: 1.8rem;
+}
+
+.synthesis-table-section h3 {
+  margin: 0 0 0.8rem;
+}
+
+.synthesis-issue-row {
+  cursor: pointer;
+}
+
+.synthesis-issue-row:hover {
+  background: var(--accent-100);
+}
+
+.synthesis-issue-row.is-focused {
+  background: rgba(132, 48, 191, 0.1);
+}
+
+.synthesis-issue-reason {
+  color: var(--muted);
+}
+
 .restriction-helper-text {
   margin: 0.5rem 0 0;
   color: var(--muted);
