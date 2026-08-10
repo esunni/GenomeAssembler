@@ -15,46 +15,62 @@ export interface SearchWindow {
   reason: 'promoter' | 'intergenic' | 'unannotated' | 'max_length' | 'silent_mutation';
 }
 
+/** Strip surrounding separators/whitespace from an extracted promoter name. */
+function cleanPromoterName(raw: string): string {
+  return raw.replace(/^[\s:=\-–—]+/, '').replace(/[\s:=\-–—]+$/, '').trim();
+}
+
+/** Push a promoter, normalising start/end so `position <= end` and tagging direction. */
+function pushPromoter(promoters: Promoter[], name: string, start: number, end: number) {
+  if (start > end) {
+    promoters.push({ name, position: end, end: start, direction: 'reverse', originalStart: start, originalEnd: end });
+  } else {
+    promoters.push({ name, position: start, end, direction: 'forward', originalStart: start, originalEnd: end });
+  }
+}
+
 export function parsePromoters(content: string): Promoter[] {
   const promoters: Promoter[] = [];
   const lines = content.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
-  
+
   for (const line of lines) {
-    // Try to parse 3 columns: name, start, end separated by commas or tabs
+    // 1) Structured columns: name, start, end separated by commas or tabs.
     const cols = line.split(/,|\t/).map(c => c.trim());
     if (cols.length >= 3) {
       const name = cols[0];
       const start = parseInt(cols[1], 10);
       const end = parseInt(cols[2], 10);
       if (!isNaN(start) && !isNaN(end)) {
-        if (start > end) {
-          promoters.push({ 
-            name, 
-            position: end, 
-            end: start, 
-            direction: 'reverse',
-            originalStart: start,
-            originalEnd: end 
-          });
-        } else {
-          promoters.push({ 
-            name, 
-            position: start, 
-            end, 
-            direction: 'forward',
-            originalStart: start,
-            originalEnd: end 
-          });
-        }
+        pushPromoter(promoters, name || `Promoter ${promoters.length + 1}`, start, end);
         continue;
       }
     }
-    
-    // Fallback for older format if someone still uses it
-    const match = line.match(/Promoter Pos:\s*(\d+)/i) || line.match(/^(\d+)$/);
-    if (match) {
-      const pos = parseInt(match[1], 10);
+
+    // 2) Free-text line with a "start-end" range, e.g. "T7 promoter: 154-173"
+    //    (accepts -, .., –, —, or "to" as the separator). Take the last range on
+    //    the line so digits inside the name aren't mistaken for coordinates.
+    const rangeRegex = /(\d+)\s*(?:\.\.|-|–|—|to)\s*(\d+)/gi;
+    let rangeMatch: RegExpExecArray | null = null;
+    let m: RegExpExecArray | null;
+    while ((m = rangeRegex.exec(line)) !== null) rangeMatch = m;
+    if (rangeMatch) {
+      const name = cleanPromoterName(line.slice(0, rangeMatch.index)) || `Promoter ${promoters.length + 1}`;
+      pushPromoter(promoters, name, parseInt(rangeMatch[1], 10), parseInt(rangeMatch[2], 10));
+      continue;
+    }
+
+    // 3) Single position, with optional name: "Promoter Pos: 154", "T7 promoter: 154", or a bare "154".
+    const posLabel = line.match(/Promoter Pos:\s*(\d+)/i);
+    if (posLabel) {
+      const pos = parseInt(posLabel[1], 10);
       promoters.push({ name: `Promoter ${promoters.length + 1}`, position: pos, end: pos, direction: 'forward', originalStart: pos, originalEnd: pos });
+      continue;
+    }
+    const single = line.match(/^(.*?)[:=\s-]*\b(\d+)\s*$/);
+    if (single) {
+      const pos = parseInt(single[2], 10);
+      const name = cleanPromoterName(single[1]) || `Promoter ${promoters.length + 1}`;
+      promoters.push({ name, position: pos, end: pos, direction: 'forward', originalStart: pos, originalEnd: pos });
     }
   }
   return promoters;

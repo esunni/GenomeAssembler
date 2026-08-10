@@ -119,7 +119,7 @@ export function SearchWindowFinder({ sequenceLength, cdsRegions, siteAnalyses, i
               aria-label="Upload promoter info"
               className="design-file-input"
               type="file"
-              accept=".txt,.csv,text/plain"
+              accept=".txt,.csv,.tsv,text/plain,text/tab-separated-values"
               onChange={handleUpload}
             />
             {promoterFileName ? (

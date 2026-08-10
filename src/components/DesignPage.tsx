@@ -234,7 +234,7 @@ export function DesignPage() {
                       <tr>
                         <th>Position</th>
                         <th>Strand</th>
-                        <th>Matched motif</th>
+                        <th>Matched motif (+ strand)</th>
                       </tr>
                     </thead>
                     <tbody>

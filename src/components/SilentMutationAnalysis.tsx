@@ -393,7 +393,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                     <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
                       {site.inCds ? (
                         <span className="chip" style={{ background: 'var(--accent-600)' }}>
-                          CDS {site.cdsId}
+                          CDS {site.cdsId} {site.cdsStrand === '-' ? '(− strand)' : '(+ strand)'}
                         </span>
                       ) : cdsRegions.length === 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
