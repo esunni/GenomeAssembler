@@ -200,7 +200,8 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                   left: '50%',
                   transform: 'translateX(-50%)',
                   marginTop: '8px',
-                  width: '340px',
+                  width: '440px',
+                  maxWidth: 'calc(100vw - 32px)',
                   padding: '16px',
                   backgroundColor: '#fff',
                   border: '1px solid #e0d4f5',
@@ -249,33 +250,35 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                     <li>Column 5 — number: observed count (0 if unknown)</li>
                   </ul>
                   <p style={{ margin: '0 0 4px 0' }}><strong>Example:</strong></p>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', border: '1px solid #eee' }}>
+                  <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem', border: '1px solid #eee' }}>
                     <thead style={{ backgroundColor: '#f5edfc', color: '#333' }}>
                       <tr>
-                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>codon</th>
-                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>aminoAcid</th>
-                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>fraction</th>
-                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>frequency</th>
-                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>number</th>
+                        <th style={{ border: '1px solid #eee', padding: '5px 6px', textAlign: 'left', whiteSpace: 'nowrap' }}>codon</th>
+                        <th style={{ border: '1px solid #eee', padding: '5px 6px', textAlign: 'left', whiteSpace: 'nowrap' }}>aminoAcid</th>
+                        <th style={{ border: '1px solid #eee', padding: '5px 6px', textAlign: 'left', whiteSpace: 'nowrap' }}>fraction</th>
+                        <th style={{ border: '1px solid #eee', padding: '5px 6px', textAlign: 'left', whiteSpace: 'nowrap' }}>frequency</th>
+                        <th style={{ border: '1px solid #eee', padding: '5px 6px', textAlign: 'left', whiteSpace: 'nowrap' }}>number</th>
                       </tr>
                     </thead>
                     <tbody style={{ color: '#555' }}>
                       <tr>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>CTG</td>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>L</td>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>0.47</td>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>51.1</td>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>0</td>
+                        <td style={{ border: '1px solid #eee', padding: '5px 6px' }}>CTG</td>
+                        <td style={{ border: '1px solid #eee', padding: '5px 6px' }}>L</td>
+                        <td style={{ border: '1px solid #eee', padding: '5px 6px' }}>0.47</td>
+                        <td style={{ border: '1px solid #eee', padding: '5px 6px' }}>51.1</td>
+                        <td style={{ border: '1px solid #eee', padding: '5px 6px' }}>0</td>
                       </tr>
                       <tr>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>CTA</td>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>L</td>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>0.04</td>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>3.8</td>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>0</td>
+                        <td style={{ border: '1px solid #eee', padding: '5px 6px' }}>CTA</td>
+                        <td style={{ border: '1px solid #eee', padding: '5px 6px' }}>L</td>
+                        <td style={{ border: '1px solid #eee', padding: '5px 6px' }}>0.04</td>
+                        <td style={{ border: '1px solid #eee', padding: '5px 6px' }}>3.8</td>
+                        <td style={{ border: '1px solid #eee', padding: '5px 6px' }}>0</td>
                       </tr>
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )}
             </div>
