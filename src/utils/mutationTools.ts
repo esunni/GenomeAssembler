@@ -37,6 +37,24 @@ export interface CodonContext {
   globalStart: number; // 1-based index of first base of this codon in genome
 }
 
+const THREE_TO_ONE: Record<string, string> = {
+  ALA: 'A', ARG: 'R', ASN: 'N', ASP: 'D', CYS: 'C', GLN: 'Q', GLU: 'E',
+  GLY: 'G', HIS: 'H', ILE: 'I', LEU: 'L', LYS: 'K', MET: 'M', PHE: 'F',
+  PRO: 'P', SER: 'S', THR: 'T', TRP: 'W', TYR: 'Y', VAL: 'V',
+  TER: '*', STOP: '*', END: '*',
+};
+
+/**
+ * Normalise an amino-acid label to the single-letter code used for codon
+ * lookups. Accepts single-letter (L), three-letter (Leu), and common stop
+ * spellings (*, Ter, Stop), case-insensitively.
+ */
+function normalizeAminoAcid(raw: string): string {
+  const value = raw.trim().toUpperCase();
+  if (value.length <= 1) return value;
+  return THREE_TO_ONE[value] ?? value;
+}
+
 export function parseCodonUsage(csvContent: string): Map<string, CodonUsage[]> {
   const lines = csvContent.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
   const codonMap = new Map<string, CodonUsage[]>();
@@ -45,8 +63,10 @@ export function parseCodonUsage(csvContent: string): Map<string, CodonUsage[]> {
   for (let i = 1; i < lines.length; i++) {
     const parts = lines[i].split(',');
     if (parts.length >= 5) {
-      const codon = parts[0].trim().toUpperCase();
-      const aminoAcid = parts[1].trim();
+      // Accept both DNA (T) and RNA (U) codons; normalise to DNA to match the
+      // genome sequence and the single-letter genetic-code lookup.
+      const codon = parts[0].trim().toUpperCase().replace(/U/g, 'T');
+      const aminoAcid = normalizeAminoAcid(parts[1]);
       const fraction = parseFloat(parts[2]);
       const frequency = parseFloat(parts[3]);
       const number = parseInt(parts[4], 10);

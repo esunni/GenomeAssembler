@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
   detectAnnotationFormat,
   parseCdsAnnotations,
+  parseCodonUsage,
   parseGenbankCds,
   parsePhastestDetails,
 } from '../utils/mutationTools';
@@ -70,6 +71,40 @@ describe('parseGenbankCds', () => {
   test('assigns sequential ids sorted by start position', () => {
     expect(regions.map((r) => r.id)).toEqual([1, 2, 3]);
     expect(regions.map((r) => r.start)).toEqual([1, 393, 7091]);
+  });
+});
+
+describe('parseCodonUsage', () => {
+  const header = 'codon,aminoAcid,fraction,frequency,number\n';
+
+  test('accepts single-letter amino acids keyed for lookup', () => {
+    const usage = parseCodonUsage(`${header}CTG,L,0.47,51.1,0\nCTA,L,0.04,3.8,0`);
+    expect(usage.get('L')).toHaveLength(2);
+  });
+
+  test('normalises RNA codons (U) to DNA (T)', () => {
+    const usage = parseCodonUsage(`${header}CUG,L,0.47,51.1,0`);
+    expect(usage.get('L')?.[0].codon).toBe('CTG');
+  });
+
+  test('normalises lower-case amino-acid codes', () => {
+    const usage = parseCodonUsage(`${header}ctg,l,0.47,51.1,0`);
+    expect(usage.get('L')?.[0].codon).toBe('CTG');
+  });
+
+  test('accepts three-letter amino-acid codes', () => {
+    const usage = parseCodonUsage(`${header}CUG,Leu,0.47,51.1,0`);
+    expect(usage.get('L')?.[0].codon).toBe('CTG');
+  });
+
+  test('maps three-letter stop spellings to *', () => {
+    const usage = parseCodonUsage(`${header}TAA,Ter,0.61,2.0,0`);
+    expect(usage.get('*')?.[0].codon).toBe('TAA');
+  });
+
+  test('ranks codons by frequency descending', () => {
+    const usage = parseCodonUsage(`${header}CTA,L,0.04,3.8,0\nCTG,L,0.47,51.1,0`);
+    expect(usage.get('L')?.map((c) => c.codon)).toEqual(['CTG', 'CTA']);
   });
 });
 

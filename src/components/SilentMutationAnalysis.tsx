@@ -240,31 +240,39 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                   </button>
                   <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem', color: '#111' }}>Custom Codon Usage Format</h4>
                   <p style={{ margin: '0 0 8px 0' }}><strong>Extensions:</strong> .csv</p>
-                  <p style={{ margin: '0 0 4px 0' }}><strong>Required Columns:</strong></p>
+                  <p style={{ margin: '0 0 4px 0' }}><strong>Required Columns (in order, with a header row):</strong></p>
                   <ul style={{ margin: '0 0 12px 0', paddingLeft: '20px', color: '#555' }}>
-                    <li>Column 1: Amino acid abbreviation (e.g., Leu)</li>
-                    <li>Column 2: Codon triplet (e.g., CUG)</li>
-                    <li>Column 3: Frequency fraction (e.g., 0.52)</li>
+                    <li>Column 1 — codon: DNA or RNA triplet (e.g., CTG or CUG)</li>
+                    <li>Column 2 — aminoAcid: single- or three-letter code (e.g., L or Leu; use * for stop)</li>
+                    <li>Column 3 — fraction: usage within the amino acid (e.g., 0.47)</li>
+                    <li>Column 4 — frequency: per-1000 codons, used for ranking (e.g., 51.1)</li>
+                    <li>Column 5 — number: observed count (0 if unknown)</li>
                   </ul>
                   <p style={{ margin: '0 0 4px 0' }}><strong>Example:</strong></p>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', border: '1px solid #eee' }}>
                     <thead style={{ backgroundColor: '#f5edfc', color: '#333' }}>
                       <tr>
-                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>AA</th>
-                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>Codon</th>
-                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>Frequency</th>
+                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>codon</th>
+                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>aminoAcid</th>
+                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>fraction</th>
+                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>frequency</th>
+                        <th style={{ border: '1px solid #eee', padding: '6px', textAlign: 'left' }}>number</th>
                       </tr>
                     </thead>
                     <tbody style={{ color: '#555' }}>
                       <tr>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>Leu</td>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>CUG</td>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>0.52</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>CTG</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>L</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>0.47</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>51.1</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>0</td>
                       </tr>
                       <tr>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>Leu</td>
-                        <td style={{ border: '1px solid #eee', padding: '6px' }}>CUA</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>CTA</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>L</td>
                         <td style={{ border: '1px solid #eee', padding: '6px' }}>0.04</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>3.8</td>
+                        <td style={{ border: '1px solid #eee', padding: '6px' }}>0</td>
                       </tr>
                     </tbody>
                   </table>
