@@ -2,7 +2,7 @@ import { ChangeEvent, DragEvent, useState, useEffect } from 'react';
 import { ParsedCircularFasta, EnzymeSite } from '../utils/designTools';
 import { defaultCodonUsageCsv } from '../utils/defaultCodonUsage';
 import {
-  parsePhastestDetails,
+  parseCdsAnnotations,
   parseCodonUsage,
   analyzeEnzymeSites,
   recommendSilentMutations,
@@ -22,7 +22,7 @@ interface SilentMutationAnalysisProps {
 }
 
 export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsRegionsChange, onSiteAnalysesChange, isLinear }: SilentMutationAnalysisProps) {
-  const [phastestFileName, setPhastestFileName] = useState<string>('');
+  const [annotationFileName, setAnnotationFileName] = useState<string>('');
   const [codonFileName, setCodonFileName] = useState<string>('E.coli_codon_usage_table.csv (Default)');
   const [useCustomCodonTable, setUseCustomCodonTable] = useState(false);
   const [isPhastestDragActive, setIsPhastestDragActive] = useState(false);
@@ -52,10 +52,10 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
 
   const handlePhastestFile = async (file: File) => {
     const text = await file.text();
-    const regions = parsePhastestDetails(text);
+    const regions = parseCdsAnnotations(text);
     setCdsRegions(regions);
     if (onCdsRegionsChange) onCdsRegionsChange(regions);
-    setPhastestFileName(file.name);
+    setAnnotationFileName(file.name);
   };
 
   const handleCodonFile = async (file: File) => {
@@ -151,7 +151,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
       <div className="section-header" style={{ marginBottom: '1.5rem' }}>
         <h2 style={{ margin: '0 0 0.5rem' }}>Silent Mutation Analysis</h2>
         <p className="page-copy">
-          Upload <a href="https://phastest.ca/submissions/new" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-600)', textDecoration: 'underline', textUnderlineOffset: '2px' }}>PHASTEST</a> results (detail.txt) and Codon usage data to analyze and resolve recognition sites via silent mutations (the default codon usage table is for <i>E. coli</i>).
+          Upload a CDS annotation file — either <a href="https://phastest.ca/submissions/new" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-600)', textDecoration: 'underline', textUnderlineOffset: '2px' }}>PHASTEST</a> results (detail.txt) or a GenBank flat file (.gb/.gbk) — together with Codon usage data to analyze and resolve recognition sites via silent mutations (the default codon usage table is for <i>E. coli</i>). The format is detected automatically.
         </p>
       </div>
 
@@ -287,19 +287,19 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
           onDrop={handlePhastestDrop}
         >
           <input
-            aria-label="Upload PHASTEST txt file"
+            aria-label="Upload PHASTEST or GenBank annotation file"
             className="design-file-input"
             type="file"
-            accept=".txt,text/plain"
+            accept=".txt,.gb,.gbk,.genbank,.gbff,text/plain"
             onChange={handlePhastestUpload}
           />
-          {phastestFileName ? (
+          {annotationFileName ? (
             <span className="design-upload-file">
               <svg className="design-upload-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              {phastestFileName}
+              {annotationFileName}
             </span>
           ) : (
             <span className="design-upload-placeholder">
@@ -307,7 +307,7 @@ export function SilentMutationAnalysis({ uploadedGenome, detectedSites, onCdsReg
                 <path d="M12 16V4M12 4L8 8M12 4L16 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M3 15V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Drop PHASTEST detail.txt file here
+              Drop PHASTEST detail.txt or GenBank .gb file here
             </span>
           )}
         </label>

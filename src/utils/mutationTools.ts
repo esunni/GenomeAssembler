@@ -111,6 +111,126 @@ export function parsePhastestDetails(txtContent: string): CdsRegion[] {
   return cdsRegions;
 }
 
+/**
+ * Parse the CDS features from a GenBank flat file (.gb/.gbk).
+ *
+ * GenBank locations use 1-based inclusive coordinates, matching CdsRegion and
+ * the PHASTEST parser above. `complement(...)` marks the reverse strand.
+ * Compound locations such as join(...) / complement(join(...)) are collapsed to
+ * their overall span (min start .. max end), which is what the downstream
+ * overlap/frame logic needs.
+ */
+export function parseGenbankCds(gbContent: string): CdsRegion[] {
+  const lines = gbContent.split(/\r?\n/);
+  const cdsRegions: CdsRegion[] = [];
+
+  let inFeatures = false;
+  // Accumulators for the feature currently being read.
+  let currentKey = '';
+  let currentLocation = '';
+  let currentProduct = '';
+  let collecting: 'location' | 'product' | null = null;
+
+  const flushFeature = () => {
+    if (currentKey === 'CDS' && currentLocation) {
+      const numbers = currentLocation.match(/\d+/g);
+      if (numbers && numbers.length >= 2) {
+        const coords = numbers.map((n) => parseInt(n, 10));
+        cdsRegions.push({
+          id: 0,
+          start: Math.min(...coords),
+          end: Math.max(...coords),
+          strand: /complement/i.test(currentLocation) ? '-' : '+',
+          product: currentProduct.replace(/"/g, '').trim() || undefined,
+        });
+      }
+    }
+    currentKey = '';
+    currentLocation = '';
+    currentProduct = '';
+    collecting = null;
+  };
+
+  for (const line of lines) {
+    if (!inFeatures) {
+      if (/^FEATURES\s/.test(line)) inFeatures = true;
+      continue;
+    }
+
+    // End of the FEATURES block (ORIGIN, // terminator, or a new top-level key).
+    if (/^(ORIGIN|\/\/)/.test(line) || (line.length > 0 && line[0] !== ' ')) {
+      flushFeature();
+      break;
+    }
+
+    // Feature header lines are indented 5 spaces; qualifier/continuation lines 21.
+    const headerMatch = line.match(/^ {5}(\S+)\s+(.*)$/);
+    if (headerMatch && line[5] !== ' ') {
+      flushFeature();
+      currentKey = headerMatch[1];
+      currentLocation = headerMatch[2].trim();
+      collecting = 'location';
+      continue;
+    }
+
+    const trimmed = line.trim();
+    if (trimmed.startsWith('/')) {
+      const productMatch = trimmed.match(/^\/product=(.*)$/);
+      if (productMatch) {
+        currentProduct = productMatch[1];
+        // Product value is complete on this line unless the opening quote is unclosed.
+        collecting = /^"[^"]*"?$/.test(currentProduct) && !currentProduct.endsWith('"') ? 'product' : null;
+        if (/^"[^"]*"$/.test(currentProduct)) collecting = null;
+      } else {
+        collecting = null;
+      }
+      continue;
+    }
+
+    // Continuation of a multi-line location or product value.
+    if (collecting === 'location') {
+      currentLocation += trimmed;
+    } else if (collecting === 'product') {
+      currentProduct += ' ' + trimmed;
+      if (trimmed.endsWith('"')) collecting = null;
+    }
+  }
+
+  cdsRegions.sort((a, b) => a.start - b.start);
+  cdsRegions.forEach((cds, index) => {
+    cds.id = index + 1;
+  });
+
+  return cdsRegions;
+}
+
+export type AnnotationFormat = 'phastest' | 'genbank';
+
+/**
+ * Sniff whether an uploaded annotation file is a PHASTEST detail export or a
+ * GenBank flat file. The two formats are unambiguous: GenBank opens with a
+ * `LOCUS` line / `FEATURES` table, while PHASTEST detail files carry the
+ * `CDS_POSITION` column header and a `gi|...` sequence header.
+ */
+export function detectAnnotationFormat(content: string): AnnotationFormat {
+  const head = content.slice(0, 5000);
+  if (/^LOCUS\s+/m.test(head) || /^FEATURES\s+Location/m.test(head)) return 'genbank';
+  if (/CDS_POSITION/.test(head) || /^gi\|/m.test(head)) return 'phastest';
+  // Fallback: GenBank-style indented CDS feature lines.
+  if (/^ {5}CDS\s+/m.test(head)) return 'genbank';
+  return 'phastest';
+}
+
+/**
+ * Parse CDS regions from an uploaded annotation file, auto-detecting whether it
+ * is a PHASTEST detail export or a GenBank flat file.
+ */
+export function parseCdsAnnotations(content: string): CdsRegion[] {
+  return detectAnnotationFormat(content) === 'genbank'
+    ? parseGenbankCds(content)
+    : parsePhastestDetails(content);
+}
+
 const GENETIC_CODE: Record<string, string> = {
   'ATA': 'I', 'ATC': 'I', 'ATT': 'I', 'ATG': 'M',
   'ACA': 'T', 'ACC': 'T', 'ACG': 'T', 'ACT': 'T',
